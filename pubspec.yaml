@@ -1,0 +1,55 @@
+name: motus_lab
+description: "Motus Lab - Automotive Diagnostic Platform"
+publish_to: "none"
+version: 0.0.1+1
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+
+  # State Management & DI
+  flutter_bloc: ^8.1.3
+  get_it: ^7.6.0
+  equatable: ^2.0.5
+
+  # Database
+  drift: ^2.14.0
+  sqlite3_flutter_libs: ^0.5.18
+  path_provider: ^2.1.1
+  path: ^1.8.3
+
+  # Logic & Hardware
+  math_expressions: ^2.4.0
+  flutter_blue_plus: ^1.30.0
+  logger: ^2.0.0
+
+  # Phase 3 Expansion
+  fl_chart: ^0.66.0
+  pdf: ^3.10.8
+  printing: ^5.11.1
+
+  # Phase 4 Desktop Power
+  flutter_libserialport: ^0.4.0
+  flutter_js: ^0.8.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  drift_dev: ^2.14.0
+  build_runner: ^2.4.7
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/fonts/
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700

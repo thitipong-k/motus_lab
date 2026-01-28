@@ -1,5 +1,6 @@
 import 'package:motus_lab/core/protocol/expression_evaluator.dart';
 import 'package:motus_lab/domain/entities/command.dart';
+import 'package:motus_lab/core/protocol/standard_pids.dart';
 
 /// ตัวขับเคลื่อนหลักของระบบ (Protocol Engine)
 /// ทำหน้าที่รับคำสั่ง (Command) และแปลงเป็นข้อมูลดิบ (Hex) เพื่อส่งไปยังรถ
@@ -9,7 +10,7 @@ class ProtocolEngine {
 
   /// สร้าง Instance ของ Protocol Engine
   ProtocolEngine({ExpressionEvaluator? evaluator})
-    : _evaluator = evaluator ?? ExpressionEvaluator();
+      : _evaluator = evaluator ?? ExpressionEvaluator();
 
   /// ฟังก์ชันสำหรับแปลงคำสั่งเป็น Hex String
   /// [command] - คำสั่งที่ต้องการส่ง
@@ -45,5 +46,38 @@ class ProtocolEngine {
 
     // ขั้นตอนที่ 2: ส่งให้ Expression Evaluator คำนวณ
     return _evaluator.evaluate(formula, dataBytes);
+  }
+
+  /// แปลง Bitmask 4 Bytes เป็นรายการของ PID Codes ที่รถรองรับ
+  /// [response] - ข้อมูลดิบจากรถ (รวม Header) เช่น 41 00 BE 1F B8 10
+  /// [startPid] - PID เริ่มต้นของ Bitmask นี้ (เช่น 0x00, 0x20, 0x40)
+  List<String> decodeSupportedPids(List<int> response, int startPid) {
+    if (response.length < 6) return []; // Header(2) + Data(4)
+
+    List<String> supportedPids = [];
+    // Data เริ่มที่ Byte 2 (A, B, C, D)
+    List<int> data = response.sublist(2, 6);
+
+    // วนลูป 32 bits (4 bytes * 8 bits)
+    for (int i = 0; i < 32; i++) {
+      int byteIndex = i ~/ 8;
+      int bitIndex = 7 - (i % 8); // อ่านจากซ้ายไปขวา (MSB)
+
+      int mask = 1 << bitIndex;
+      if ((data[byteIndex] & mask) != 0) {
+        // PID ที่รองรับ = startPid + 1 + i
+        int pidVal = startPid + 1 + i;
+        // แปลงเป็น Hex String เช่น 0C -> "010C" (สมมติ Mode 01 เสมอ)
+        String pidHex = pidVal.toRadixString(16).toUpperCase().padLeft(2, '0');
+        supportedPids.add("01$pidHex");
+      }
+    }
+
+    return supportedPids;
+  }
+
+  /// คืนค่ารายการ PIDs มาตรฐานทั้งหมดที่รองรับ
+  List<Command> getAllSupportedPids() {
+    return StandardPids.all;
   }
 }
