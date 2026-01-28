@@ -1,0 +1,46 @@
+{
+  "meta": {
+    "id": "honda_civic_generic",
+    "version": "1.0",
+    "name": "Honda Civic (Generic OBD2)"
+  },
+  "init_sequence": ["ATZ", "ATSP0", "ATH1"],
+  "commands": [
+    {
+      "pid": "010C",
+      "name": "Engine RPM",
+      "unit": "RPM",
+      "bytes": 2,
+      "formula": "((A * 256) + B) / 4",
+      "min": 0,
+      "max": 8000
+    },
+    {
+      "pid": "010D",
+      "name": "Vehicle Speed",
+      "unit": "km/h",
+      "bytes": 1,
+      "formula": "A",
+      "min": 0,
+      "max": 255
+    },
+    {
+      "pid": "0105",
+      "name": "Coolant Temp",
+      "unit": "°C",
+      "bytes": 1,
+      "formula": "A - 40",
+      "min": -40,
+      "max": 215
+    },
+    {
+      "pid": "0111",
+      "name": "Throttle Position",
+      "unit": "%",
+      "bytes": 1,
+      "formula": "(A * 100) / 255",
+      "min": 0,
+      "max": 100
+    }
+  ]
+}

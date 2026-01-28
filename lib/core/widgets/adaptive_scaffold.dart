@@ -24,27 +24,35 @@ class AdaptiveScaffold extends StatelessWidget {
           return Scaffold(
             body: Row(
               children: [
-                NavigationRail(
-                  selectedIndex: selectedIndex,
-                  onDestinationSelected: onDestinationSelected,
-                  labelType: NavigationRailLabelType.all,
-                  backgroundColor: AppColors.background,
-                  indicatorColor: AppColors.primary.withOpacity(0.2),
-                  unselectedIconTheme:
-                      const IconThemeData(color: Colors.white54),
-                  selectedIconTheme:
-                      const IconThemeData(color: AppColors.primary),
-                  selectedLabelTextStyle:
-                      const TextStyle(color: AppColors.primary),
-                  unselectedLabelTextStyle:
-                      const TextStyle(color: Colors.white54),
-                  destinations: destinations
-                      .map((d) => NavigationRailDestination(
-                            icon: d.icon,
-                            selectedIcon: d.selectedIcon ?? d.icon,
-                            label: Text(d.label),
-                          ))
-                      .toList(),
+                SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints:
+                        BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: NavigationRail(
+                        selectedIndex: selectedIndex,
+                        onDestinationSelected: onDestinationSelected,
+                        labelType: NavigationRailLabelType.all,
+                        backgroundColor: AppColors.background,
+                        indicatorColor: AppColors.primary.withOpacity(0.2),
+                        unselectedIconTheme:
+                            const IconThemeData(color: Colors.white54),
+                        selectedIconTheme:
+                            const IconThemeData(color: AppColors.primary),
+                        selectedLabelTextStyle:
+                            const TextStyle(color: AppColors.primary),
+                        unselectedLabelTextStyle:
+                            const TextStyle(color: Colors.white54),
+                        destinations: destinations
+                            .map((d) => NavigationRailDestination(
+                                  icon: d.icon,
+                                  selectedIcon: d.selectedIcon ?? d.icon,
+                                  label: Text(d.label),
+                                ))
+                            .toList(),
+                      ),
+                    ),
+                  ),
                 ),
                 const VerticalDivider(thickness: 1, width: 1),
                 Expanded(child: body),

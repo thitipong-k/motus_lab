@@ -1,16 +1,35 @@
+import 'dart:convert';
 import 'package:motus_lab/core/protocol/expression_evaluator.dart';
 import 'package:motus_lab/domain/entities/command.dart';
 import 'package:motus_lab/core/protocol/standard_pids.dart';
+import 'package:motus_lab/core/protocol/models/protocol_pack.dart';
 
 /// ตัวขับเคลื่อนหลักของระบบ (Protocol Engine)
 /// ทำหน้าที่รับคำสั่ง (Command) และแปลงเป็นข้อมูลดิบ (Hex) เพื่อส่งไปยังรถ
 /// และรับค่ากลับมาคำนวณตามสูตร
 class ProtocolEngine {
   final ExpressionEvaluator _evaluator;
+  ProtocolPack? _activePack;
+  List<Command>? _cachedCommands;
 
   /// สร้าง Instance ของ Protocol Engine
   ProtocolEngine({ExpressionEvaluator? evaluator})
       : _evaluator = evaluator ?? ExpressionEvaluator();
+
+  /// โหลด Protocol Pack จาก JSON String
+  /// [jsonString] - เนื้อหาไฟล์ JSON (e.g. อ่านจาก assets หรือ downloaded file)
+  void loadProtocolPack(String jsonString) {
+    try {
+      final jsonMap = jsonDecode(jsonString);
+      _activePack = ProtocolPack.fromJson(jsonMap);
+      _cachedCommands = null; // Clear cache
+      print("Loaded Protocol Pack: ${_activePack?.meta.name}");
+    } catch (e) {
+      print("Error loading protocol pack: $e");
+      // Fallback to null (StandardPids)
+      _activePack = null;
+    }
+  }
 
   /// ฟังก์ชันสำหรับแปลงคำสั่งเป็น Hex String
   /// [command] - คำสั่งที่ต้องการส่ง
@@ -49,8 +68,8 @@ class ProtocolEngine {
   }
 
   /// แปลง Bitmask 4 Bytes เป็นรายการของ PID Codes ที่รถรองรับ
-  /// [response] - ข้อมูลดิบจากรถ (รวม Header) เช่น 41 00 BE 1F B8 10
-  /// [startPid] - PID เริ่มต้นของ Bitmask นี้ (เช่น 0x00, 0x20, 0x40)
+  /// [response] - ข้อมูลดิบจากรถ
+  /// [startPid] - PID เริ่มต้นของ Bitmask นี้
   List<String> decodeSupportedPids(List<int> response, int startPid) {
     if (response.length < 6) return []; // Header(2) + Data(4)
 
@@ -76,8 +95,21 @@ class ProtocolEngine {
     return supportedPids;
   }
 
-  /// คืนค่ารายการ PIDs มาตรฐานทั้งหมดที่รองรับ
+  /// คืนค่ารายการ PIDs ทั้งหมดที่รองรับ (จาก Pack หรือ Standard)
   List<Command> getAllSupportedPids() {
-    return StandardPids.all;
+    // ถ้ามี Protocol Pack ให้ใช้นิยามจาก Pack
+    if (_activePack != null && _cachedCommands == null) {
+      _cachedCommands = _activePack!.commands.map((cmd) {
+        return Command(
+          name: cmd.name,
+          code: cmd.pid,
+          description: "From ${cmd.pid}",
+          unit: cmd.unit,
+          formula: cmd.formula,
+        );
+      }).toList();
+    }
+
+    return _cachedCommands ?? StandardPids.all;
   }
 }

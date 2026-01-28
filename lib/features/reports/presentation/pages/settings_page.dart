@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
 import 'package:motus_lab/features/reports/domain/services/report_generator.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:motus_lab/core/theme/theme_cubit.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -41,10 +43,19 @@ class SettingsPage extends StatelessWidget {
           const Text("App Preferences",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 16),
-          const ListTile(
-            leading: Icon(Icons.dark_mode),
-            title: Text("Dark Mode"),
-            trailing: Switch(value: true, onChanged: null),
+          BlocBuilder<ThemeCubit, ThemeMode>(
+            builder: (context, mode) {
+              return ListTile(
+                leading: const Icon(Icons.dark_mode),
+                title: const Text("Dark Mode"),
+                trailing: Switch(
+                  value: mode == ThemeMode.dark,
+                  onChanged: (value) {
+                    context.read<ThemeCubit>().toggleTheme(value);
+                  },
+                ),
+              );
+            },
           ),
           const ListTile(
             leading: Icon(Icons.language),
