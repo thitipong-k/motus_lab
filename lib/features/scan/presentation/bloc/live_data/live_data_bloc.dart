@@ -5,6 +5,7 @@ import 'package:motus_lab/core/protocol/protocol_engine.dart';
 import 'package:motus_lab/core/connection/connection_interface.dart';
 import 'package:motus_lab/domain/entities/command.dart';
 import 'package:motus_lab/data/repositories/protocol_repository.dart';
+import 'package:motus_lab/data/repositories/vehicle_profile_repository.dart';
 
 part 'live_data_event.dart';
 part 'live_data_state.dart';
@@ -15,6 +16,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
   final ProtocolEngine _engine;
   final ConnectionInterface _connection;
   final ProtocolRepository _repository;
+  final VehicleProfileRepository _profileRepository;
   Timer? _timer;
   List<Command> _activeCommands = [];
 
@@ -22,9 +24,11 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     required ProtocolEngine engine,
     required ConnectionInterface connection,
     required ProtocolRepository repository,
+    required VehicleProfileRepository profileRepository,
   })  : _engine = engine,
         _connection = connection,
         _repository = repository,
+        _profileRepository = profileRepository,
         super(const LiveDataState()) {
     on<StartStreaming>(_onStartStreaming);
     on<StopStreaming>(_onStopStreaming);
@@ -45,30 +49,72 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       // Simple heuristic: if default list is small/empty, try discover
       emit(state.copyWith(isStreaming: true, isDiscovering: true));
 
-      // 1. Discovery Phase
+      // --- ระบบจดจำรถยนต์ (Vehicle Identity) และการทำ Caching ---
       List<String> supportedKeyCodes = [];
-      // Check 0100 (Supported 01-20)
-      await _checkSupportedPids("0100", supportedKeyCodes);
+      String? currentVin;
 
-      // If 0120 supported (bit 32 of 0100), check 0120.
-      // Simplification: Check 0120, 0140 anyway if connection is good.
-      await _checkSupportedPids("0120", supportedKeyCodes);
-      await _checkSupportedPids("0140", supportedKeyCodes);
+      // 0. พยายามอ่านเลขตัวถัง (VIN) ก่อนเพื่อตรวจสอบว่ามีข้อมูลใน Cache หรือไม่
+      try {
+        // Mode 09 PID 02 (VIN)
+        final vinCmd = _repository.getCommandByCode("0902");
+        if (vinCmd != null) {
+          final request = _engine.buildRequest(vinCmd);
+          final response = await _connection.send(request);
+          // TODO: แปลงค่า VIN จาก Hex เป็น Text จริงๆ
+          // ในสถานการณ์จริง ใช้ _engine.parseVin(response)
+          // สำหรับการจำลอง ใส่ค่า Mock ไปก่อน
+          currentVin = "JHMGD38TEST"; // Mock ID
+        }
+      } catch (e) {
+        print("Error reading VIN: $e");
+      }
 
-      print("Discovered PIDs: $supportedKeyCodes");
+      bool cacheHit = false;
+      if (currentVin != null) {
+        // ตรวจสอบข้อมูลใน Database
+        final cachedPids =
+            await _profileRepository.getSupportedPids(currentVin);
+        if (cachedPids != null && cachedPids.isNotEmpty) {
+          print("Cache HIT for VIN: $currentVin. Skipping discovery.");
+          supportedKeyCodes = cachedPids;
+          cacheHit = true;
+        }
+      }
 
-      // 2. Matching Phase
+      if (!cacheHit) {
+        // Cache MISS -> เริ่มกระบวนการค้นหาเต็มรูปแบบ (Full Discovery)
+        print("Cache MISS. Starting Full Discovery...");
+
+        // 1. Discovery Phase (ค้นหา PID ที่รถรองรับ)
+        // ตรวจสอบ PID 0100, 0120, 0140 เพื่อดู Bitmask
+        await _checkSupportedPids("0100", supportedKeyCodes);
+        await _checkSupportedPids("0120", supportedKeyCodes);
+        await _checkSupportedPids("0140", supportedKeyCodes);
+
+        print("Discovered PIDs: $supportedKeyCodes");
+
+        // บันทึกผลลัพธ์ลง Cache (Database)
+        if (currentVin != null && supportedKeyCodes.isNotEmpty) {
+          await _profileRepository.saveProfile(
+            vin: currentVin,
+            protocol: "AUTO", // TODO: Get real protocol
+            supportedPids: supportedKeyCodes,
+          );
+        }
+      }
+
+      // 2. Matching Phase (จับคู่ PID ที่เจอ กับ Command ที่เรามี)
       final allAvailable = _repository.getAllAvailablePids();
       commandsToUse = allAvailable.where((cmd) {
         return supportedKeyCodes.contains(cmd.code);
       }).toList();
 
-      // If nothing found (e.g. mock or error), fallback to Standard
+      // ถ้าไม่เจออะไรเลย (เช่น Mock หรือ Error) ให้ใช้ค่า Default ไปก่อน
       if (commandsToUse.isEmpty) {
         commandsToUse = _repository.getStandardPids();
       }
 
-      // Update State with supported codes
+      // อัพเดต State
       emit(state.copyWith(
           isDiscovering: false, supportedPidCodes: supportedKeyCodes));
     }
@@ -82,23 +128,40 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     // หยุด Timer เก่าถ้ามี
     _timer?.cancel();
 
-    // เริ่ม Loop การส่งคำสั่งทุก 200ms
-    _timer = Timer.periodic(const Duration(milliseconds: 200), (timer) async {
+    int tick = 0;
+    // ปรับ Base Loop ให้เร็วขึ้นเป็น 50ms เพื่อรองรับ High Priority
+    _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) async {
       if (!_connection.isConnected) {
         add(StopStreaming());
         return;
       }
 
-      // ... (Rest of loop remains similar)
-
+      tick++;
       Map<String, double> updatedValues = Map.from(state.currentValues);
 
-      // ใช้ _activeCommands จาก class field เพื่อให้เปลี่ยนค่าได้กลางอากาศ
-      for (var cmd in _activeCommands) {
+      // กรองคำสั่งที่จะส่งในรอบนี้ (Weighted Polling)
+      final commandsToPoll = _activeCommands.where((cmd) {
+        switch (cmd.priority) {
+          case CommandPriority.high:
+            // 50ms interval (Every tick)
+            return true;
+          case CommandPriority.normal:
+            // 500ms interval (Every 10 ticks)
+            return tick % 10 == 0;
+          case CommandPriority.low:
+            // 2000ms interval (Every 40 ticks)
+            return tick % 40 == 0;
+        }
+      }).toList();
+
+      if (commandsToPoll.isEmpty) return;
+
+      for (var cmd in commandsToPoll) {
         try {
           // 1. สร้าง Request
           final request = _engine.buildRequest(cmd);
           // 2. ส่งและรับ Response
+          // Note: อาจต้องระวังเรื่อง Queue ถ้ารับส่งไม่ทัน 50ms
           final response = await _connection.send(request);
           // 3. แปลผล
           if (response.isNotEmpty) {
@@ -110,7 +173,9 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
         }
       }
 
-      add(NewDataReceived(updatedValues));
+      if (updatedValues.isNotEmpty) {
+        add(NewDataReceived(updatedValues));
+      }
     });
   }
 

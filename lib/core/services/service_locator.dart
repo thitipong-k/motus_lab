@@ -9,6 +9,7 @@ import 'package:motus_lab/features/scan/presentation/bloc/dtc/dtc_bloc.dart';
 import 'package:motus_lab/core/database/app_database.dart';
 import 'package:motus_lab/data/repositories/diagnostic_repository.dart';
 import 'package:motus_lab/data/repositories/protocol_repository.dart';
+import 'package:motus_lab/data/repositories/vehicle_profile_repository.dart';
 
 final locator = GetIt.instance;
 
@@ -28,12 +29,14 @@ void setupLocator() {
   locator.registerLazySingleton(() => AppDatabase());
   locator.registerLazySingleton(() => DiagnosticRepository(locator()));
   locator.registerLazySingleton(() => ProtocolRepository());
+  locator.registerLazySingleton(() => VehicleProfileRepository(locator()));
 
   // 3. Blocs
   locator.registerFactory(() => LiveDataBloc(
         engine: locator<ProtocolEngine>(),
         connection: locator<ConnectionInterface>(),
         repository: locator<ProtocolRepository>(),
+        profileRepository: locator<VehicleProfileRepository>(),
       ));
 
   locator.registerFactory(() => DtcBloc(

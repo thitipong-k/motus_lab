@@ -16,7 +16,8 @@ class StandardPids {
       code: "0105",
       description: "Engine Coolant Temperature",
       unit: "°C",
-      formula: "A-40");
+      formula: "A-40",
+      priority: CommandPriority.low);
 
   static const Command shortTermFuelTrim1 = Command(
       name: "Short Term Fuel Trim B1",
@@ -44,21 +45,24 @@ class StandardPids {
       code: "010C",
       description: "Engine Revolutions Per Minute",
       unit: "rpm",
-      formula: "((A*256)+B)/4");
+      formula: "((A*256)+B)/4",
+      priority: CommandPriority.high);
 
   static const Command vehicleSpeed = Command(
       name: "Vehicle Speed",
       code: "010D",
       description: "Vehicle Speed",
       unit: "km/h",
-      formula: "A");
+      formula: "A",
+      priority: CommandPriority.high);
 
   static const Command timingAdvance = Command(
       name: "Timing Advance",
       code: "010E",
       description: "Timing Advance for Cylinder 1",
       unit: "°",
-      formula: "(A/2)-64");
+      formula: "(A/2)-64",
+      priority: CommandPriority.high);
 
   static const Command intakeAirTemp = Command(
       name: "Intake Air Temp",
@@ -79,7 +83,8 @@ class StandardPids {
       code: "0111",
       description: "Throttle Position",
       unit: "%",
-      formula: "A*100/255");
+      formula: "A*100/255",
+      priority: CommandPriority.high);
 
   static const Command runtimeSinceStart = Command(
       name: "Run Time",
@@ -100,7 +105,8 @@ class StandardPids {
       code: "012F",
       description: "Fuel Tank Level Input",
       unit: "%",
-      formula: "A*100/255");
+      formula: "A*100/255",
+      priority: CommandPriority.low);
 
   static const Command controlModuleVoltage = Command(
       name: "Module Voltage",
@@ -121,7 +127,8 @@ class StandardPids {
       code: "0146",
       description: "Ambient Air Temperature",
       unit: "°C",
-      formula: "A-40");
+      formula: "A-40",
+      priority: CommandPriority.low);
 
   // --- Supported PIDs Check ---
   static const Command pidsSupported00 = Command(

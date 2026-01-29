@@ -448,6 +448,332 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
   }
 }
 
+class $VehicleProfilesTable extends VehicleProfiles
+    with TableInfo<$VehicleProfilesTable, VehicleProfile> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VehicleProfilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _vinPrefixMeta =
+      const VerificationMeta('vinPrefix');
+  @override
+  late final GeneratedColumn<String> vinPrefix = GeneratedColumn<String>(
+      'vin_prefix', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _protocolMeta =
+      const VerificationMeta('protocol');
+  @override
+  late final GeneratedColumn<String> protocol = GeneratedColumn<String>(
+      'protocol', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _supportedPidsMeta =
+      const VerificationMeta('supportedPids');
+  @override
+  late final GeneratedColumn<String> supportedPids = GeneratedColumn<String>(
+      'supported_pids', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _ecuMapMeta = const VerificationMeta('ecuMap');
+  @override
+  late final GeneratedColumn<String> ecuMap = GeneratedColumn<String>(
+      'ecu_map', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _lastUpdatedMeta =
+      const VerificationMeta('lastUpdated');
+  @override
+  late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
+      'last_updated', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [vinPrefix, protocol, supportedPids, ecuMap, lastUpdated];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'vehicle_profiles';
+  @override
+  VerificationContext validateIntegrity(Insertable<VehicleProfile> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('vin_prefix')) {
+      context.handle(_vinPrefixMeta,
+          vinPrefix.isAcceptableOrUnknown(data['vin_prefix']!, _vinPrefixMeta));
+    } else if (isInserting) {
+      context.missing(_vinPrefixMeta);
+    }
+    if (data.containsKey('protocol')) {
+      context.handle(_protocolMeta,
+          protocol.isAcceptableOrUnknown(data['protocol']!, _protocolMeta));
+    } else if (isInserting) {
+      context.missing(_protocolMeta);
+    }
+    if (data.containsKey('supported_pids')) {
+      context.handle(
+          _supportedPidsMeta,
+          supportedPids.isAcceptableOrUnknown(
+              data['supported_pids']!, _supportedPidsMeta));
+    } else if (isInserting) {
+      context.missing(_supportedPidsMeta);
+    }
+    if (data.containsKey('ecu_map')) {
+      context.handle(_ecuMapMeta,
+          ecuMap.isAcceptableOrUnknown(data['ecu_map']!, _ecuMapMeta));
+    }
+    if (data.containsKey('last_updated')) {
+      context.handle(
+          _lastUpdatedMeta,
+          lastUpdated.isAcceptableOrUnknown(
+              data['last_updated']!, _lastUpdatedMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {vinPrefix};
+  @override
+  VehicleProfile map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VehicleProfile(
+      vinPrefix: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}vin_prefix'])!,
+      protocol: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}protocol'])!,
+      supportedPids: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}supported_pids'])!,
+      ecuMap: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}ecu_map']),
+      lastUpdated: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
+    );
+  }
+
+  @override
+  $VehicleProfilesTable createAlias(String alias) {
+    return $VehicleProfilesTable(attachedDatabase, alias);
+  }
+}
+
+class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
+  /// VIN Prefix (e.g. "JHMGD38") - ใช้เป็น Primary Key
+  final String vinPrefix;
+
+  /// Protocol used (e.g. "ISO 15765-4 CAN 11/500")
+  final String protocol;
+
+  /// JSON String เก็บรายการ PID Code ที่รองรับ (e.g. ["010C", "010D", ...])
+  final String supportedPids;
+
+  /// JSON String เก็บ Map ของ ECU Header (Optional)
+  final String? ecuMap;
+
+  /// เวลาที่อัพเดตล่าสุด
+  final DateTime lastUpdated;
+  const VehicleProfile(
+      {required this.vinPrefix,
+      required this.protocol,
+      required this.supportedPids,
+      this.ecuMap,
+      required this.lastUpdated});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['vin_prefix'] = Variable<String>(vinPrefix);
+    map['protocol'] = Variable<String>(protocol);
+    map['supported_pids'] = Variable<String>(supportedPids);
+    if (!nullToAbsent || ecuMap != null) {
+      map['ecu_map'] = Variable<String>(ecuMap);
+    }
+    map['last_updated'] = Variable<DateTime>(lastUpdated);
+    return map;
+  }
+
+  VehicleProfilesCompanion toCompanion(bool nullToAbsent) {
+    return VehicleProfilesCompanion(
+      vinPrefix: Value(vinPrefix),
+      protocol: Value(protocol),
+      supportedPids: Value(supportedPids),
+      ecuMap:
+          ecuMap == null && nullToAbsent ? const Value.absent() : Value(ecuMap),
+      lastUpdated: Value(lastUpdated),
+    );
+  }
+
+  factory VehicleProfile.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VehicleProfile(
+      vinPrefix: serializer.fromJson<String>(json['vinPrefix']),
+      protocol: serializer.fromJson<String>(json['protocol']),
+      supportedPids: serializer.fromJson<String>(json['supportedPids']),
+      ecuMap: serializer.fromJson<String?>(json['ecuMap']),
+      lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'vinPrefix': serializer.toJson<String>(vinPrefix),
+      'protocol': serializer.toJson<String>(protocol),
+      'supportedPids': serializer.toJson<String>(supportedPids),
+      'ecuMap': serializer.toJson<String?>(ecuMap),
+      'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
+    };
+  }
+
+  VehicleProfile copyWith(
+          {String? vinPrefix,
+          String? protocol,
+          String? supportedPids,
+          Value<String?> ecuMap = const Value.absent(),
+          DateTime? lastUpdated}) =>
+      VehicleProfile(
+        vinPrefix: vinPrefix ?? this.vinPrefix,
+        protocol: protocol ?? this.protocol,
+        supportedPids: supportedPids ?? this.supportedPids,
+        ecuMap: ecuMap.present ? ecuMap.value : this.ecuMap,
+        lastUpdated: lastUpdated ?? this.lastUpdated,
+      );
+  VehicleProfile copyWithCompanion(VehicleProfilesCompanion data) {
+    return VehicleProfile(
+      vinPrefix: data.vinPrefix.present ? data.vinPrefix.value : this.vinPrefix,
+      protocol: data.protocol.present ? data.protocol.value : this.protocol,
+      supportedPids: data.supportedPids.present
+          ? data.supportedPids.value
+          : this.supportedPids,
+      ecuMap: data.ecuMap.present ? data.ecuMap.value : this.ecuMap,
+      lastUpdated:
+          data.lastUpdated.present ? data.lastUpdated.value : this.lastUpdated,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VehicleProfile(')
+          ..write('vinPrefix: $vinPrefix, ')
+          ..write('protocol: $protocol, ')
+          ..write('supportedPids: $supportedPids, ')
+          ..write('ecuMap: $ecuMap, ')
+          ..write('lastUpdated: $lastUpdated')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(vinPrefix, protocol, supportedPids, ecuMap, lastUpdated);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VehicleProfile &&
+          other.vinPrefix == this.vinPrefix &&
+          other.protocol == this.protocol &&
+          other.supportedPids == this.supportedPids &&
+          other.ecuMap == this.ecuMap &&
+          other.lastUpdated == this.lastUpdated);
+}
+
+class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
+  final Value<String> vinPrefix;
+  final Value<String> protocol;
+  final Value<String> supportedPids;
+  final Value<String?> ecuMap;
+  final Value<DateTime> lastUpdated;
+  final Value<int> rowid;
+  const VehicleProfilesCompanion({
+    this.vinPrefix = const Value.absent(),
+    this.protocol = const Value.absent(),
+    this.supportedPids = const Value.absent(),
+    this.ecuMap = const Value.absent(),
+    this.lastUpdated = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  VehicleProfilesCompanion.insert({
+    required String vinPrefix,
+    required String protocol,
+    required String supportedPids,
+    this.ecuMap = const Value.absent(),
+    this.lastUpdated = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : vinPrefix = Value(vinPrefix),
+        protocol = Value(protocol),
+        supportedPids = Value(supportedPids);
+  static Insertable<VehicleProfile> custom({
+    Expression<String>? vinPrefix,
+    Expression<String>? protocol,
+    Expression<String>? supportedPids,
+    Expression<String>? ecuMap,
+    Expression<DateTime>? lastUpdated,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (vinPrefix != null) 'vin_prefix': vinPrefix,
+      if (protocol != null) 'protocol': protocol,
+      if (supportedPids != null) 'supported_pids': supportedPids,
+      if (ecuMap != null) 'ecu_map': ecuMap,
+      if (lastUpdated != null) 'last_updated': lastUpdated,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  VehicleProfilesCompanion copyWith(
+      {Value<String>? vinPrefix,
+      Value<String>? protocol,
+      Value<String>? supportedPids,
+      Value<String?>? ecuMap,
+      Value<DateTime>? lastUpdated,
+      Value<int>? rowid}) {
+    return VehicleProfilesCompanion(
+      vinPrefix: vinPrefix ?? this.vinPrefix,
+      protocol: protocol ?? this.protocol,
+      supportedPids: supportedPids ?? this.supportedPids,
+      ecuMap: ecuMap ?? this.ecuMap,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (vinPrefix.present) {
+      map['vin_prefix'] = Variable<String>(vinPrefix.value);
+    }
+    if (protocol.present) {
+      map['protocol'] = Variable<String>(protocol.value);
+    }
+    if (supportedPids.present) {
+      map['supported_pids'] = Variable<String>(supportedPids.value);
+    }
+    if (ecuMap.present) {
+      map['ecu_map'] = Variable<String>(ecuMap.value);
+    }
+    if (lastUpdated.present) {
+      map['last_updated'] = Variable<DateTime>(lastUpdated.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VehicleProfilesCompanion(')
+          ..write('vinPrefix: $vinPrefix, ')
+          ..write('protocol: $protocol, ')
+          ..write('supportedPids: $supportedPids, ')
+          ..write('ecuMap: $ecuMap, ')
+          ..write('lastUpdated: $lastUpdated, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ScanHistoryTable extends ScanHistory
     with TableInfo<$ScanHistoryTable, ScanHistoryData> {
   @override
@@ -2312,6 +2638,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $VehiclesTable vehicles = $VehiclesTable(this);
+  late final $VehicleProfilesTable vehicleProfiles =
+      $VehicleProfilesTable(this);
   late final $ScanHistoryTable scanHistory = $ScanHistoryTable(this);
   late final $DtcLibraryTable dtcLibrary = $DtcLibraryTable(this);
   late final $PossibleCausesTable possibleCauses = $PossibleCausesTable(this);
@@ -2324,6 +2652,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
         vehicles,
+        vehicleProfiles,
         scanHistory,
         dtcLibrary,
         possibleCauses,
@@ -2637,6 +2966,181 @@ typedef $$VehiclesTableProcessedTableManager = ProcessedTableManager<
     (Vehicle, $$VehiclesTableReferences),
     Vehicle,
     PrefetchHooks Function({bool scanHistoryRefs})>;
+typedef $$VehicleProfilesTableCreateCompanionBuilder = VehicleProfilesCompanion
+    Function({
+  required String vinPrefix,
+  required String protocol,
+  required String supportedPids,
+  Value<String?> ecuMap,
+  Value<DateTime> lastUpdated,
+  Value<int> rowid,
+});
+typedef $$VehicleProfilesTableUpdateCompanionBuilder = VehicleProfilesCompanion
+    Function({
+  Value<String> vinPrefix,
+  Value<String> protocol,
+  Value<String> supportedPids,
+  Value<String?> ecuMap,
+  Value<DateTime> lastUpdated,
+  Value<int> rowid,
+});
+
+class $$VehicleProfilesTableFilterComposer
+    extends Composer<_$AppDatabase, $VehicleProfilesTable> {
+  $$VehicleProfilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get vinPrefix => $composableBuilder(
+      column: $table.vinPrefix, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get protocol => $composableBuilder(
+      column: $table.protocol, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get supportedPids => $composableBuilder(
+      column: $table.supportedPids, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get ecuMap => $composableBuilder(
+      column: $table.ecuMap, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get lastUpdated => $composableBuilder(
+      column: $table.lastUpdated, builder: (column) => ColumnFilters(column));
+}
+
+class $$VehicleProfilesTableOrderingComposer
+    extends Composer<_$AppDatabase, $VehicleProfilesTable> {
+  $$VehicleProfilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get vinPrefix => $composableBuilder(
+      column: $table.vinPrefix, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get protocol => $composableBuilder(
+      column: $table.protocol, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get supportedPids => $composableBuilder(
+      column: $table.supportedPids,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get ecuMap => $composableBuilder(
+      column: $table.ecuMap, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get lastUpdated => $composableBuilder(
+      column: $table.lastUpdated, builder: (column) => ColumnOrderings(column));
+}
+
+class $$VehicleProfilesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VehicleProfilesTable> {
+  $$VehicleProfilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get vinPrefix =>
+      $composableBuilder(column: $table.vinPrefix, builder: (column) => column);
+
+  GeneratedColumn<String> get protocol =>
+      $composableBuilder(column: $table.protocol, builder: (column) => column);
+
+  GeneratedColumn<String> get supportedPids => $composableBuilder(
+      column: $table.supportedPids, builder: (column) => column);
+
+  GeneratedColumn<String> get ecuMap =>
+      $composableBuilder(column: $table.ecuMap, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastUpdated => $composableBuilder(
+      column: $table.lastUpdated, builder: (column) => column);
+}
+
+class $$VehicleProfilesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $VehicleProfilesTable,
+    VehicleProfile,
+    $$VehicleProfilesTableFilterComposer,
+    $$VehicleProfilesTableOrderingComposer,
+    $$VehicleProfilesTableAnnotationComposer,
+    $$VehicleProfilesTableCreateCompanionBuilder,
+    $$VehicleProfilesTableUpdateCompanionBuilder,
+    (
+      VehicleProfile,
+      BaseReferences<_$AppDatabase, $VehicleProfilesTable, VehicleProfile>
+    ),
+    VehicleProfile,
+    PrefetchHooks Function()> {
+  $$VehicleProfilesTableTableManager(
+      _$AppDatabase db, $VehicleProfilesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VehicleProfilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$VehicleProfilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$VehicleProfilesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> vinPrefix = const Value.absent(),
+            Value<String> protocol = const Value.absent(),
+            Value<String> supportedPids = const Value.absent(),
+            Value<String?> ecuMap = const Value.absent(),
+            Value<DateTime> lastUpdated = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              VehicleProfilesCompanion(
+            vinPrefix: vinPrefix,
+            protocol: protocol,
+            supportedPids: supportedPids,
+            ecuMap: ecuMap,
+            lastUpdated: lastUpdated,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String vinPrefix,
+            required String protocol,
+            required String supportedPids,
+            Value<String?> ecuMap = const Value.absent(),
+            Value<DateTime> lastUpdated = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              VehicleProfilesCompanion.insert(
+            vinPrefix: vinPrefix,
+            protocol: protocol,
+            supportedPids: supportedPids,
+            ecuMap: ecuMap,
+            lastUpdated: lastUpdated,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$VehicleProfilesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $VehicleProfilesTable,
+    VehicleProfile,
+    $$VehicleProfilesTableFilterComposer,
+    $$VehicleProfilesTableOrderingComposer,
+    $$VehicleProfilesTableAnnotationComposer,
+    $$VehicleProfilesTableCreateCompanionBuilder,
+    $$VehicleProfilesTableUpdateCompanionBuilder,
+    (
+      VehicleProfile,
+      BaseReferences<_$AppDatabase, $VehicleProfilesTable, VehicleProfile>
+    ),
+    VehicleProfile,
+    PrefetchHooks Function()>;
 typedef $$ScanHistoryTableCreateCompanionBuilder = ScanHistoryCompanion
     Function({
   Value<int> id,
@@ -4085,6 +4589,8 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$VehiclesTableTableManager get vehicles =>
       $$VehiclesTableTableManager(_db, _db.vehicles);
+  $$VehicleProfilesTableTableManager get vehicleProfiles =>
+      $$VehicleProfilesTableTableManager(_db, _db.vehicleProfiles);
   $$ScanHistoryTableTableManager get scanHistory =>
       $$ScanHistoryTableTableManager(_db, _db.scanHistory);
   $$DtcLibraryTableTableManager get dtcLibrary =>

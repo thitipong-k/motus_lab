@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:motus_lab/l10n/app_localizations.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/radar_view.dart';
 
+/// หน้าสำหรับค้นหาและเชื่อมต่ออุปกรณ์ Bluetooth (รองรับหลายภาษา: EN/TH)
 class ConnectionPage extends StatelessWidget {
   const ConnectionPage({super.key});
 
@@ -13,7 +15,7 @@ class ConnectionPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "DEVICE SELECTION",
+          AppLocalizations.of(context)!.titleDeviceSelection,
           style: Theme.of(context).textTheme.headlineMedium,
         ),
       ),
@@ -43,8 +45,8 @@ class ConnectionPage extends StatelessWidget {
               // Device List
               Expanded(
                 child: state.results.isEmpty
-                    ? const Center(
-                        child: Text("No devices found. Tap refresh to scan."))
+                    ? Center(
+                        child: Text(AppLocalizations.of(context)!.msgNoDevices))
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: state.results.length,
@@ -85,12 +87,15 @@ class ConnectionPage extends StatelessWidget {
   }
 
   Widget _buildStatusText(BuildContext context, ScanState state) {
-    String text = "Tap refresh to start scanning";
+    String text = AppLocalizations.of(context)!.msgTapToScan;
     if (state.status == ScanStatus.scanning)
-      text = "Scanning for OBDII devices...";
-    if (state.status == ScanStatus.connecting) text = "Connecting to device...";
-    if (state.status == ScanStatus.connected) text = "Connected successfully!";
-    if (state.status == ScanStatus.error) text = "Error: ${state.errorMessage}";
+      text = AppLocalizations.of(context)!.lblScanning;
+    if (state.status == ScanStatus.connecting)
+      text = AppLocalizations.of(context)!.lblConnecting;
+    if (state.status == ScanStatus.connected)
+      text = AppLocalizations.of(context)!.lblConnected;
+    if (state.status == ScanStatus.error)
+      text = AppLocalizations.of(context)!.lblError(state.errorMessage ?? "");
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -136,7 +141,9 @@ class ConnectionPage extends StatelessWidget {
                     : () {
                         context.read<ScanBloc>().add(ConnectToDevice(mac));
                       },
-                child: Text(isConnected ? "Connected" : "Connect"),
+                child: Text(isConnected
+                    ? AppLocalizations.of(context)!.btnConnected
+                    : AppLocalizations.of(context)!.btnConnect),
               ),
       ),
     );

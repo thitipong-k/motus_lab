@@ -1,0 +1,15 @@
+{
+    "appTitle": "Motus Lab",
+    "titleDeviceSelection": "เลือกอุปกรณ์",
+    "btnConnect": "เชื่อมต่อ",
+    "btnConnected": "เชื่อมต่อแล้ว",
+    "btnDisconnect": "ตัดการเชื่อมต่อ",
+    "btnScan": "สแกน",
+    "btnStop": "หยุด",
+    "lblScanning": "กำลังค้นหาอุปกรณ์ OBDII...",
+    "lblConnecting": "กำลังเชื่อมต่ออุปกรณ์...",
+    "lblConnected": "เชื่อมต่อสำเร็จ!",
+    "lblError": "เกิดข้อผิดพลาด: {message}",
+    "msgNoDevices": "ไม่พบอุปกรณ์ กดปุ่มรีเฟรชเพื่อสแกนใหม่",
+    "msgTapToScan": "กดปุ่มรีเฟรชเพื่อเริ่มสแกน"
+}

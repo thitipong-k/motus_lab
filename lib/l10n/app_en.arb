@@ -1,0 +1,25 @@
+{
+    "appTitle": "Motus Lab",
+    "titleDeviceSelection": "Device Selection",
+    "@appTitle": {
+        "description": "The title of the application"
+    },
+    "btnConnect": "Connect",
+    "btnConnected": "Connected",
+    "btnDisconnect": "Disconnect",
+    "btnScan": "Scan",
+    "btnStop": "Stop",
+    "lblScanning": "Scanning for OBDII devices...",
+    "lblConnecting": "Connecting to device...",
+    "lblConnected": "Connected successfully!",
+    "lblError": "Error: {message}",
+    "@lblError": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "msgNoDevices": "No devices found. Tap refresh to scan.",
+    "msgTapToScan": "Tap refresh to start scanning"
+}

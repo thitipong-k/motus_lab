@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:motus_lab/l10n/app_localizations.dart';
 import 'package:motus_lab/core/theme/app_theme.dart';
 import 'package:motus_lab/features/dashboard/presentation/pages/dashboard_page.dart';
 
@@ -24,6 +25,8 @@ class MotusApp extends StatelessWidget {
         builder: (context, themeMode) {
           return MaterialApp(
             title: 'Motus Lab',
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             debugShowCheckedModeBanner: false,
             // Use configured themes
             theme: AppTheme.lightTheme,
