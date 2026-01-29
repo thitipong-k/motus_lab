@@ -36,3 +36,12 @@ class NewDataReceived extends LiveDataEvent {
   @override
   List<Object> get props => [values];
 }
+
+/// โหลด Protocol Pack จาก Asset (สำหรับการทดสอบ)
+class LoadProtocol extends LiveDataEvent {
+  final String assetPath;
+  const LoadProtocol(this.assetPath);
+
+  @override
+  List<Object> get props => [assetPath];
+}

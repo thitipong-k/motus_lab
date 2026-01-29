@@ -1,4 +1,3 @@
-
 import 'package:equatable/equatable.dart';
 
 /// คำสั่ง (Command) สำหรับส่งไปยัง ECU
@@ -19,14 +18,22 @@ class Command extends Equatable {
   /// สูตรคำนวณ (เช่น "A*256+B / 4")
   final String formula;
 
+  /// ค่าต่ำสุดที่คาดหวัง (สำหรับ Gauge)
+  final double min;
+
+  /// ค่าสูงสุดที่คาดหวัง (สำหรับ Gauge)
+  final double max;
+
   const Command({
     required this.name,
     required this.code,
     required this.description,
     this.unit = '',
     this.formula = '',
+    this.min = 0.0,
+    this.max = 100.0,
   });
 
   @override
-  List<Object?> get props => [name, code, description, unit, formula];
+  List<Object?> get props => [name, code, description, unit, formula, min, max];
 }

@@ -1,0 +1,57 @@
+{
+    "0x7E0": {
+        "name": "ECM",
+        "desc": "Engine Control Module",
+        "bus": "CAN-HS"
+    },
+    "0x7E1": {
+        "name": "TCM",
+        "desc": "Transmission Control Module",
+        "bus": "CAN-HS"
+    },
+    "0x7E2": {
+        "name": "ABS",
+        "desc": "Anti-Lock Brake System",
+        "bus": "CAN-HS"
+    },
+    "0x7E3": {
+        "name": "BCM",
+        "desc": "Body Control Module",
+        "bus": "CAN-MS"
+    },
+    "0x7E4": {
+        "name": "IPC",
+        "desc": "Instrument Cluster",
+        "bus": "CAN-MS"
+    },
+    "0x7E5": {
+        "name": "HVAC",
+        "desc": "Climate Control",
+        "bus": "CAN-MS"
+    },
+    "0x7E6": {
+        "name": "SRS",
+        "desc": "Airbag System",
+        "bus": "CAN-HS"
+    },
+    "0x7E7": {
+        "name": "EPS",
+        "desc": "Electric Power Steering",
+        "bus": "CAN-HS"
+    },
+    "0x7E8": {
+        "name": "TPMS",
+        "desc": "Tire Pressure Monitor",
+        "bus": "CAN-MS"
+    },
+    "0x7E9": {
+        "name": "PDM",
+        "desc": "Passenger Door Module",
+        "bus": "CAN-MS"
+    },
+    "0x7EA": {
+        "name": "DDM",
+        "desc": "Driver Door Module",
+        "bus": "CAN-MS"
+    }
+}

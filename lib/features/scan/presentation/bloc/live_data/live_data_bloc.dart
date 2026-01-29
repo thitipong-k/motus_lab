@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:motus_lab/core/protocol/protocol_engine.dart';
 import 'package:motus_lab/core/connection/connection_interface.dart';
 import 'package:motus_lab/domain/entities/command.dart';
+import 'package:motus_lab/data/repositories/protocol_repository.dart';
 
 part 'live_data_event.dart';
 part 'live_data_state.dart';
@@ -13,25 +14,70 @@ part 'live_data_state.dart';
 class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
   final ProtocolEngine _engine;
   final ConnectionInterface _connection;
+  final ProtocolRepository _repository;
   Timer? _timer;
   List<Command> _activeCommands = [];
 
   LiveDataBloc({
     required ProtocolEngine engine,
     required ConnectionInterface connection,
+    required ProtocolRepository repository,
   })  : _engine = engine,
         _connection = connection,
+        _repository = repository,
         super(const LiveDataState()) {
     on<StartStreaming>(_onStartStreaming);
     on<StopStreaming>(_onStopStreaming);
     on<UpdateActiveCommands>(_onUpdateActiveCommands);
     on<NewDataReceived>(_onNewDataReceived);
+    on<LoadProtocol>(_onLoadProtocol);
   }
 
   Future<void> _onStartStreaming(
       StartStreaming event, Emitter<LiveDataState> emit) async {
-    _activeCommands = event.commands;
-    emit(const LiveDataState(isStreaming: true));
+    // Check if we need to discover PIDs (if event.commands is empty or explicitly requested)
+    // For now, if event.commands is passed (e.g. from UI selection), use it.
+    // If not, trigger discovery.
+
+    List<Command> commandsToUse = event.commands;
+
+    if (commandsToUse.isEmpty || commandsToUse.length <= 3) {
+      // Simple heuristic: if default list is small/empty, try discover
+      emit(state.copyWith(isStreaming: true, isDiscovering: true));
+
+      // 1. Discovery Phase
+      List<String> supportedKeyCodes = [];
+      // Check 0100 (Supported 01-20)
+      await _checkSupportedPids("0100", supportedKeyCodes);
+
+      // If 0120 supported (bit 32 of 0100), check 0120.
+      // Simplification: Check 0120, 0140 anyway if connection is good.
+      await _checkSupportedPids("0120", supportedKeyCodes);
+      await _checkSupportedPids("0140", supportedKeyCodes);
+
+      print("Discovered PIDs: $supportedKeyCodes");
+
+      // 2. Matching Phase
+      final allAvailable = _repository.getAllAvailablePids();
+      commandsToUse = allAvailable.where((cmd) {
+        return supportedKeyCodes.contains(cmd.code);
+      }).toList();
+
+      // If nothing found (e.g. mock or error), fallback to Standard
+      if (commandsToUse.isEmpty) {
+        commandsToUse = _repository.getStandardPids();
+      }
+
+      // Update State with supported codes
+      emit(state.copyWith(
+          isDiscovering: false, supportedPidCodes: supportedKeyCodes));
+    }
+
+    _activeCommands = commandsToUse;
+    // Tell UI about the commands we are actually using
+    // Note: We might need a new state field for 'activeCommands' to update UI list
+
+    emit(state.copyWith(isStreaming: true));
 
     // หยุด Timer เก่าถ้ามี
     _timer?.cancel();
@@ -42,6 +88,8 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
         add(StopStreaming());
         return;
       }
+
+      // ... (Rest of loop remains similar)
 
       Map<String, double> updatedValues = Map.from(state.currentValues);
 
@@ -66,9 +114,31 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     });
   }
 
+  Future<void> _checkSupportedPids(
+      String pidCode, List<String> resultList) async {
+    try {
+      final cmd = _repository.getCommandByCode(pidCode);
+      if (cmd == null) return;
+
+      final request = _engine.buildRequest(cmd);
+      final response = await _connection.send(request);
+      if (response.isNotEmpty) {
+        // Assuming 0100 means start at 0x00
+        int startPid = int.parse(pidCode.substring(2), radix: 16);
+        final pids = _engine.decodeSupportedPids(response, startPid);
+        resultList.addAll(pids);
+      }
+      // Small delay to prevent flooding
+      await Future.delayed(const Duration(milliseconds: 50));
+    } catch (e) {
+      print("Discovery Error ($pidCode): $e");
+    }
+  }
+
   void _onUpdateActiveCommands(
       UpdateActiveCommands event, Emitter<LiveDataState> emit) {
     _activeCommands = event.newCommands;
+    emit(state.copyWith(activeCommands: _activeCommands));
     // ไม่ต้องทำอะไรเพิ่ม Timer รอบถัดไปจะเก็ตค่าใหม่เอง
   }
 
@@ -78,8 +148,18 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
   }
 
   void _onNewDataReceived(NewDataReceived event, Emitter<LiveDataState> emit) {
-    emit(LiveDataState(
-        isStreaming: state.isStreaming, currentValues: event.values));
+    emit(state.copyWith(currentValues: event.values));
+  }
+
+  Future<void> _onLoadProtocol(
+      LoadProtocol event, Emitter<LiveDataState> emit) async {
+    emit(state.copyWith(isStreaming: false)); // Stop temporarily
+    _timer?.cancel();
+
+    await _repository.loadProtocolPackFromAsset(event.assetPath);
+
+    // Trigger re-discovery with empty list
+    add(const StartStreaming([]));
   }
 
   @override

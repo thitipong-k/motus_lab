@@ -3,8 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
 import 'package:motus_lab/domain/entities/command.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/live_data/live_data_bloc.dart';
-import 'package:motus_lab/core/protocol/standard_pids.dart';
-import 'package:motus_lab/features/scan/presentation/widgets/gauges/simple_gauge.dart';
+
 import 'package:motus_lab/features/scan/presentation/pages/live_data/pid_selection_page.dart';
 import 'package:motus_lab/core/utils/unit_converter.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -18,13 +17,6 @@ class LiveDataPage extends StatefulWidget {
 }
 
 class _LiveDataPageState extends State<LiveDataPage> {
-  // รายการคำสั่งที่จะดึงข้อมูลมาแสดง (เริ่มต้นด้วย RPM, Speed)
-  List<Command> _activeCommands = [
-    StandardPids.engineRpm,
-    StandardPids.vehicleSpeed,
-    StandardPids.engineCoolantTemp,
-  ];
-
   bool _useImperial = false;
   bool _isGraphMode = false;
 
@@ -35,8 +27,8 @@ class _LiveDataPageState extends State<LiveDataPage> {
   @override
   void initState() {
     super.initState();
-    // เริ่มดึงข้อมูลเมื่อเปิดหน้านี้
-    context.read<LiveDataBloc>().add(StartStreaming(_activeCommands));
+    // Start with EMPTY list to trigger discovery
+    context.read<LiveDataBloc>().add(StartStreaming([]));
   }
 
   @override
@@ -45,21 +37,21 @@ class _LiveDataPageState extends State<LiveDataPage> {
   }
 
   void _openPidSelection() async {
+    // Use state's active commands for current selection
+    final currentBlocState = context.read<LiveDataBloc>().state;
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) =>
-            PidSelectionPage(currentSelection: _activeCommands),
+            PidSelectionPage(currentSelection: currentBlocState.activeCommands),
       ),
     );
 
     if (result != null && result is List<Command>) {
-      setState(() {
-        _activeCommands = result;
-        _dataHistory.clear(); // ล้างกราฟเมื่อเปลี่ยน PIDs
-        _timeCounter = 0;
-      });
-      context.read<LiveDataBloc>().add(UpdateActiveCommands(_activeCommands));
+      // Just send update event, no need to set local state (BLoC handles it)
+      _dataHistory.clear();
+      _timeCounter = 0;
+      context.read<LiveDataBloc>().add(UpdateActiveCommands(result));
     }
   }
 
@@ -68,6 +60,7 @@ class _LiveDataPageState extends State<LiveDataPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("LIVE DATA"),
+        // ... actions omitted for brevity, keeping same structure ...
         actions: [
           // Unit Toggle
           TextButton(
@@ -93,33 +86,64 @@ class _LiveDataPageState extends State<LiveDataPage> {
             icon: const Icon(Icons.settings),
             onPressed: _openPidSelection,
           ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'honda') {
+                context.read<LiveDataBloc>().add(
+                    const LoadProtocol("assets/protocols/honda_civic.json"));
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return [
+                const PopupMenuItem<String>(
+                  value: 'honda',
+                  child: Text('Simulate Honda Civic'),
+                ),
+              ];
+            },
+            icon: const Icon(Icons.more_vert),
+          ),
         ],
       ),
       body: BlocConsumer<LiveDataBloc, LiveDataState>(
         listener: (context, state) {
           if (state.currentValues.isNotEmpty) {
-            _updateHistory(state.currentValues);
+            _updateHistory(state.currentValues, state.activeCommands);
           }
         },
         builder: (context, state) {
-          if (!state.isStreaming) {
-            return const Center(child: Text("Connecting to data stream..."));
+          if (state.isDiscovering) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text("Scanning supported PIDs..."),
+                ],
+              ),
+            );
+          }
+
+          if (!state.isStreaming && state.activeCommands.isEmpty) {
+            return const Center(child: Text("Connecting / No PIDs selected"));
           }
 
           if (_isGraphMode) {
-            return _buildGraphView();
+            return _buildGraphView(state.activeCommands);
           } else {
-            return _buildListView(state);
+            return _buildListView(state, state.activeCommands);
           }
         },
       ),
     );
   }
 
-  void _updateHistory(Map<String, double> values) {
+  void _updateHistory(
+      Map<String, double> values, List<Command> activeCommands) {
     _timeCounter += 0.2; // เพิ่มเวลาตาม Timer (200ms)
 
-    for (var cmd in _activeCommands) {
+    for (var cmd in activeCommands) {
       if (!_dataHistory.containsKey(cmd.name)) {
         _dataHistory[cmd.name] = [];
       }
@@ -139,12 +163,12 @@ class _LiveDataPageState extends State<LiveDataPage> {
     }
   }
 
-  Widget _buildGraphView() {
+  Widget _buildGraphView(List<Command> activeCommands) {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: _activeCommands.length,
+      itemCount: activeCommands.length,
       itemBuilder: (context, index) {
-        final cmd = _activeCommands[index];
+        final cmd = activeCommands[index];
         final rawPoints = _dataHistory[cmd.name] ?? [];
 
         // Convert points for display
@@ -195,66 +219,54 @@ class _LiveDataPageState extends State<LiveDataPage> {
     );
   }
 
-  Widget _buildListView(LiveDataState state) {
+  Widget _buildListView(LiveDataState state, List<Command> activeCommands) {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: _activeCommands.length,
+      itemCount: activeCommands.length,
       itemBuilder: (context, index) {
-        final cmd = _activeCommands[index];
+        final cmd = activeCommands[index];
         final rawValue = state.currentValues[cmd.name] ?? 0.0;
+        final displayValue =
+            UnitConverter.formatValue(rawValue, cmd.unit, _useImperial);
 
-        // Special display for RPM and Speed (Gauge)
-        if (cmd.code == "010C" || cmd.code == "010D") {
-          // Convert for Gauge if needed
-          double gaugeValue = rawValue;
-          String gaugeUnit = cmd.unit;
-          double maxGauge = cmd.code == "010C" ? 8000 : 220;
-
-          if (_useImperial && cmd.code == "010D") {
-            // Speed
-            gaugeValue = UnitConverter.kmhToMph(rawValue);
-            gaugeUnit = "mph";
-            maxGauge = 140; // ~220 kmh
-          }
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: Center(
-              child: SimpleGauge(
-                label: cmd.name.toUpperCase(),
-                value: gaugeValue,
-                min: 0,
-                max: maxGauge,
-                unit: gaugeUnit.toUpperCase(),
-              ),
-            ),
-          );
-        }
-
-        // Normal display in Card
         return Card(
-          margin: const EdgeInsets.only(bottom: 8),
+          elevation: 2,
+          margin: const EdgeInsets.only(bottom: 12),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(cmd.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text(cmd.description,
-                        style:
-                            const TextStyle(fontSize: 12, color: Colors.grey)),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(cmd.name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 4),
+                      Text(cmd.description,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 12, color: Colors.grey)),
+                    ],
+                  ),
                 ),
-                Text(
-                  UnitConverter.formatValue(rawValue, cmd.unit, _useImperial),
-                  style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    displayValue,
+                    style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary),
+                  ),
                 ),
               ],
             ),

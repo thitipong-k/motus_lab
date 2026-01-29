@@ -1,46 +1,27 @@
 {
   "meta": {
-    "id": "honda_civic_generic",
+    "name": "Honda Civic 2018 (1.5T)",
     "version": "1.0",
-    "name": "Honda Civic (Generic OBD2)"
+    "author": "Motus Lab"
   },
-  "init_sequence": ["ATZ", "ATSP0", "ATH1"],
   "commands": [
     {
-      "pid": "010C",
-      "name": "Engine RPM",
-      "unit": "RPM",
-      "bytes": 2,
-      "formula": "((A * 256) + B) / 4",
-      "min": 0,
-      "max": 8000
-    },
-    {
-      "pid": "010D",
-      "name": "Vehicle Speed",
-      "unit": "km/h",
-      "bytes": 1,
-      "formula": "A",
-      "min": 0,
-      "max": 255
-    },
-    {
       "pid": "0105",
-      "name": "Coolant Temp",
+      "name": "Engine Coolant",
+      "description": "Standard ECT",
       "unit": "°C",
-      "bytes": 1,
-      "formula": "A - 40",
-      "min": -40,
-      "max": 215
+      "min": 40,
+      "max": 120,
+      "formula": "A-40"
     },
     {
-      "pid": "0111",
-      "name": "Throttle Position",
-      "unit": "%",
-      "bytes": 1,
-      "formula": "(A * 100) / 255",
-      "min": 0,
-      "max": 100
+      "pid": "2101",
+      "name": "Honda CVT Temp",
+      "description": "Transmission Fluid Temperature",
+      "unit": "°C",
+      "min": 40,
+      "max": 150,
+      "formula": "A-40"
     }
   ]
 }

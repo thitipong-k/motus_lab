@@ -1,98 +1,74 @@
 import 'dart:async';
-import 'dart:math';
-import 'package:motus_lab/domain/entities/vehicle_module.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart';
+import '../../domain/entities/vehicle_module.dart';
+import '../../core/topology/broadcast_scanner.dart';
 
 class TopologyRepository {
-  // Simulate a network scan
+  final BroadcastScanner _scanner = BroadcastScanner();
+  Map<String, dynamic>? _moduleDatabase;
+
+  /// Loads the static JSON database into memory
+  Future<void> initialize() async {
+    if (_moduleDatabase != null) return;
+    try {
+      final jsonString = await rootBundle.loadString('assets/modules_db.json');
+      _moduleDatabase = json.decode(jsonString);
+    } catch (e) {
+      print("Error loading module database: $e");
+      // Fallback to empty if file fails, so we don't crash
+      _moduleDatabase = {};
+    }
+  }
+
+  /// Broadcasts a query and resolves responding IDs to full Module objects
   Stream<VehicleModule> scanModules() async* {
-    final modules = _getMockModules();
+    // Ensure DB is loaded
+    await initialize();
 
-    for (var module in modules) {
-      // Simulate network delay (50ms - 200ms per module)
-      await Future.delayed(Duration(milliseconds: 50 + Random().nextInt(150)));
+    await for (final id in _scanner.scan()) {
+      if (_moduleDatabase!.containsKey(id)) {
+        final info = _moduleDatabase![id];
 
-      // Randomly decide status for simulation effect if needed,
-      // but let's stick to the mock data for consistency
-      yield module;
+        // Simulating some status logic (normally we'd parse this from the reply bytes)
+        // For now, let's mark ABS and TPMS as having faults to keep the UI interesting
+        ModuleStatus status = ModuleStatus.ok;
+        int dtcCount = 0;
+
+        if (info['name'] == 'ABS') {
+          status = ModuleStatus.fault;
+          dtcCount = 2;
+        } else if (info['name'] == 'TPMS') {
+          status = ModuleStatus.warning;
+          dtcCount = 1;
+        }
+
+        yield VehicleModule(
+          id: id,
+          name: info['name'] ?? 'Unknown',
+          bus: info['bus'] ?? 'Unknown',
+          status: status,
+          dtcCount: dtcCount,
+          description: info['desc'] ?? '',
+        );
+      } else {
+        // Handle unknown module response
+        yield VehicleModule(
+          id: id,
+          name: "Unknown ($id)",
+          bus: "Unknown",
+          status: ModuleStatus.warning,
+          description: "Unrecognized Module",
+        );
+      }
     }
   }
 
   Future<List<VehicleModule>> getModulesSnapshot() async {
-    // Simulate full scan time
-    await Future.delayed(const Duration(seconds: 2));
-    return _getMockModules();
-  }
-
-  List<VehicleModule> _getMockModules() {
-    return [
-      const VehicleModule(
-          id: "0x7E0",
-          name: "ECM",
-          bus: "CAN-HS",
-          status: ModuleStatus.ok,
-          description: "Engine Control Module"),
-      const VehicleModule(
-          id: "0x7E1",
-          name: "TCM",
-          bus: "CAN-HS",
-          status: ModuleStatus.ok,
-          description: "Transmission Control Module"),
-      const VehicleModule(
-          id: "0x7E2",
-          name: "ABS",
-          bus: "CAN-HS",
-          status: ModuleStatus.fault,
-          dtcCount: 2,
-          description: "Anti-Lock Brake System"),
-      const VehicleModule(
-          id: "0x7E3",
-          name: "BCM",
-          bus: "CAN-MS",
-          status: ModuleStatus.ok,
-          description: "Body Control Module"),
-      const VehicleModule(
-          id: "0x7E4",
-          name: "IPC",
-          bus: "CAN-MS",
-          status: ModuleStatus.ok,
-          description: "Instrument Cluster"),
-      const VehicleModule(
-          id: "0x7E5",
-          name: "HVAC",
-          bus: "CAN-MS",
-          status: ModuleStatus.offline,
-          description: "Climate Control"),
-      const VehicleModule(
-          id: "0x7E6",
-          name: "SRS",
-          bus: "CAN-HS",
-          status: ModuleStatus.ok,
-          description: "Airbag System"),
-      const VehicleModule(
-          id: "0x7E7",
-          name: "EPS",
-          bus: "CAN-HS",
-          status: ModuleStatus.ok,
-          description: "Electric Power Steering"),
-      const VehicleModule(
-          id: "0x7E8",
-          name: "TPMS",
-          bus: "CAN-MS",
-          status: ModuleStatus.fault,
-          dtcCount: 1,
-          description: "Tire Pressure Monitor"),
-      const VehicleModule(
-          id: "0x7E9",
-          name: "PDM",
-          bus: "CAN-MS",
-          status: ModuleStatus.ok,
-          description: "Passenger Door Module"),
-      const VehicleModule(
-          id: "0x7EA",
-          name: "DDM",
-          bus: "CAN-MS",
-          status: ModuleStatus.ok,
-          description: "Driver Door Module"),
-    ];
+    final List<VehicleModule> modules = [];
+    await for (final module in scanModules()) {
+      modules.add(module);
+    }
+    return modules;
   }
 }

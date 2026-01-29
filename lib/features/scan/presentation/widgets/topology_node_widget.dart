@@ -26,6 +26,10 @@ class TopologyNodeWidget extends StatelessWidget {
         statusColor = AppColors.error;
         statusIcon = Icons.warning;
         break;
+      case ModuleStatus.warning:
+        statusColor = AppColors.warning;
+        statusIcon = Icons.info;
+        break;
       case ModuleStatus.offline:
         statusColor = Colors.grey;
         statusIcon = Icons.power_off;
@@ -95,6 +99,23 @@ class TopologyNodeWidget extends StatelessWidget {
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
+                  ),
+                ),
+              )
+            else if (module.status == ModuleStatus.warning)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: AppColors.warning),
+                ),
+                child: Text(
+                  "${module.dtcCount} Pending",
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.warning,
                   ),
                 ),
               )

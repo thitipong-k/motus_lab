@@ -56,10 +56,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
         BlocProvider(
-          create: (context) => LiveDataBloc(
-            engine: locator<ProtocolEngine>(),
-            connection: locator<ConnectionInterface>(),
-          ),
+          create: (context) => locator<LiveDataBloc>(),
         ),
         BlocProvider(
           create: (context) => DtcBloc(

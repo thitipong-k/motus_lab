@@ -1,4 +1,4 @@
-enum ModuleStatus { ok, fault, offline, scanning }
+enum ModuleStatus { ok, fault, warning, offline, scanning }
 
 class VehicleModule {
   final String id;

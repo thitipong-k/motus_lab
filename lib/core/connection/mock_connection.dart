@@ -33,65 +33,110 @@ class MockConnection implements ConnectionInterface {
   Future<List<int>> send(List<int> data) async {
     if (!_isConnected) throw Exception("Device not connected");
 
-    // จำลองการ Response ของรถ
-    // ถ้าส่งคำสั่ง 01 0C (RPM) จะตอบกลับค่าสุ่ม
-    // data[0] คือ Mode (01), data[1] คือ PID (0C)
-
-    await Future.delayed(Duration(milliseconds: 100)); // Delay ระหว่างส่ง-รับ
+    await Future.delayed(
+        Duration(milliseconds: 50)); // Faster response for smoother graph
 
     List<int> response = [];
 
-    // Discovery (01 00) - Supported PIDs [01-20]
-    if (data.length >= 2 && data[0] == 0x01 && data[1] == 0x00) {
-      // Mocked: 04, 05, 0B, 0C, 0D, 0F, 10
-      // Byte A (1-8): 0001 1000 = 0x18 (04, 05)
-      // Byte B (9-16): 0011 1011 = 0x3B (0B, 0C, 0D, 0F, 10)
-      // Byte C, D: 00 00
-      response = [0x41, 0x00, 0x18, 0x3B, 0x00, 0x00];
+    // --- MODE 01: Live Data ---
+    if (data.length >= 2 && data[0] == 0x01) {
+      final pid = data[1];
+
+      // 01 00: Supported PIDs
+      if (pid == 0x00) {
+        // Mock supporting ONLY:
+        // PID 0C (RPM) -> Byte 2, Bit 4 -> 0x10
+        // PID 0D (Speed) -> Byte 2, Bit 3 -> 0x08
+        // Combined Byte 2: 0x18
+        // Result: 41 00 00 18 00 00
+        response = [0x41, 0x00, 0x00, 0x18, 0x00, 0x00];
+      }
+      // 01 20: Supported PIDs [21-40]
+      else if (pid == 0x20) {
+        // No more PIDs
+        response = [0x41, 0x20, 0x00, 0x00, 0x00, 0x00];
+      }
+      // 01 0C: Engine RPM (Sine Wave)
+      // Formula: ((A*256)+B)/4
+      else if (pid == 0x0C) {
+        // Generate Sine Wave: 800 - 4000 RPM
+        // Period: 10 seconds
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final sineValue = sin(now / 10000 * 2 * pi); // -1 to 1
+        // Map -1..1 to 800..4000
+        // Normalized 0..1 = (sine + 1) / 2
+        double rpm = 800 + ((sineValue + 1) / 2) * 3200;
+
+        // Add some noise (+- 50 rpm)
+        rpm += (Random().nextDouble() - 0.5) * 50;
+
+        int rawValue = (rpm * 4).round();
+        int A = (rawValue ~/ 256) & 0xFF;
+        int B = rawValue & 0xFF;
+        response = [0x41, 0x0C, A, B];
+      }
+      // 01 0D: Vehicle Speed (Ramp Up/Down)
+      // Formula: A
+      else if (pid == 0x0D) {
+        // Ramp: 0 -> 100 -> 0 every 20 seconds
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final cycle = now % 20000; // 0 - 19999
+        int speed;
+        if (cycle < 10000) {
+          // Accelerate 0 -> 100
+          speed = (cycle / 100).round();
+        } else {
+          // Decelerate 100 -> 0
+          speed = ((20000 - cycle) / 100).round();
+        }
+        response = [0x41, 0x0D, speed];
+      }
+      // 01 05: Coolant Temp
+      else if (pid == 0x05) {
+        int temp = 90; // Constant nominal
+        int A = temp + 40;
+        response = [0x41, 0x05, A];
+      } else {
+        response = [0x41, pid, 0x00];
+      }
     }
-    // Load (01 04)
-    else if (data.length >= 2 && data[0] == 0x01 && data[1] == 0x04) {
-      // A*100/255 -> Random 20-80%
-      int A = 50 + Random().nextInt(150);
-      response = [0x41, 0x04, A];
+
+    // --- MODE 21: Honda Custom PIDs ---
+    else if (data.length >= 2 && data[0] == 0x21) {
+      final pid = data[1];
+      // 21 01: CVT Temp
+      if (pid == 0x01) {
+        // Mock value 85 deg C -> 85 + 40 = 125 (0x7D)
+        response = [0x61, 0x01, 0x7D];
+      } else {
+        response = [0x7F, 0x21, 0x12]; // Subfunction not supported
+      }
     }
-    // Coolant (01 05)
-    else if (data.length >= 2 && data[0] == 0x01 && data[1] == 0x05) {
-      // A - 40 -> Want 90 deg C -> A = 130
-      int A = 120 + Random().nextInt(20);
-      response = [0x41, 0x05, A];
+
+    // --- MODE 03: Read DTCs ---
+    else if (data.length >= 1 && data[0] == 0x03) {
+      // Mock returning 2 DTCs: P0123, U0456
+      // Standard ISO 15765-4 usually splits this into multiple frames for CAN,
+      // but for logic testing we can assume the Parser handles valid bytes.
+      // SAE J1979 format: [43] [N] [DTC1_HB] [DTC1_LB] [DTC2_HB] [DTC2_LB] ...
+      // DTC Format:
+      // P0123 -> P=00 (0000), 0=0 (00), 1=1 (01) -> 0000 0001 -> 01
+      //          2=2 (0010), 3=3 (0011)          -> 0010 0011 -> 23
+      // So P0123 = 01 23
+      // U0456 -> U=11 (11), 0=0 (00), 4=4 (0100) -> 1100 0100 -> C4
+      //          5=5 (0101), 6=6 (0110)          -> 0101 0110 -> 56
+      // So U0456 = C4 56
+
+      // Response: 43 (Mode+40) 02 (Count) 01 23 C4 56
+      response = [0x43, 0x02, 0x01, 0x23, 0xC4, 0x56];
     }
-    // Intake Manifold Pressure (01 0B)
-    else if (data.length >= 2 && data[0] == 0x01 && data[1] == 0x0B) {
-      // A (kPa)
-      int A = 30 + Random().nextInt(70);
-      response = [0x41, 0x0B, A];
+
+    // --- MODE 04: Clear DTCs ---
+    else if (data.length >= 1 && data[0] == 0x04) {
+      // Success response is just 44
+      response = [0x44];
     }
-    // RPM (01 0C)
-    else if (data.length >= 2 && data[0] == 0x01 && data[1] == 0x0C) {
-      final random = Random();
-      int A = random.nextInt(50);
-      int B = random.nextInt(256);
-      response = [0x41, 0x0C, A, B];
-    }
-    // Speed (01 0D)
-    else if (data.length >= 2 && data[0] == 0x01 && data[1] == 0x0D) {
-      int speed = Random().nextInt(120);
-      response = [0x41, 0x0D, speed];
-    }
-    // Intake Air Temp (01 0F)
-    else if (data.length >= 2 && data[0] == 0x01 && data[1] == 0x0F) {
-      // A - 40 -> Want 30 deg C -> A = 70
-      int A = 60 + Random().nextInt(20);
-      response = [0x41, 0x0F, A];
-    }
-    // MAF (01 10)
-    else if (data.length >= 2 && data[0] == 0x01 && data[1] == 0x10) {
-      // ((A*256)+B)/100
-      int A = Random().nextInt(10);
-      int B = Random().nextInt(256);
-      response = [0x41, 0x10, A, B];
-    }
+
     // Default
     else {
       response = [0x41, data.length > 1 ? data[1] : 0x00, 0x00];

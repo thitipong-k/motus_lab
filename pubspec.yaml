@@ -35,6 +35,7 @@ dependencies:
   # Phase 4 Desktop Power
   flutter_libserialport: ^0.4.0
   flutter_js: ^0.8.1
+  sqlite3: ^2.9.4
 
 dev_dependencies:
   flutter_test:
@@ -48,6 +49,7 @@ flutter:
   assets:
     - assets/fonts/
     - assets/protocols/
+    - assets/modules_db.json
   fonts:
     - family: Inter
       fonts:
