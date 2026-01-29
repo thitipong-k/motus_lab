@@ -129,6 +129,11 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     _timer?.cancel();
 
     int tick = 0;
+    // --- Adaptive Discovery State ---
+    final Map<String, int> _consecutiveErrors = {};
+    final List<Command> _quarantinedCommands = [];
+    const int _maxErrorsBeforeQuarantine = 5;
+
     // ปรับ Base Loop ให้เร็วขึ้นเป็น 50ms เพื่อรองรับ High Priority
     _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) async {
       if (!_connection.isConnected) {
@@ -139,8 +144,33 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       tick++;
       Map<String, double> updatedValues = Map.from(state.currentValues);
 
+      // --- Recovery Phase (Probing Quarantined PIDs) ---
+      // ทุกๆ 200 ticks (~10 วินาที) ลองกู้คืน 1 PID
+      if (tick % 200 == 0 && _quarantinedCommands.isNotEmpty) {
+        final probeCmd = _quarantinedCommands.first;
+        print("Probing quarantined PID: ${probeCmd.name}...");
+        try {
+          final request = _engine.buildRequest(probeCmd);
+          final response = await _connection.send(request);
+          if (response.isNotEmpty) {
+            print("PID Recovered! Restoring ${probeCmd.name}");
+            _quarantinedCommands.remove(probeCmd);
+            _activeCommands.add(probeCmd); // Add back to active
+            _consecutiveErrors[probeCmd.code] = 0; // Reset error
+          }
+        } catch (e) {
+          print("Probe failed for ${probeCmd.name}. Keeping in quarantine.");
+          // Rotate to end of list to probe others next time
+          _quarantinedCommands.remove(probeCmd);
+          _quarantinedCommands.add(probeCmd);
+        }
+      }
+
       // กรองคำสั่งที่จะส่งในรอบนี้ (Weighted Polling)
       final commandsToPoll = _activeCommands.where((cmd) {
+        // Skip if quarantined (Safety check, though they should be removed from active)
+        if (_quarantinedCommands.contains(cmd)) return false;
+
         switch (cmd.priority) {
           case CommandPriority.high:
             // 50ms interval (Every tick)
@@ -167,9 +197,23 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
           if (response.isNotEmpty) {
             final value = _engine.parseResponse(response, cmd.formula);
             updatedValues[cmd.name] = value;
+
+            // Success! Reset error count
+            if (_consecutiveErrors.containsKey(cmd.code)) {
+              _consecutiveErrors[cmd.code] = 0;
+            }
           }
         } catch (e) {
-          // ข้ามถ้าตัวใดตัวหนึ่งเสีย
+          // Adaptive logic: Increment error count
+          int errors = (_consecutiveErrors[cmd.code] ?? 0) + 1;
+          _consecutiveErrors[cmd.code] = errors;
+
+          if (errors >= _maxErrorsBeforeQuarantine) {
+            print(
+                "Usage Warning: PID ${cmd.name} is unstable ($errors errors). Quarantining.");
+            _activeCommands.remove(cmd);
+            _quarantinedCommands.add(cmd);
+          }
         }
       }
 
