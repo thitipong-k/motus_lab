@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/dtc/dtc_bloc.dart';
+import 'package:motus_lab/core/widgets/motus_card.dart';
+import 'package:motus_lab/core/widgets/loading_indicator.dart';
+import 'package:motus_lab/core/widgets/empty_state.dart';
 // Note: Will implement injection later
-import 'package:motus_lab/data/repositories/diagnostic_repository.dart';
+import 'package:motus_lab/features/scan/data/repositories/diagnostic_repository.dart';
 import 'package:get_it/get_it.dart';
 
 class DtcResultPage extends StatefulWidget {
@@ -54,7 +57,10 @@ class _DtcResultPageState extends State<DtcResultPage> {
       body: BlocBuilder<DtcBloc, DtcState>(
         builder: (context, state) {
           if (state.codes.isEmpty) {
-            return const Center(child: Text("No Fault Codes Found (Clean)"));
+            return const EmptyState(
+              icon: Icons.check_circle_outline,
+              message: "No Fault Codes Found (Clean)",
+            );
           }
 
           return ListView.builder(
@@ -63,7 +69,7 @@ class _DtcResultPageState extends State<DtcResultPage> {
               final code = state.codes[index];
               final isSelected = _selectedDtc == code;
 
-              return Card(
+              return MotusCard(
                 color: isSelected ? AppColors.primary.withOpacity(0.1) : null,
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
@@ -92,7 +98,7 @@ class _DtcResultPageState extends State<DtcResultPage> {
     if (_isLoadingCauses) {
       return const Padding(
         padding: EdgeInsets.all(16.0),
-        child: Center(child: CircularProgressIndicator()),
+        child: LoadingIndicator(),
       );
     }
 

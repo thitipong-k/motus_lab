@@ -7,6 +7,21 @@
 - **Workflow Comments**: Added Thai comments to `scan_bloc.dart` and `live_data_bloc.dart` explaining system internals.
 - **Roadmap Update**: Updated Phase 7 status for PID library and persistence.
 
+## [0.7.2] - 2026-01-30
+
+### Refactor
+
+- **Frontend Architecture**:
+  - Implemented **Clean Architecture** (Data, Domain, Presentation layers).
+  - Adopted **Feature-First** structure (features/scan, features/dashboard).
+  - Decoupled BLoCs using **UseCases** (`ReadVinUseCase`, `ConnectToDeviceUseCase`).
+- **Data Layer**: Moved repositories to feature directories.
+- **UI Components**: Extracted Core Widgets (`MotusCard`, `MotusButton`, `EmptyState`) for consistent design.
+
+### Fixed
+
+- **Demo Mode**: Fixed unresponsive "Enter Demo Mode" button by bypassing Bluetooth stopScan check.
+
 ## [0.7.0] - 2026-01-30
 
 ### Added

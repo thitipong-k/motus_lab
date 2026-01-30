@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:motus_lab/core/connection/bluetooth_service.dart';
-import 'package:motus_lab/core/connection/connection_interface.dart';
 import 'package:motus_lab/core/services/service_locator.dart';
-import 'package:motus_lab/core/protocol/protocol_engine.dart';
 import 'package:motus_lab/core/widgets/adaptive_scaffold.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/live_data/live_data_bloc.dart';
@@ -49,19 +46,13 @@ class _DashboardPageState extends State<DashboardPage> {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => ScanBloc(
-            bluetoothService: locator<BluetoothService>(),
-            connection: locator<ConnectionInterface>(),
-          ),
+          create: (context) => locator<ScanBloc>(),
         ),
         BlocProvider(
           create: (context) => locator<LiveDataBloc>(),
         ),
         BlocProvider(
-          create: (context) => DtcBloc(
-            engine: locator<ProtocolEngine>(),
-            connection: locator<ConnectionInterface>(),
-          ),
+          create: (context) => locator<DtcBloc>(),
         ),
       ],
       child: BlocListener<ScanBloc, ScanState>(

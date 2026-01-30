@@ -10,6 +10,9 @@ import 'package:motus_lab/core/utils/unit_converter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/graphs/live_data_graph.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/gauges/simple_gauge.dart';
+import 'package:motus_lab/core/widgets/motus_card.dart';
+import 'package:motus_lab/core/widgets/loading_indicator.dart';
+import 'package:motus_lab/core/widgets/empty_state.dart';
 
 enum ViewMode { gauge, graph }
 
@@ -143,20 +146,17 @@ class _LiveDataPageState extends State<LiveDataPage> {
         },
         builder: (context, state) {
           if (state.isDiscovering) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text("Scanning supported PIDs..."),
-                ],
-              ),
-            );
+            if (state.isDiscovering) {
+              return const LoadingIndicator(
+                  message: "Scanning supported PIDs...");
+            }
           }
 
           if (!state.isStreaming && state.activeCommands.isEmpty) {
-            return const Center(child: Text("Connecting / No PIDs selected"));
+            return const EmptyState(
+              icon: Icons.sensors_off,
+              message: "Connecting / No PIDs selected",
+            );
           }
 
           switch (_viewMode) {
@@ -228,7 +228,7 @@ class _LiveDataPageState extends State<LiveDataPage> {
         maxY = (maxY + 5).ceilToDouble();
         if (minY < 0) minY = 0;
 
-        return Card(
+        return MotusCard(
           margin: const EdgeInsets.only(bottom: 16),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -285,10 +285,7 @@ class _LiveDataPageState extends State<LiveDataPage> {
           }
         }
 
-        return Card(
-          elevation: 4,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        return MotusCard(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: SimpleGauge(

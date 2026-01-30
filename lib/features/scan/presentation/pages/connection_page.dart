@@ -5,6 +5,9 @@ import 'package:motus_lab/l10n/app_localizations.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/radar_view.dart';
+import 'package:motus_lab/core/widgets/motus_card.dart';
+import 'package:motus_lab/core/widgets/motus_button.dart';
+import 'package:motus_lab/core/widgets/empty_state.dart';
 
 /// หน้าสำหรับค้นหาและเชื่อมต่ออุปกรณ์ Bluetooth (รองรับหลายภาษา: EN/TH)
 class ConnectionPage extends StatelessWidget {
@@ -45,8 +48,10 @@ class ConnectionPage extends StatelessWidget {
               // Device List
               Expanded(
                 child: state.results.isEmpty
-                    ? Center(
-                        child: Text(AppLocalizations.of(context)!.msgNoDevices))
+                    ? EmptyState(
+                        message: AppLocalizations.of(context)!.msgNoDevices,
+                        icon: Icons.bluetooth_searching,
+                      )
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: state.results.length,
@@ -68,20 +73,19 @@ class ConnectionPage extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: ElevatedButton.icon(
+                child: MotusButton(
                   onPressed: () {
                     // Directly connect to Mock Device
-                    context.read<ScanBloc>().add(ConnectToDevice("MOCK-001"));
+                    context
+                        .read<ScanBloc>()
+                        .add(const ConnectToDevice("MOCK-001"));
 
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text("Entering Simulation Mode...")));
                   },
-                  icon: const Icon(Icons.gamepad),
-                  label: const Text("ENTER DEMO MODE"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber[800],
-                    foregroundColor: Colors.white,
-                  ),
+                  icon: Icons.gamepad,
+                  label: "ENTER DEMO MODE",
+                  type: ButtonType.warning,
                 ),
               ),
             ],
@@ -138,7 +142,7 @@ class ConnectionPage extends StatelessWidget {
     }
     final mac = result.device.remoteId.str;
 
-    return Card(
+    return MotusCard(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: Icon(

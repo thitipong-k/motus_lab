@@ -4,8 +4,10 @@ import 'package:equatable/equatable.dart';
 import 'package:motus_lab/core/protocol/protocol_engine.dart';
 import 'package:motus_lab/core/connection/connection_interface.dart';
 import 'package:motus_lab/domain/entities/command.dart';
-import 'package:motus_lab/data/repositories/protocol_repository.dart';
-import 'package:motus_lab/data/repositories/vehicle_profile_repository.dart';
+import 'package:motus_lab/features/scan/data/repositories/protocol_repository.dart';
+import 'package:motus_lab/features/scan/data/repositories/vehicle_profile_repository.dart';
+import 'package:motus_lab/features/scan/domain/usecases/get_supported_pids.dart';
+import 'package:motus_lab/features/scan/domain/usecases/read_vin.dart';
 
 part 'live_data_event.dart';
 part 'live_data_state.dart';
@@ -17,7 +19,10 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
   final ProtocolEngine _engine;
   final ConnectionInterface _connection;
   final ProtocolRepository _repository;
-  final VehicleProfileRepository _profileRepository;
+  final VehicleProfileRepository
+      _profileRepository; // Keep for saveProfile (or create SaveUseCase later)
+  final GetSupportedPidsUseCase _getSupportedPids;
+  final ReadVinUseCase _readVin;
   Timer? _timer;
   List<Command> _activeCommands = [];
 
@@ -26,10 +31,14 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     required ConnectionInterface connection,
     required ProtocolRepository repository,
     required VehicleProfileRepository profileRepository,
+    required GetSupportedPidsUseCase getSupportedPids,
+    required ReadVinUseCase readVin,
   })  : _engine = engine,
         _connection = connection,
         _repository = repository,
         _profileRepository = profileRepository,
+        _getSupportedPids = getSupportedPids,
+        _readVin = readVin,
         super(const LiveDataState()) {
     on<StartStreaming>(_onStartStreaming);
     on<StopStreaming>(_onStopStreaming);
@@ -57,16 +66,8 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
 
       // 0. พยายามอ่านเลขตัวถัง (VIN) ก่อนเพื่อตรวจสอบว่ามีข้อมูลใน Cache หรือไม่
       try {
-        // Mode 09 PID 02 (VIN)
-        final vinCmd = _repository.getCommandByCode("0902");
-        if (vinCmd != null) {
-          final request = _engine.buildRequest(vinCmd);
-          final response = await _connection.send(request);
-          // TODO: แปลงค่า VIN จาก Hex เป็น Text จริงๆ
-          // ในสถานการณ์จริง ใช้ _engine.parseVin(response)
-          // สำหรับการจำลอง ใส่ค่า Mock ไปก่อน
-          currentVin = "JHMGD38TEST"; // Mock ID
-        }
+        // อ่าน VIN ผ่าน UseCase
+        currentVin = await _readVin(null);
       } catch (e) {
         print("Error reading VIN: $e");
       }
@@ -74,8 +75,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       bool cacheHit = false;
       if (currentVin != null) {
         // ตรวจสอบข้อมูลใน Database
-        final cachedPids =
-            await _profileRepository.getSupportedPids(currentVin);
+        final cachedPids = await _getSupportedPids(currentVin);
         if (cachedPids != null && cachedPids.isNotEmpty) {
           print("Cache HIT for VIN: $currentVin. Skipping discovery.");
           supportedKeyCodes = cachedPids;

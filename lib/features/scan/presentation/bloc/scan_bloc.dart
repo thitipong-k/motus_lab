@@ -3,7 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:motus_lab/core/connection/bluetooth_service.dart' as motus;
-import 'package:motus_lab/core/connection/connection_interface.dart';
+import 'package:motus_lab/features/scan/domain/usecases/connect_to_device.dart';
+import 'package:motus_lab/core/connection/connection_interface.dart'; // Keep for type check if needed, or refactor
 import 'package:motus_lab/core/connection/mock_connection.dart';
 
 part 'scan_event.dart';
@@ -14,13 +15,16 @@ part 'scan_state.dart';
 /// [WORKFLOW STEP 1] Connection Flow: จุดเริ่มต้นการเชื่อมต่อ
 class ScanBloc extends Bloc<ScanEvent, ScanState> {
   final motus.BluetoothService _bluetoothService;
-  final ConnectionInterface _connection;
+  final ConnectToDeviceUseCase _connectToDevice;
+  final ConnectionInterface _connection; // Keep for Mock check
   StreamSubscription? _resultsSubscription;
 
   ScanBloc({
     required motus.BluetoothService bluetoothService,
+    required ConnectToDeviceUseCase connectToDevice,
     required ConnectionInterface connection,
   })  : _bluetoothService = bluetoothService,
+        _connectToDevice = connectToDevice,
         _connection = connection,
         super(const ScanState()) {
     // ลงทะเบียนจัดการ Event
@@ -96,8 +100,12 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         status: ScanStatus.connecting, connectedDeviceId: event.deviceId));
 
     try {
-      await _bluetoothService.stopScan();
-      await _connection.connect(event.deviceId);
+      // ตรวจสอบว่าเป็น Mock Connection หรือไม่เพื่อเลี่ยงปัญหา Bluetooth จริงบน Simulator
+      if (_connection is! MockConnection) {
+        await _bluetoothService.stopScan();
+      }
+      // เรียก UseCase เพื่อทำการเชื่อมต่อ
+      await _connectToDevice(event.deviceId);
       print("ScanBloc: Connected to ${event.deviceId}!");
       emit(state.copyWith(
           status: ScanStatus.connected, connectedDeviceId: event.deviceId));
