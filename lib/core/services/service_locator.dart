@@ -27,6 +27,9 @@ import 'package:motus_lab/features/maintenance/presentation/bloc/maintenance_blo
 import 'package:motus_lab/features/crm/domain/repositories/crm_repository.dart';
 import 'package:motus_lab/features/crm/data/repositories/crm_repository_impl.dart';
 import 'package:motus_lab/features/crm/presentation/bloc/crm_bloc.dart';
+import 'package:motus_lab/features/remote/domain/repositories/remote_repository.dart';
+import 'package:motus_lab/features/remote/data/repositories/remote_repository_impl.dart';
+import 'package:motus_lab/features/remote/presentation/bloc/remote_bloc.dart';
 
 final locator = GetIt.instance;
 
@@ -102,4 +105,8 @@ Future<void> setupLocator() async {
   locator
       .registerLazySingleton<CrmRepository>(() => CrmRepositoryImpl(locator()));
   locator.registerFactory(() => CrmBloc(locator()));
+
+  // 8. Remote Expert (Phase 5 Part 2)
+  locator.registerLazySingleton<RemoteRepository>(() => RemoteRepositoryImpl());
+  locator.registerFactory(() => RemoteBloc(locator()));
 }

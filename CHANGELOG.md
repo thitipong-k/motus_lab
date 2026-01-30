@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.1] - 2026-01-30
+
+### Added
+
+- **Remote Expert**: Real-time chat interface with mock certified mechanics.
+- **ChatWidget**: Custom bubble chat UI with support for text messages.
+- **Mock Connection**: Simulated server connection and auto-replies.
+
 ## [0.8.0] - 2026-01-30
 
 ### Added
