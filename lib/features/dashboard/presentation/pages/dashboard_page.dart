@@ -12,7 +12,7 @@ import 'package:motus_lab/features/scan/presentation/pages/freeze_frame_page.dar
 import 'package:motus_lab/features/settings/presentation/pages/settings_page.dart';
 import 'package:motus_lab/features/coding/presentation/pages/adaptation_page.dart';
 import 'package:motus_lab/features/sniffer/presentation/pages/sniffer_page.dart';
-import 'package:motus_lab/features/service/presentation/pages/service_catalog_page.dart';
+import 'package:motus_lab/features/maintenance/presentation/pages/maintenance_page.dart';
 import 'package:motus_lab/features/crm/presentation/pages/customer_list_page.dart';
 import 'package:motus_lab/features/remote/presentation/pages/remote_expert_page.dart';
 import 'package:motus_lab/features/profile/presentation/pages/wallet_page.dart';
@@ -34,7 +34,7 @@ class _DashboardPageState extends State<DashboardPage> {
       const LiveDataPage(), // Tab 1: Dashboard
       const TopologyPage(), // Tab 2: Topology
       const FreezeFramePage(), // Tab 3: Freeze Frame
-      const ServiceCatalogPage(), // Tab 4: Service
+      const MaintenancePage(), // Tab 4: Service (Maintenance)
       const CustomerListPage(), // Tab 5: CRM
       const RemoteExpertPage(), // Tab 6: Remote (Phase 5)
       const WalletPage(), // Tab 7: Wallet (Phase 5)

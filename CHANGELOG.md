@@ -11,6 +11,7 @@
 
 ### Added
 
+- **Maintenance Module**: Added Service Reminders feature to track vehicle maintenance (mileage/date).
 - **Data Export**: Support for exporting reports as CSV files for external analysis.
 - **Settings UI**: Improved export dialog to select between PDF and CSV formats.
 - **Settings Module**: New feature for managing app preferences.

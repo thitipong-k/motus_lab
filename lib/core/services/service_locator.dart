@@ -21,6 +21,9 @@ import 'package:motus_lab/features/settings/data/datasources/settings_local_data
 import 'package:motus_lab/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:motus_lab/features/settings/domain/repositories/settings_repository.dart';
 import 'package:motus_lab/features/settings/presentation/bloc/settings_bloc.dart';
+import 'package:motus_lab/features/maintenance/domain/repositories/maintenance_repository.dart';
+import 'package:motus_lab/features/maintenance/data/repositories/maintenance_repository_impl.dart';
+import 'package:motus_lab/features/maintenance/presentation/bloc/maintenance_bloc.dart';
 
 final locator = GetIt.instance;
 
@@ -84,4 +87,9 @@ Future<void> setupLocator() async {
   locator.registerLazySingleton<SettingsRepository>(
       () => SettingsRepositoryImpl(locator()));
   locator.registerFactory(() => SettingsBloc(repository: locator()));
+
+  // 6. Maintenance Feature
+  locator.registerLazySingleton<MaintenanceRepository>(
+      () => MaintenanceRepositoryImpl(locator()));
+  locator.registerFactory(() => MaintenanceBloc(locator()));
 }

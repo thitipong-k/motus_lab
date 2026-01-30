@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:motus_lab/core/database/tables/service_reminders_table.dart';
 import 'package:motus_lab/core/database/tables/vehicles_table.dart';
 import 'package:motus_lab/core/database/tables/vehicle_profiles_table.dart';
 import 'package:motus_lab/core/database/tables/scan_history_table.dart';
@@ -19,19 +20,23 @@ part 'app_database.g.dart';
   PossibleCauses,
   Solutions,
   DiagnosticIntelligence,
-  ShopProfiles
+  ShopProfiles,
+  ServiceReminders
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(openConnection());
 
   @override
-  int get schemaVersion => 3; // Incremented for ShopProfiles
+  int get schemaVersion => 4; // Incremented for ServiceReminders
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onUpgrade: (m, from, to) async {
           if (from < 3) {
             await m.createTable(shopProfiles);
+          }
+          if (from < 4) {
+            await m.createTable(serviceReminders);
           }
         },
         beforeOpen: (details) async {
