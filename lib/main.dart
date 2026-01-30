@@ -14,7 +14,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // เริ่มต้นระบบ Service Locator
-  setupLocator();
+  await setupLocator();
 
   // --- 1. Mobile: Immersive Mode ---
   if (Platform.isAndroid || Platform.isIOS) {

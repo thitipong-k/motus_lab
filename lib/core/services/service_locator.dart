@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:motus_lab/core/connection/bluetooth_service.dart' as motus;
 import 'package:motus_lab/core/protocol/protocol_engine.dart';
 import 'package:motus_lab/core/connection/connection_interface.dart';
@@ -16,13 +17,22 @@ import 'package:motus_lab/features/scan/data/repositories/vehicle_profile_reposi
 import 'package:motus_lab/domain/repositories/shop_profile_repository.dart';
 import 'package:motus_lab/data/repositories/shop_profile_repository_impl.dart';
 import 'package:motus_lab/core/services/report_service.dart';
+import 'package:motus_lab/features/settings/data/datasources/settings_local_data_source.dart';
+import 'package:motus_lab/features/settings/data/repositories/settings_repository_impl.dart';
+import 'package:motus_lab/features/settings/domain/repositories/settings_repository.dart';
+import 'package:motus_lab/features/settings/presentation/bloc/settings_bloc.dart';
 
 final locator = GetIt.instance;
 
 /// ฟังก์ชันสำหรับลงทะเบียน Service ทั้งหมดในแอป
 /// ช่วยให้เรียกใช้ Instance เดิมซ้ำได้จากทุกที่ (Singleton)
 /// [WORKFLOW STEP 0] Initialization: เริ่มต้นระบบและลงทะเบียน Dependencies
-void setupLocator() {
+/// [WORKFLOW STEP 0] Initialization: เริ่มต้นระบบและลงทะเบียน Dependencies
+Future<void> setupLocator() async {
+  // 0. External Services
+  final sharedPreferences = await SharedPreferences.getInstance();
+  locator.registerSingleton<SharedPreferences>(sharedPreferences);
+
   // 1. Core Logic
   locator.registerLazySingleton(() => ProtocolEngine());
 
@@ -53,7 +63,8 @@ void setupLocator() {
   locator.registerFactory(() => ScanBloc(
       bluetoothService: locator<motus.BluetoothService>(),
       connection: locator<ConnectionInterface>(),
-      connectToDevice: locator<ConnectToDeviceUseCase>()));
+      connectToDevice: locator<ConnectToDeviceUseCase>(),
+      settingsRepository: locator<SettingsRepository>()));
   locator.registerFactory(() => LiveDataBloc(
         engine: locator<ProtocolEngine>(),
         connection: locator<ConnectionInterface>(),
@@ -67,4 +78,10 @@ void setupLocator() {
         engine: locator<ProtocolEngine>(),
         connection: locator<ConnectionInterface>(),
       ));
+  // 5. Settings Feature
+  locator.registerLazySingleton<SettingsLocalDataSource>(
+      () => SettingsLocalDataSourceImpl(locator()));
+  locator.registerLazySingleton<SettingsRepository>(
+      () => SettingsRepositoryImpl(locator()));
+  locator.registerFactory(() => SettingsBloc(repository: locator()));
 }

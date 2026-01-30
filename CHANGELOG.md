@@ -7,6 +7,14 @@
 - **Workflow Comments**: Added Thai comments to `scan_bloc.dart` and `live_data_bloc.dart` explaining system internals.
 - **Roadmap Update**: Updated Phase 7 status for PID library and persistence.
 
+## [0.7.3] - 2026-01-30
+
+### Added
+
+- **Settings Module**: New feature for managing app preferences.
+- **Connection Preferences**: Added auto-connect toggle and adjustable connection timeout.
+- **Dependency Injection**: Fixed runtime crash by registering `SharedPreferences` in `ServiceLocator`.
+
 ## [0.7.2] - 2026-01-30
 
 ### Refactor

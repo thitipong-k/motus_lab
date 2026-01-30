@@ -9,7 +9,7 @@ import 'package:motus_lab/features/scan/presentation/pages/connection_page.dart'
 import 'package:motus_lab/features/scan/presentation/pages/live_data/live_data_page.dart';
 import 'package:motus_lab/features/scan/presentation/pages/topology/topology_page.dart';
 import 'package:motus_lab/features/scan/presentation/pages/freeze_frame_page.dart';
-import 'package:motus_lab/features/reports/presentation/pages/settings_page.dart';
+import 'package:motus_lab/features/settings/presentation/pages/settings_page.dart';
 import 'package:motus_lab/features/coding/presentation/pages/adaptation_page.dart';
 import 'package:motus_lab/features/sniffer/presentation/pages/sniffer_page.dart';
 import 'package:motus_lab/features/service/presentation/pages/service_catalog_page.dart';
