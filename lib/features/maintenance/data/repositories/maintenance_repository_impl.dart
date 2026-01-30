@@ -1,5 +1,6 @@
 import 'package:motus_lab/core/database/app_database.dart';
-import 'package:motus_lab/features/maintenance/domain/entities/service_reminder.dart';
+import 'package:motus_lab/features/maintenance/domain/entities/service_reminder.dart'
+    as domain;
 import 'package:motus_lab/features/maintenance/domain/repositories/maintenance_repository.dart';
 import 'package:drift/drift.dart';
 
@@ -9,14 +10,14 @@ class MaintenanceRepositoryImpl implements MaintenanceRepository {
   MaintenanceRepositoryImpl(this._db);
 
   @override
-  Stream<List<ServiceReminder>> watchReminders() {
+  Stream<List<domain.ServiceReminder>> watchReminders() {
     return _db.select(_db.serviceReminders).watch().map((rows) {
       return rows.map((row) => _mapToEntity(row)).toList();
     });
   }
 
   @override
-  Future<List<ServiceReminder>> getReminders() async {
+  Future<List<domain.ServiceReminder>> getReminders() async {
     final rows = await _db.select(_db.serviceReminders).get();
     return rows.map((row) => _mapToEntity(row)).toList();
   }
@@ -46,8 +47,8 @@ class MaintenanceRepositoryImpl implements MaintenanceRepository {
         .go();
   }
 
-  ServiceReminder _mapToEntity(ServiceReminderData row) {
-    return ServiceReminder(
+  domain.ServiceReminder _mapToEntity(ServiceReminder row) {
+    return domain.ServiceReminder(
       id: row.id,
       title: row.title,
       dueMileage: row.dueMileage,

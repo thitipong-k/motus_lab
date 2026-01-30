@@ -3042,6 +3042,349 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfile> {
   }
 }
 
+class $ServiceRemindersTable extends ServiceReminders
+    with TableInfo<$ServiceRemindersTable, ServiceReminder> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ServiceRemindersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+      'title', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _dueMileageMeta =
+      const VerificationMeta('dueMileage');
+  @override
+  late final GeneratedColumn<int> dueMileage = GeneratedColumn<int>(
+      'due_mileage', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _dueDateMeta =
+      const VerificationMeta('dueDate');
+  @override
+  late final GeneratedColumn<DateTime> dueDate = GeneratedColumn<DateTime>(
+      'due_date', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _isCompletedMeta =
+      const VerificationMeta('isCompleted');
+  @override
+  late final GeneratedColumn<bool> isCompleted = GeneratedColumn<bool>(
+      'is_completed', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("is_completed" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+      'note', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, title, dueMileage, dueDate, isCompleted, note];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'service_reminders';
+  @override
+  VerificationContext validateIntegrity(Insertable<ServiceReminder> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+          _titleMeta, title.isAcceptableOrUnknown(data['title']!, _titleMeta));
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('due_mileage')) {
+      context.handle(
+          _dueMileageMeta,
+          dueMileage.isAcceptableOrUnknown(
+              data['due_mileage']!, _dueMileageMeta));
+    }
+    if (data.containsKey('due_date')) {
+      context.handle(_dueDateMeta,
+          dueDate.isAcceptableOrUnknown(data['due_date']!, _dueDateMeta));
+    }
+    if (data.containsKey('is_completed')) {
+      context.handle(
+          _isCompletedMeta,
+          isCompleted.isAcceptableOrUnknown(
+              data['is_completed']!, _isCompletedMeta));
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+          _noteMeta, note.isAcceptableOrUnknown(data['note']!, _noteMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ServiceReminder map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ServiceReminder(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      title: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
+      dueMileage: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}due_mileage']),
+      dueDate: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}due_date']),
+      isCompleted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_completed'])!,
+      note: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}note']),
+    );
+  }
+
+  @override
+  $ServiceRemindersTable createAlias(String alias) {
+    return $ServiceRemindersTable(attachedDatabase, alias);
+  }
+}
+
+class ServiceReminder extends DataClass implements Insertable<ServiceReminder> {
+  final int id;
+  final String title;
+  final int? dueMileage;
+  final DateTime? dueDate;
+  final bool isCompleted;
+  final String? note;
+  const ServiceReminder(
+      {required this.id,
+      required this.title,
+      this.dueMileage,
+      this.dueDate,
+      required this.isCompleted,
+      this.note});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['title'] = Variable<String>(title);
+    if (!nullToAbsent || dueMileage != null) {
+      map['due_mileage'] = Variable<int>(dueMileage);
+    }
+    if (!nullToAbsent || dueDate != null) {
+      map['due_date'] = Variable<DateTime>(dueDate);
+    }
+    map['is_completed'] = Variable<bool>(isCompleted);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    return map;
+  }
+
+  ServiceRemindersCompanion toCompanion(bool nullToAbsent) {
+    return ServiceRemindersCompanion(
+      id: Value(id),
+      title: Value(title),
+      dueMileage: dueMileage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dueMileage),
+      dueDate: dueDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dueDate),
+      isCompleted: Value(isCompleted),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+    );
+  }
+
+  factory ServiceReminder.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ServiceReminder(
+      id: serializer.fromJson<int>(json['id']),
+      title: serializer.fromJson<String>(json['title']),
+      dueMileage: serializer.fromJson<int?>(json['dueMileage']),
+      dueDate: serializer.fromJson<DateTime?>(json['dueDate']),
+      isCompleted: serializer.fromJson<bool>(json['isCompleted']),
+      note: serializer.fromJson<String?>(json['note']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'title': serializer.toJson<String>(title),
+      'dueMileage': serializer.toJson<int?>(dueMileage),
+      'dueDate': serializer.toJson<DateTime?>(dueDate),
+      'isCompleted': serializer.toJson<bool>(isCompleted),
+      'note': serializer.toJson<String?>(note),
+    };
+  }
+
+  ServiceReminder copyWith(
+          {int? id,
+          String? title,
+          Value<int?> dueMileage = const Value.absent(),
+          Value<DateTime?> dueDate = const Value.absent(),
+          bool? isCompleted,
+          Value<String?> note = const Value.absent()}) =>
+      ServiceReminder(
+        id: id ?? this.id,
+        title: title ?? this.title,
+        dueMileage: dueMileage.present ? dueMileage.value : this.dueMileage,
+        dueDate: dueDate.present ? dueDate.value : this.dueDate,
+        isCompleted: isCompleted ?? this.isCompleted,
+        note: note.present ? note.value : this.note,
+      );
+  ServiceReminder copyWithCompanion(ServiceRemindersCompanion data) {
+    return ServiceReminder(
+      id: data.id.present ? data.id.value : this.id,
+      title: data.title.present ? data.title.value : this.title,
+      dueMileage:
+          data.dueMileage.present ? data.dueMileage.value : this.dueMileage,
+      dueDate: data.dueDate.present ? data.dueDate.value : this.dueDate,
+      isCompleted:
+          data.isCompleted.present ? data.isCompleted.value : this.isCompleted,
+      note: data.note.present ? data.note.value : this.note,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServiceReminder(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('dueMileage: $dueMileage, ')
+          ..write('dueDate: $dueDate, ')
+          ..write('isCompleted: $isCompleted, ')
+          ..write('note: $note')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, title, dueMileage, dueDate, isCompleted, note);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ServiceReminder &&
+          other.id == this.id &&
+          other.title == this.title &&
+          other.dueMileage == this.dueMileage &&
+          other.dueDate == this.dueDate &&
+          other.isCompleted == this.isCompleted &&
+          other.note == this.note);
+}
+
+class ServiceRemindersCompanion extends UpdateCompanion<ServiceReminder> {
+  final Value<int> id;
+  final Value<String> title;
+  final Value<int?> dueMileage;
+  final Value<DateTime?> dueDate;
+  final Value<bool> isCompleted;
+  final Value<String?> note;
+  const ServiceRemindersCompanion({
+    this.id = const Value.absent(),
+    this.title = const Value.absent(),
+    this.dueMileage = const Value.absent(),
+    this.dueDate = const Value.absent(),
+    this.isCompleted = const Value.absent(),
+    this.note = const Value.absent(),
+  });
+  ServiceRemindersCompanion.insert({
+    this.id = const Value.absent(),
+    required String title,
+    this.dueMileage = const Value.absent(),
+    this.dueDate = const Value.absent(),
+    this.isCompleted = const Value.absent(),
+    this.note = const Value.absent(),
+  }) : title = Value(title);
+  static Insertable<ServiceReminder> custom({
+    Expression<int>? id,
+    Expression<String>? title,
+    Expression<int>? dueMileage,
+    Expression<DateTime>? dueDate,
+    Expression<bool>? isCompleted,
+    Expression<String>? note,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (title != null) 'title': title,
+      if (dueMileage != null) 'due_mileage': dueMileage,
+      if (dueDate != null) 'due_date': dueDate,
+      if (isCompleted != null) 'is_completed': isCompleted,
+      if (note != null) 'note': note,
+    });
+  }
+
+  ServiceRemindersCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? title,
+      Value<int?>? dueMileage,
+      Value<DateTime?>? dueDate,
+      Value<bool>? isCompleted,
+      Value<String?>? note}) {
+    return ServiceRemindersCompanion(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      dueMileage: dueMileage ?? this.dueMileage,
+      dueDate: dueDate ?? this.dueDate,
+      isCompleted: isCompleted ?? this.isCompleted,
+      note: note ?? this.note,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (dueMileage.present) {
+      map['due_mileage'] = Variable<int>(dueMileage.value);
+    }
+    if (dueDate.present) {
+      map['due_date'] = Variable<DateTime>(dueDate.value);
+    }
+    if (isCompleted.present) {
+      map['is_completed'] = Variable<bool>(isCompleted.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServiceRemindersCompanion(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('dueMileage: $dueMileage, ')
+          ..write('dueDate: $dueDate, ')
+          ..write('isCompleted: $isCompleted, ')
+          ..write('note: $note')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3055,6 +3398,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $DiagnosticIntelligenceTable diagnosticIntelligence =
       $DiagnosticIntelligenceTable(this);
   late final $ShopProfilesTable shopProfiles = $ShopProfilesTable(this);
+  late final $ServiceRemindersTable serviceReminders =
+      $ServiceRemindersTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3067,7 +3412,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         possibleCauses,
         solutions,
         diagnosticIntelligence,
-        shopProfiles
+        shopProfiles,
+        serviceReminders
       ];
 }
 
@@ -5205,6 +5551,189 @@ typedef $$ShopProfilesTableProcessedTableManager = ProcessedTableManager<
     ),
     ShopProfile,
     PrefetchHooks Function()>;
+typedef $$ServiceRemindersTableCreateCompanionBuilder
+    = ServiceRemindersCompanion Function({
+  Value<int> id,
+  required String title,
+  Value<int?> dueMileage,
+  Value<DateTime?> dueDate,
+  Value<bool> isCompleted,
+  Value<String?> note,
+});
+typedef $$ServiceRemindersTableUpdateCompanionBuilder
+    = ServiceRemindersCompanion Function({
+  Value<int> id,
+  Value<String> title,
+  Value<int?> dueMileage,
+  Value<DateTime?> dueDate,
+  Value<bool> isCompleted,
+  Value<String?> note,
+});
+
+class $$ServiceRemindersTableFilterComposer
+    extends Composer<_$AppDatabase, $ServiceRemindersTable> {
+  $$ServiceRemindersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get dueMileage => $composableBuilder(
+      column: $table.dueMileage, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get dueDate => $composableBuilder(
+      column: $table.dueDate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isCompleted => $composableBuilder(
+      column: $table.isCompleted, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get note => $composableBuilder(
+      column: $table.note, builder: (column) => ColumnFilters(column));
+}
+
+class $$ServiceRemindersTableOrderingComposer
+    extends Composer<_$AppDatabase, $ServiceRemindersTable> {
+  $$ServiceRemindersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get dueMileage => $composableBuilder(
+      column: $table.dueMileage, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get dueDate => $composableBuilder(
+      column: $table.dueDate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isCompleted => $composableBuilder(
+      column: $table.isCompleted, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get note => $composableBuilder(
+      column: $table.note, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ServiceRemindersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ServiceRemindersTable> {
+  $$ServiceRemindersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<int> get dueMileage => $composableBuilder(
+      column: $table.dueMileage, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dueDate =>
+      $composableBuilder(column: $table.dueDate, builder: (column) => column);
+
+  GeneratedColumn<bool> get isCompleted => $composableBuilder(
+      column: $table.isCompleted, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+}
+
+class $$ServiceRemindersTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ServiceRemindersTable,
+    ServiceReminder,
+    $$ServiceRemindersTableFilterComposer,
+    $$ServiceRemindersTableOrderingComposer,
+    $$ServiceRemindersTableAnnotationComposer,
+    $$ServiceRemindersTableCreateCompanionBuilder,
+    $$ServiceRemindersTableUpdateCompanionBuilder,
+    (
+      ServiceReminder,
+      BaseReferences<_$AppDatabase, $ServiceRemindersTable, ServiceReminder>
+    ),
+    ServiceReminder,
+    PrefetchHooks Function()> {
+  $$ServiceRemindersTableTableManager(
+      _$AppDatabase db, $ServiceRemindersTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ServiceRemindersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ServiceRemindersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ServiceRemindersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> title = const Value.absent(),
+            Value<int?> dueMileage = const Value.absent(),
+            Value<DateTime?> dueDate = const Value.absent(),
+            Value<bool> isCompleted = const Value.absent(),
+            Value<String?> note = const Value.absent(),
+          }) =>
+              ServiceRemindersCompanion(
+            id: id,
+            title: title,
+            dueMileage: dueMileage,
+            dueDate: dueDate,
+            isCompleted: isCompleted,
+            note: note,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String title,
+            Value<int?> dueMileage = const Value.absent(),
+            Value<DateTime?> dueDate = const Value.absent(),
+            Value<bool> isCompleted = const Value.absent(),
+            Value<String?> note = const Value.absent(),
+          }) =>
+              ServiceRemindersCompanion.insert(
+            id: id,
+            title: title,
+            dueMileage: dueMileage,
+            dueDate: dueDate,
+            isCompleted: isCompleted,
+            note: note,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ServiceRemindersTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ServiceRemindersTable,
+    ServiceReminder,
+    $$ServiceRemindersTableFilterComposer,
+    $$ServiceRemindersTableOrderingComposer,
+    $$ServiceRemindersTableAnnotationComposer,
+    $$ServiceRemindersTableCreateCompanionBuilder,
+    $$ServiceRemindersTableUpdateCompanionBuilder,
+    (
+      ServiceReminder,
+      BaseReferences<_$AppDatabase, $ServiceRemindersTable, ServiceReminder>
+    ),
+    ServiceReminder,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5226,4 +5755,6 @@ class $AppDatabaseManager {
           _db, _db.diagnosticIntelligence);
   $$ShopProfilesTableTableManager get shopProfiles =>
       $$ShopProfilesTableTableManager(_db, _db.shopProfiles);
+  $$ServiceRemindersTableTableManager get serviceReminders =>
+      $$ServiceRemindersTableTableManager(_db, _db.serviceReminders);
 }

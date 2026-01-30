@@ -63,7 +63,7 @@ Future<void> setupLocator() async {
       locator<ConnectionInterface>(), locator<ProtocolRepository>()));
 
   // 3. Blocs
-  locator.registerFactory(() => ScanBloc(
+  locator.registerLazySingleton(() => ScanBloc(
       bluetoothService: locator<motus.BluetoothService>(),
       connection: locator<ConnectionInterface>(),
       connectToDevice: locator<ConnectToDeviceUseCase>(),

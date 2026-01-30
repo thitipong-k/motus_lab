@@ -45,8 +45,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (context) => locator<ScanBloc>(),
+        BlocProvider.value(
+          value: locator<ScanBloc>(),
         ),
         BlocProvider(
           create: (context) => locator<LiveDataBloc>(),
