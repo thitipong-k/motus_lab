@@ -1,7 +1,7 @@
 name: motus_lab
 description: "Motus Lab - Automotive Diagnostic Platform"
 publish_to: "none"
-version: 2.6.0+26
+version: 1.0.0+1
 
 environment:
   sdk: ">=3.2.0 <4.0.0"

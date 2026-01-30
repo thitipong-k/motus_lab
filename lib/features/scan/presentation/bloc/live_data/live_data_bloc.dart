@@ -86,6 +86,9 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
         }
       }
 
+      // [WORKFLOW STEP 1] Identity Flow: ตรวจสอบ VIN และค้นหา PIDs ที่รองรับ
+      // หากพบ VIN ในฐานข้อมูล จะดึงค่าเดิมมาใช้ทันที (Fast Start)
+      // หากเป็นรถใหม่ จะทำการ Full Discovery เพื่อหาว่ากล่อง ECU ตอบรับ PID ไหนบ้าง
       if (!cacheHit) {
         print("Cache MISS. Starting Full Discovery...");
         await _checkSupportedPids("0100", supportedKeyCodes);
@@ -150,6 +153,11 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
         }
       }
 
+      // [WORKFLOW STEP 2] Adaptive Polling: จัดลำดับการส่งคำสั่งตาม Priority
+      // High (RPM/Speed) : ส่งทุกครั้งที่ Tick
+      // Normal (Engine Load): ส่งทุก 10 Ticks
+      // Low (Temp): ส่งทุก 40 Ticks
+      // พร้อมระบบ Quarantine: หาก PID ไหนตอบช้าหรือ Error ติดกัน 5 ครั้ง จะถูกพักไว้ชั่วคราว
       final commandsToPoll = _activeCommands.where((cmd) {
         if (_quarantinedCommands.contains(cmd)) return false;
         switch (cmd.priority) {

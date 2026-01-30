@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.0] - 2026-01-30
+
+### Added
+
+- **Final Gold Master**: All core modules (Connection, Live Data, Diagnostics, Reporting, CRM, Remote Expert) are now 100% complete.
+- **Improved UI Stability**: Resolved GlobalKey conflicts and ListTile layout overflows across all pages.
+- **Unified Bloc Management**: All Blocs now operate as Singletons via Service Locator for consistent state management.
+- **Thai Comments**: Exhaustive Thai documentation added to core system files for easier maintenance.
+- **Platform Optimization**: Enhanced Immersive Mode for Mobile and Full Screen for Desktop.
+
 ## [0.8.2] - 2026-01-30
 
 ### Added

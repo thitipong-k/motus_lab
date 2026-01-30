@@ -23,8 +23,15 @@ class GenerateReportPdf extends ReportEvent {
   const GenerateReportPdf(this.reportData);
 }
 
+class GenerateReportCsv extends ReportEvent {
+  final DiagnosticReport reportData;
+  const GenerateReportCsv(this.reportData);
+}
+
+class ResetReportStatus extends ReportEvent {}
+
 // States
-enum ReportStatus { initial, loading, success, failure }
+enum ReportStatus { initial, loading, configLoaded, exported, failure }
 
 class ReportState extends Equatable {
   final ReportStatus status;
@@ -65,6 +72,8 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     on<LoadReportConfig>(_onLoadConfig);
     on<UpdateReportConfig>(_onUpdateConfig);
     on<GenerateReportPdf>(_onGeneratePdf);
+    on<GenerateReportCsv>(_onGenerateCsv);
+    on<ResetReportStatus>(_onResetStatus);
   }
 
   Future<void> _onLoadConfig(
@@ -72,7 +81,7 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     emit(state.copyWith(status: ReportStatus.loading));
     try {
       final config = await repository.getReportConfig();
-      emit(state.copyWith(status: ReportStatus.success, config: config));
+      emit(state.copyWith(status: ReportStatus.configLoaded, config: config));
     } catch (e) {
       emit(state.copyWith(status: ReportStatus.failure, error: e.toString()));
     }
@@ -97,12 +106,28 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
 
       final file = await repository.generateReportPdf(event.reportData, config);
       emit(state.copyWith(
-        status: ReportStatus.success,
+        status: ReportStatus.exported,
         generatedPdf: file,
         config: config, // Update config in state if it was null
       ));
     } catch (e) {
       emit(state.copyWith(status: ReportStatus.failure, error: e.toString()));
     }
+  }
+
+  Future<void> _onGenerateCsv(
+      GenerateReportCsv event, Emitter<ReportState> emit) async {
+    emit(state.copyWith(status: ReportStatus.loading));
+    try {
+      final config = state.config ?? await repository.getReportConfig();
+      await repository.generateReportCsv(event.reportData, config);
+      emit(state.copyWith(status: ReportStatus.exported, config: config));
+    } catch (e) {
+      emit(state.copyWith(status: ReportStatus.failure, error: e.toString()));
+    }
+  }
+
+  void _onResetStatus(ResetReportStatus event, Emitter<ReportState> emit) {
+    emit(state.copyWith(status: ReportStatus.initial, generatedPdf: null));
   }
 }

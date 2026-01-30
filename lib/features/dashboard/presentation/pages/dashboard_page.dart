@@ -48,11 +48,11 @@ class _DashboardPageState extends State<DashboardPage> {
         BlocProvider.value(
           value: locator<ScanBloc>(),
         ),
-        BlocProvider(
-          create: (context) => locator<LiveDataBloc>(),
+        BlocProvider.value(
+          value: locator<LiveDataBloc>(),
         ),
-        BlocProvider(
-          create: (context) => locator<DtcBloc>(),
+        BlocProvider.value(
+          value: locator<DtcBloc>(),
         ),
       ],
       child: BlocListener<ScanBloc, ScanState>(

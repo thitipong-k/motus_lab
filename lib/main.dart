@@ -8,8 +8,6 @@ import 'package:motus_lab/core/theme/app_theme.dart';
 import 'package:motus_lab/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:motus_lab/core/services/service_locator.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:motus_lab/core/theme/theme_cubit.dart';
-import 'package:motus_lab/core/theme/app_style.dart';
 import 'package:motus_lab/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/live_data/live_data_bloc.dart';
@@ -25,6 +23,8 @@ void main() async {
   await setupLocator();
 
   // --- 1. Mobile: Immersive Mode ---
+  // ตั้งค่าสำหรับมือถือ: เปิดโหมด Immersive (ซ่อนแถบสถานะและแถบนำทาง)
+  // และล็อคหน้าจอให้เป็นแนวตั้งเท่านั้น
   if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
     // Hide Status Bar & Nav Bar
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -36,6 +36,8 @@ void main() async {
   }
 
   // --- 2. Desktop: Full Screen ---
+  // ตั้งค่าสำหรับ Desktop: ซ่อนแถบ Title Bar, ตั้งค่ากึ่งกลางหน้าจอ
+  // และบังคับให้เปิดเป็นโหมดเต็มหน้าจอ (Full Screen) ทันทีที่พร้อม
   if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
     await windowManager.ensureInitialized();
 
@@ -64,18 +66,17 @@ class MotusApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => ThemeCubit()),
-        BlocProvider(
-            create: (_) => locator<SettingsBloc>()..add(LoadSettings())),
-        BlocProvider(create: (_) => locator<ScanBloc>()),
-        BlocProvider(create: (_) => locator<LiveDataBloc>()),
-        BlocProvider(create: (_) => locator<DtcBloc>()),
-        BlocProvider(create: (_) => locator<ReportBloc>()),
+        BlocProvider.value(value: locator<SettingsBloc>()..add(LoadSettings())),
+        BlocProvider.value(value: locator<ScanBloc>()),
+        BlocProvider.value(value: locator<LiveDataBloc>()),
+        BlocProvider.value(value: locator<DtcBloc>()),
+        // Initialize ReportBloc and load config on startup
+        BlocProvider.value(
+            value: locator<ReportBloc>()..add(LoadReportConfig())),
       ],
-      child: BlocBuilder<ThemeCubit, AppStyle>(
-        builder: (context, style) {
-          // Listen to Settings to update ThemeCubit if needed (optional sync)
-          // For now, Settings Page updates ThemeCubit directly.
+      child: BlocBuilder<SettingsBloc, SettingsState>(
+        builder: (context, state) {
+          final style = state.settings.theme;
 
           return MaterialApp(
             title: 'Motus Lab',

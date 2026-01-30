@@ -239,7 +239,7 @@ class _DtcResultPageState extends State<DtcResultPage> {
             locator<ReportBloc>()..add(GenerateReportPdf(report)),
         child: BlocConsumer<ReportBloc, ReportState>(
           listener: (context, state) {
-            if (state.status == ReportStatus.success &&
+            if (state.status == ReportStatus.exported &&
                 state.generatedPdf != null) {
               Navigator.pop(ctx); // Close loading dialog
               Navigator.push(

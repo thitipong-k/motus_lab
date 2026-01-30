@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
-import 'package:motus_lab/core/services/report_service.dart';
-import 'package:motus_lab/core/services/service_locator.dart';
 import 'package:motus_lab/domain/entities/command.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/live_data/live_data_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/pages/live_data/pid_selection_page.dart';
@@ -15,6 +13,9 @@ import 'package:motus_lab/features/scan/presentation/widgets/gauges/simple_gauge
 import 'package:motus_lab/core/widgets/motus_card.dart';
 import 'package:motus_lab/core/widgets/loading_indicator.dart';
 import 'package:motus_lab/core/widgets/empty_state.dart';
+import 'package:motus_lab/features/reporting/presentation/bloc/report_bloc.dart';
+import 'package:motus_lab/features/reporting/domain/entities/report_entities.dart';
+import 'package:printing/printing.dart';
 
 enum ViewMode { gauge, graph }
 
@@ -97,130 +98,166 @@ class _LiveDataPageState extends State<LiveDataPage> {
     final useImperial =
         settingsState.settings.unitSystem == UnitSystem.imperial;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("LIVE DATA"),
-        actions: [
-          // Record Button
-          BlocBuilder<LiveDataBloc, LiveDataState>(
-            buildWhen: (previous, current) =>
-                previous.isLogging != current.isLogging ||
-                previous.activeCommands.length != current.activeCommands.length,
-            builder: (context, state) {
-              return IconButton(
-                icon: Icon(
-                  state.isLogging
-                      ? Icons.stop_circle
-                      : Icons.fiber_manual_record,
-                  color: state.isLogging ? Colors.red : null,
-                ),
-                tooltip: state.isLogging ? "Stop Recording" : "Start Recording",
-                onPressed: () {
-                  if (state.isLogging) {
-                    context.read<LiveDataBloc>().add(StopLogging());
-                  } else {
-                    if (state.activeCommands.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text("No active PIDs to record!")));
-                      return;
-                    }
-                    context.read<LiveDataBloc>().add(StartLogging());
-                  }
-                },
-              );
-            },
-          ),
-          // Unit Toggle (Updates Global Settings)
-          TextButton(
-            onPressed: () {
-              context.read<SettingsBloc>().add(UpdateUnitSystem(
-                  useImperial ? UnitSystem.metric : UnitSystem.imperial));
-            },
-            child: Text(useImperial ? "IMP" : "MET",
-                style: const TextStyle(
-                    color: AppColors.primary, fontWeight: FontWeight.bold)),
-          ),
-          // View Toggle
-          IconButton(
-            icon: Icon(_getViewIcon()),
-            tooltip: "Switch View (Graph / Gauge)",
-            onPressed: _cycleViewMode,
-          ),
-          if (_viewMode == ViewMode.graph)
-            IconButton(
-              icon:
-                  Icon(_isCombinedGraph ? Icons.merge_type : Icons.call_split),
-              tooltip: _isCombinedGraph ? "Split Graphs" : "Combine Graphs",
-              onPressed: () {
-                setState(() {
-                  _isCombinedGraph = !_isCombinedGraph;
-                });
-              },
-            ),
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
-            tooltip: "Export PDF Report",
-            onPressed: () {
-              final state = context.read<LiveDataBloc>().state;
-              locator<ReportService>().generateHealthReport(
-                vin:
-                    state.activeCommands.isNotEmpty ? "SCANNING..." : "UNKNOWN",
-                dtcs: [], // Link with DtcBloc if needed
-                liveData: state.currentValues,
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: _openPidSelection,
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'honda') {
-                context.read<LiveDataBloc>().add(
-                    const LoadProtocol("assets/protocols/honda_civic.json"));
-              }
-            },
-            itemBuilder: (BuildContext context) {
-              return [
-                const PopupMenuItem<String>(
-                  value: 'honda',
-                  child: Text('Simulate Honda Civic'),
-                ),
-              ];
-            },
-            icon: const Icon(Icons.more_vert),
-          ),
-        ],
-      ),
-      body: BlocConsumer<LiveDataBloc, LiveDataState>(
-        listener: (context, state) {
-          if (state.currentValues.isNotEmpty) {
-            _updateHistory(state.currentValues, state.activeCommands);
-          }
-        },
-        builder: (context, state) {
-          if (state.isDiscovering) {
-            if (state.isDiscovering) {
-              return const LoadingIndicator(
-                  message: "Scanning supported PIDs...");
-            }
-          }
-
-          if (!state.isStreaming && state.activeCommands.isEmpty) {
-            return const EmptyState(
-              icon: Icons.sensors_off,
-              message: "Connecting / No PIDs selected",
+    return BlocListener<ReportBloc, ReportState>(
+      listener: (context, state) {
+        if (state.status == ReportStatus.exported) {
+          if (state.generatedPdf != null) {
+            Printing.layoutPdf(
+              onLayout: (format) async => state.generatedPdf!.readAsBytesSync(),
+              name: 'LiveReport_${DateTime.now().millisecondsSinceEpoch}.pdf',
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Report exported successfully!'),
+                backgroundColor: Colors.green,
+              ),
             );
           }
+          context.read<ReportBloc>().add(ResetReportStatus());
+        } else if (state.status == ReportStatus.failure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Export Failed: ${state.error}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          context.read<ReportBloc>().add(ResetReportStatus());
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("LIVE DATA"),
+          actions: [
+            // Record Button
+            BlocBuilder<LiveDataBloc, LiveDataState>(
+              buildWhen: (previous, current) =>
+                  previous.isLogging != current.isLogging ||
+                  previous.activeCommands.length !=
+                      current.activeCommands.length,
+              builder: (context, state) {
+                return IconButton(
+                  icon: Icon(
+                    state.isLogging
+                        ? Icons.stop_circle
+                        : Icons.fiber_manual_record,
+                    color: state.isLogging ? Colors.red : null,
+                  ),
+                  tooltip:
+                      state.isLogging ? "Stop Recording" : "Start Recording",
+                  onPressed: () {
+                    if (state.isLogging) {
+                      context.read<LiveDataBloc>().add(StopLogging());
+                    } else {
+                      if (state.activeCommands.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text("No active PIDs to record!")));
+                        return;
+                      }
+                      context.read<LiveDataBloc>().add(StartLogging());
+                    }
+                  },
+                );
+              },
+            ),
+            // Unit Toggle (Updates Global Settings)
+            TextButton(
+              onPressed: () {
+                context.read<SettingsBloc>().add(UpdateUnitSystem(
+                    useImperial ? UnitSystem.metric : UnitSystem.imperial));
+              },
+              child: Text(useImperial ? "IMP" : "MET",
+                  style: const TextStyle(
+                      color: AppColors.primary, fontWeight: FontWeight.bold)),
+            ),
+            // View Toggle
+            IconButton(
+              icon: Icon(_getViewIcon()),
+              tooltip: "Switch View (Graph / Gauge)",
+              onPressed: _cycleViewMode,
+            ),
+            if (_viewMode == ViewMode.graph)
+              IconButton(
+                icon: Icon(
+                    _isCombinedGraph ? Icons.merge_type : Icons.call_split),
+                tooltip: _isCombinedGraph ? "Split Graphs" : "Combine Graphs",
+                onPressed: () {
+                  setState(() {
+                    _isCombinedGraph = !_isCombinedGraph;
+                  });
+                },
+              ),
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf),
+              tooltip: "Export PDF Report",
+              onPressed: () {
+                final state = context.read<LiveDataBloc>().state;
+                final reportData = DiagnosticReport(
+                  id: "LR-${DateTime.now().millisecondsSinceEpoch}",
+                  vehicleVin:
+                      state.activeCommands.isNotEmpty ? "SCANNING" : "UNKNOWN",
+                  vehicleName: "Current Live Streaming",
+                  timestamp: DateTime.now(),
+                  technicianName: "Motus Lab Tech",
+                  dtcList: [], // Future: Link with DtcBloc findings
+                );
+                context.read<ReportBloc>().add(GenerateReportPdf(reportData));
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: _openPidSelection,
+            ),
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'honda') {
+                  context.read<LiveDataBloc>().add(
+                      const LoadProtocol("assets/protocols/honda_civic.json"));
+                }
+              },
+              itemBuilder: (BuildContext context) {
+                return [
+                  const PopupMenuItem<String>(
+                    value: 'honda',
+                    child: Text('Simulate Honda Civic'),
+                  ),
+                ];
+              },
+              icon: const Icon(Icons.more_vert),
+            ),
+          ],
+        ),
+        body: BlocConsumer<LiveDataBloc, LiveDataState>(
+          listener: (context, state) {
+            if (state.currentValues.isNotEmpty) {
+              _updateHistory(state.currentValues, state.activeCommands);
+            }
+          },
+          builder: (context, state) {
+            if (state.isDiscovering) {
+              if (state.isDiscovering) {
+                return const LoadingIndicator(
+                    message: "Scanning supported PIDs...");
+              }
+            }
 
-          switch (_viewMode) {
-            case ViewMode.graph:
-              return _buildGraphView(state.activeCommands, useImperial);
-            case ViewMode.gauge:
-              return _buildGaugeView(state, state.activeCommands, useImperial);
-          }
-        },
+            if (!state.isStreaming && state.activeCommands.isEmpty) {
+              return const EmptyState(
+                icon: Icons.sensors_off,
+                message: "Connecting / No PIDs selected",
+              );
+            }
+
+            switch (_viewMode) {
+              case ViewMode.graph:
+                return _buildGraphView(state.activeCommands, useImperial);
+              case ViewMode.gauge:
+                return _buildGaugeView(
+                    state, state.activeCommands, useImperial);
+            }
+          },
+        ),
       ),
     );
   }

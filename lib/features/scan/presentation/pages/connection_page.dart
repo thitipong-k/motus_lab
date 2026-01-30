@@ -157,15 +157,21 @@ class ConnectionPage extends StatelessWidget {
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(strokeWidth: 2))
-            : ElevatedButton(
-                onPressed: isConnected
-                    ? null
-                    : () {
-                        context.read<ScanBloc>().add(ConnectToDevice(mac));
-                      },
-                child: Text(isConnected
-                    ? AppLocalizations.of(context)!.btnConnected
-                    : AppLocalizations.of(context)!.btnConnect),
+            : ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 100),
+                child: ElevatedButton(
+                  onPressed: isConnected
+                      ? null
+                      : () {
+                          context.read<ScanBloc>().add(ConnectToDevice(mac));
+                        },
+                  child: Text(
+                    isConnected
+                        ? AppLocalizations.of(context)!.btnConnected
+                        : AppLocalizations.of(context)!.btnConnect,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
       ),
     );

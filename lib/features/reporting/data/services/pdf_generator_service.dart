@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -10,13 +11,15 @@ class PdfGeneratorService {
     final pdf = pw.Document();
 
     // Load Fonts (Use standard fonts for now, or load custom if needed)
-    // For Thai support, we need a font that supports Thai characters.
-    // Assuming we have Sarabun font in assets, we would load it here.
-    // For MVP, we will use standard font and English content primarily,
-    // or try to load built-in font if possible.
+    // สำหรับการรองรับภาษาไทย จำเป็นต้องใช้ Font ที่รองรับอักขระไทย (เช่น Sarabun)
+    // โดยดึงจาก Google Fonts ผ่าน package printing
     final font = await PdfGoogleFonts.sarabunRegular();
     final fontBold = await PdfGoogleFonts.sarabunBold();
 
+    // [WORKFLOW STEP 6] Professional Reporting: สร้างเอกสาร PDF
+    // 1. กำหนดฟอนต์ (รองรับภาษาไทย)
+    // 2. ออกแบบโครงสร้างหน้า (A4, Header, Vehicle Info, DTC Table, Footer)
+    // 3. บันทึกไฟล์ลง Temporary Directory ชั่วคราว
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
@@ -26,7 +29,7 @@ class PdfGeneratorService {
         ),
         build: (pw.Context context) {
           return [
-            _buildHeader(config),
+            _buildHeader(config, report),
             pw.Divider(),
             _buildVehicleInfo(report),
             pw.SizedBox(height: 20),
@@ -44,35 +47,80 @@ class PdfGeneratorService {
     return file;
   }
 
-  pw.Widget _buildHeader(ReportConfig config) {
+  pw.Widget _buildHeader(ReportConfig config, DiagnosticReport report) {
+    // โหลดรูปภาพ Logo (รองรับทั้งแบบ Base64 และ Path ไฟล์ในเครื่อง)
+    pw.ImageProvider? logoImage;
+    final path = config.logoPath;
+    if (path != null) {
+      if (path.startsWith('data:image')) {
+        try {
+          final base64Data = path.split(',').last;
+          logoImage = pw.MemoryImage(base64Decode(base64Data));
+        } catch (e) {
+          // Ignore invalid base64
+        }
+      } else if (File(path).existsSync()) {
+        logoImage = pw.MemoryImage(File(path).readAsBytesSync());
+      }
+    }
+
     return pw.Row(
-      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: pw.MainAxisAlignment.start,
+      crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
-        pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(config.shopName,
-                style:
-                    pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-            pw.Text(config.address),
-            pw.Text("Phone: ${config.phone}"),
-            if (config.taxId != null) pw.Text("Tax ID: ${config.taxId}"),
-          ],
-        ),
-        // Logo placeholder (Load image logic would go here)
-        pw.Container(
-          height: 60,
-          width: 60,
-          decoration: pw.BoxDecoration(
-            border: pw.Border.all(color: PdfColors.grey),
+        if (logoImage != null)
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(right: 20),
+            child: pw.Container(
+              height: 70,
+              width: 70,
+              child: pw.Image(logoImage),
+            ),
+          )
+        else
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(right: 20),
+            child: pw.Container(
+              height: 60,
+              width: 60,
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey),
+              ),
+              child: pw.Center(
+                  child: pw.Text("MOTUS\nLAB",
+                      textAlign: pw.TextAlign.center,
+                      style: const pw.TextStyle(fontSize: 8))),
+            ),
           ),
-          child: pw.Center(child: pw.Text("LOGO")),
+        pw.Expanded(
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(config.shopName,
+                  style: pw.TextStyle(
+                      fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.Text(config.address),
+              pw.Text("Phone: ${config.phone}"),
+              if (config.taxId != null && config.taxId!.isNotEmpty)
+                pw.Text("Tax ID: ${config.taxId}"),
+            ],
+          ),
         ),
       ],
     );
   }
 
   pw.Widget _buildVehicleInfo(DiagnosticReport report) {
+    // Health Color Mapping
+    PdfColor healthColor;
+    if (report.dtcList.isEmpty) {
+      healthColor = PdfColors.green700;
+    } else if (report.dtcList.length <= 2) {
+      healthColor = PdfColors.orange700;
+    } else {
+      healthColor = PdfColors.red700;
+    }
+
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -91,17 +139,20 @@ class PdfGeneratorService {
         ]),
         pw.SizedBox(height: 10),
         pw.Container(
-          padding: const pw.EdgeInsets.all(8),
+          padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: pw.BoxDecoration(
-            color:
-                report.dtcList.isEmpty ? PdfColors.green100 : PdfColors.red100,
+            color: PdfColors.grey200,
             borderRadius: pw.BorderRadius.circular(4),
+            border: pw.Border.all(color: PdfColors.grey300),
           ),
           child: pw.Row(
+            mainAxisSize: pw.MainAxisSize.min,
             children: [
-              pw.Text("Health Status: ",
+              pw.Text("HEALTH SCORE summary: ",
                   style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              pw.Text(report.healthScore),
+              pw.Text(report.healthScore,
+                  style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold, color: healthColor)),
             ],
           ),
         )
