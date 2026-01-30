@@ -8,6 +8,9 @@ import 'package:motus_lab/features/scan/data/repositories/protocol_repository.da
 import 'package:motus_lab/features/scan/data/repositories/vehicle_profile_repository.dart';
 import 'package:motus_lab/features/scan/domain/usecases/get_supported_pids.dart';
 import 'package:motus_lab/features/scan/domain/usecases/read_vin.dart';
+import 'package:motus_lab/features/scan/domain/repositories/log_repository.dart';
+import 'package:motus_lab/features/scan/domain/entities/log_record.dart';
+import 'package:motus_lab/features/scan/domain/entities/log_session.dart';
 
 part 'live_data_event.dart';
 part 'live_data_state.dart';
@@ -19,10 +22,10 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
   final ProtocolEngine _engine;
   final ConnectionInterface _connection;
   final ProtocolRepository _repository;
-  final VehicleProfileRepository
-      _profileRepository; // Keep for saveProfile (or create SaveUseCase later)
+  final VehicleProfileRepository _profileRepository;
   final GetSupportedPidsUseCase _getSupportedPids;
   final ReadVinUseCase _readVin;
+  final LogRepository _logRepository;
   Timer? _timer;
   List<Command> _activeCommands = [];
 
@@ -33,48 +36,48 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     required VehicleProfileRepository profileRepository,
     required GetSupportedPidsUseCase getSupportedPids,
     required ReadVinUseCase readVin,
+    LogRepository? logRepository, // Optional for backward compatibility/testing
   })  : _engine = engine,
         _connection = connection,
         _repository = repository,
         _profileRepository = profileRepository,
         _getSupportedPids = getSupportedPids,
         _readVin = readVin,
+        _logRepository = logRepository ??
+            _DebugLogRepository(), // Fallback if not injected (mostly test/debug)
         super(const LiveDataState()) {
     on<StartStreaming>(_onStartStreaming);
     on<StopStreaming>(_onStopStreaming);
     on<UpdateActiveCommands>(_onUpdateActiveCommands);
     on<NewDataReceived>(_onNewDataReceived);
     on<LoadProtocol>(_onLoadProtocol);
+    on<StartLogging>(_onStartLogging);
+    on<StopLogging>(_onStopLogging);
   }
 
   Future<void> _onStartStreaming(
       StartStreaming event, Emitter<LiveDataState> emit) async {
-    // Check if we need to discover PIDs (if event.commands is empty or explicitly requested)
-    // For now, if event.commands is passed (e.g. from UI selection), use it.
-    // If not, trigger discovery.
-
     List<Command> commandsToUse = event.commands;
 
     if (commandsToUse.isEmpty || commandsToUse.length <= 3) {
-      // Simple heuristic: if default list is small/empty, try discover
       emit(state.copyWith(isStreaming: true, isDiscovering: true));
 
-      // --- ระบบจดจำรถยนต์ (Vehicle Identity) และการทำ Caching ---
-      // [WORKFLOW STEP 1.2] Identity Check: อ่านค่า VIN -> เช็ค Profile ใน DB
       List<String> supportedKeyCodes = [];
       String? currentVin;
 
-      // 0. พยายามอ่านเลขตัวถัง (VIN) ก่อนเพื่อตรวจสอบว่ามีข้อมูลใน Cache หรือไม่
       try {
-        // อ่าน VIN ผ่าน UseCase
         currentVin = await _readVin(null);
       } catch (e) {
         print("Error reading VIN: $e");
       }
 
+      // Update VIN in state as soon as we have it
+      if (currentVin != null) {
+        emit(state.copyWith(vin: currentVin));
+      }
+
       bool cacheHit = false;
       if (currentVin != null) {
-        // ตรวจสอบข้อมูลใน Database
         final cachedPids = await _getSupportedPids(currentVin);
         if (cachedPids != null && cachedPids.isNotEmpty) {
           print("Cache HIT for VIN: $currentVin. Skipping discovery.");
@@ -84,61 +87,44 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       }
 
       if (!cacheHit) {
-        // [WORKFLOW STEP 1.3] Full Discovery: ถ้าไม่เคยเจอรถคันนี้ ให้สแกนหา PIDs ทั้งหมด
-        // Cache MISS -> เริ่มกระบวนการค้นหาเต็มรูปแบบ (Full Discovery)
         print("Cache MISS. Starting Full Discovery...");
-
-        // 1. Discovery Phase (ค้นหา PID ที่รถรองรับ)
-        // ตรวจสอบ PID 0100, 0120, 0140 เพื่อดู Bitmask
         await _checkSupportedPids("0100", supportedKeyCodes);
         await _checkSupportedPids("0120", supportedKeyCodes);
         await _checkSupportedPids("0140", supportedKeyCodes);
-
         print("Discovered PIDs: $supportedKeyCodes");
 
-        // บันทึกผลลัพธ์ลง Cache (Database)
         if (currentVin != null && supportedKeyCodes.isNotEmpty) {
           await _profileRepository.saveProfile(
             vin: currentVin,
-            protocol: "AUTO", // TODO: Get real protocol
+            protocol: "AUTO",
             supportedPids: supportedKeyCodes,
           );
         }
       }
 
-      // 2. Matching Phase (จับคู่ PID ที่เจอ กับ Command ที่เรามี)
       final allAvailable = _repository.getAllAvailablePids();
       commandsToUse = allAvailable.where((cmd) {
         return supportedKeyCodes.contains(cmd.code);
       }).toList();
 
-      // ถ้าไม่เจออะไรเลย (เช่น Mock หรือ Error) ให้ใช้ค่า Default ไปก่อน
       if (commandsToUse.isEmpty) {
         commandsToUse = _repository.getStandardPids();
       }
 
-      // อัพเดต State
       emit(state.copyWith(
           isDiscovering: false, supportedPidCodes: supportedKeyCodes));
     }
 
     _activeCommands = commandsToUse;
-    // Tell UI about the commands we are actually using
-    // Note: We might need a new state field for 'activeCommands' to update UI list
+    emit(state.copyWith(isStreaming: true, activeCommands: _activeCommands));
 
-    emit(state.copyWith(isStreaming: true));
-
-    // หยุด Timer เก่าถ้ามี
     _timer?.cancel();
 
     int tick = 0;
-    // --- Adaptive Discovery State ---
     final Map<String, int> _consecutiveErrors = {};
     final List<Command> _quarantinedCommands = [];
     const int _maxErrorsBeforeQuarantine = 5;
 
-    // ปรับ Base Loop ให้เร็วขึ้นเป็น 50ms เพื่อรองรับ High Priority
-    // [WORKFLOW STEP 2.1] Adaptive Polling Loop: วนลูปอ่านค่าตาม Active List
     _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) async {
       if (!_connection.isConnected) {
         add(StopStreaming());
@@ -148,44 +134,30 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       tick++;
       Map<String, double> updatedValues = Map.from(state.currentValues);
 
-      // --- Recovery Phase (Probing Quarantined PIDs) ---
-      // [WORKFLOW STEP 2.4] Probing: แอบลองถามใหม่เผื่อมันหายดีแล้ว (Recovery)
-      // ทุกๆ 200 ticks (~10 วินาที) ลองกู้คืน 1 PID
       if (tick % 200 == 0 && _quarantinedCommands.isNotEmpty) {
         final probeCmd = _quarantinedCommands.first;
-        print("Probing quarantined PID: ${probeCmd.name}...");
         try {
           final request = _engine.buildRequest(probeCmd);
           final response = await _connection.send(request);
           if (response.isNotEmpty) {
-            print("PID Recovered! Restoring ${probeCmd.name}");
             _quarantinedCommands.remove(probeCmd);
-            _activeCommands.add(probeCmd); // Add back to active
-            _consecutiveErrors[probeCmd.code] = 0; // Reset error
+            _activeCommands.add(probeCmd);
+            _consecutiveErrors[probeCmd.code] = 0;
           }
         } catch (e) {
-          print("Probe failed for ${probeCmd.name}. Keeping in quarantine.");
-          // Rotate to end of list to probe others next time
           _quarantinedCommands.remove(probeCmd);
           _quarantinedCommands.add(probeCmd);
         }
       }
 
-      // กรองคำสั่งที่จะส่งในรอบนี้ (Weighted Polling)
-      // [WORKFLOW STEP 2.2] Priority Management: แยกความถี่ตาม Priority (High=50ms, Low=2s)
       final commandsToPoll = _activeCommands.where((cmd) {
-        // Skip if quarantined (Safety check, though they should be removed from active)
         if (_quarantinedCommands.contains(cmd)) return false;
-
         switch (cmd.priority) {
           case CommandPriority.high:
-            // 50ms interval (Every tick)
             return true;
           case CommandPriority.normal:
-            // 500ms interval (Every 10 ticks)
             return tick % 10 == 0;
           case CommandPriority.low:
-            // 2000ms interval (Every 40 ticks)
             return tick % 40 == 0;
         }
       }).toList();
@@ -194,30 +166,19 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
 
       for (var cmd in commandsToPoll) {
         try {
-          // 1. สร้าง Request
           final request = _engine.buildRequest(cmd);
-          // 2. ส่งและรับ Response
-          // Note: อาจต้องระวังเรื่อง Queue ถ้ารับส่งไม่ทัน 50ms
           final response = await _connection.send(request);
-          // 3. แปลผล
           if (response.isNotEmpty) {
             final value = _engine.parseResponse(response, cmd.formula);
             updatedValues[cmd.name] = value;
-
-            // Success! Reset error count
             if (_consecutiveErrors.containsKey(cmd.code)) {
               _consecutiveErrors[cmd.code] = 0;
             }
           }
         } catch (e) {
-          // Adaptive logic: Increment error count
-          // [WORKFLOW STEP 2.3] Quarantine Logic: นับ Error Count
           int errors = (_consecutiveErrors[cmd.code] ?? 0) + 1;
           _consecutiveErrors[cmd.code] = errors;
-
           if (errors >= _maxErrorsBeforeQuarantine) {
-            print(
-                "Usage Warning: PID ${cmd.name} is unstable ($errors errors). Quarantining.");
             _activeCommands.remove(cmd);
             _quarantinedCommands.add(cmd);
           }
@@ -235,16 +196,13 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     try {
       final cmd = _repository.getCommandByCode(pidCode);
       if (cmd == null) return;
-
       final request = _engine.buildRequest(cmd);
       final response = await _connection.send(request);
       if (response.isNotEmpty) {
-        // Assuming 0100 means start at 0x00
         int startPid = int.parse(pidCode.substring(2), radix: 16);
         final pids = _engine.decodeSupportedPids(response, startPid);
         resultList.addAll(pids);
       }
-      // Small delay to prevent flooding
       await Future.delayed(const Duration(milliseconds: 50));
     } catch (e) {
       print("Discovery Error ($pidCode): $e");
@@ -255,32 +213,121 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       UpdateActiveCommands event, Emitter<LiveDataState> emit) {
     _activeCommands = event.newCommands;
     emit(state.copyWith(activeCommands: _activeCommands));
-    // ไม่ต้องทำอะไรเพิ่ม Timer รอบถัดไปจะเก็ตค่าใหม่เอง
   }
 
-  void _onStopStreaming(StopStreaming event, Emitter<LiveDataState> emit) {
+  Future<void> _onStopStreaming(
+      StopStreaming event, Emitter<LiveDataState> emit) async {
     _timer?.cancel();
-    emit(const LiveDataState(isStreaming: false));
+    if (state.isLogging) {
+      add(StopLogging());
+    }
+    emit(state.copyWith(isStreaming: false));
   }
 
+  Future<void> _onStartLogging(
+      StartLogging event, Emitter<LiveDataState> emit) async {
+    try {
+      final vin =
+          state.vin ?? "UNKNOWN_VIN_${DateTime.now().millisecondsSinceEpoch}";
+      final session = await _logRepository.startSession(vin);
+      emit(state.copyWith(isLogging: true, currentSessionId: session.id));
+    } catch (e) {
+      print("Start Logging Failed: $e");
+    }
+  }
+
+  Future<void> _onStopLogging(
+      StopLogging event, Emitter<LiveDataState> emit) async {
+    if (state.currentSessionId != null) {
+      await _logRepository.stopSession(state.currentSessionId!);
+    }
+    emit(state.copyWith(
+        isLogging: false,
+        currentSessionId:
+            null)); // Or keep session ID for review? Better null for next start.
+  }
+
+  // Handle data reception and logging
   void _onNewDataReceived(NewDataReceived event, Emitter<LiveDataState> emit) {
     emit(state.copyWith(currentValues: event.values));
+
+    // Logging Logic
+    if (state.isLogging &&
+        state.currentSessionId != null &&
+        event.values.isNotEmpty) {
+      final now = DateTime.now();
+      List<LogRecord> records = [];
+
+      // Find command defs for values to get units
+      // Optimization: Use a Map for O(1) lookup if activeCommands is large
+
+      for (var entry in event.values.entries) {
+        final cmd = _activeCommands.firstWhere((c) => c.name == entry.key,
+            orElse: () => Command(
+                name: entry.key,
+                code: "",
+                description: "Unknown",
+                formula: "",
+                unit: ""));
+
+        // Log only if valid command (optional) or just log everything
+        records.add(LogRecord(
+            sessionId: state.currentSessionId!,
+            timestamp: now,
+            pidName: entry.key,
+            value: entry.value,
+            unit: cmd.unit));
+      }
+
+      // Fire and forget save to avoid blocking UI?
+      // Or wait? LogRepository uses file append which is fast.
+      _logRepository.saveRecords(records);
+    }
   }
 
   Future<void> _onLoadProtocol(
       LoadProtocol event, Emitter<LiveDataState> emit) async {
-    emit(state.copyWith(isStreaming: false)); // Stop temporarily
+    emit(state.copyWith(isStreaming: false));
     _timer?.cancel();
-
     await _repository.loadProtocolPackFromAsset(event.assetPath);
-
-    // Trigger re-discovery with empty list
     add(const StartStreaming([]));
   }
 
   @override
   Future<void> close() {
     _timer?.cancel();
+    // Ensure we stop logging if bloc closes?
+    if (state.isLogging && state.currentSessionId != null) {
+      _logRepository.stopSession(state.currentSessionId!);
+    }
     return super.close();
   }
 }
+
+// Dummy repo for fallback/testing
+class _DebugLogRepository implements LogRepository {
+  @override
+  Future<void> deleteSession(int sessionId) async {}
+
+  @override
+  Future<List<LogRecord>> getRecords(int sessionId) async => [];
+
+  @override
+  Future<List<LogSession>> getSessions() async => [];
+
+  @override
+  Future<void> saveRecords(List<LogRecord> records) async {
+    print("DEBUG LOG: ${records.length} records");
+  }
+
+  @override
+  Future<LogSession> startSession(String vin) async {
+    print("DEBUG START LOGGING: $vin");
+    return LogSession(id: 999, vin: vin, startTime: DateTime.now());
+  }
+
+  @override
+  Future<void> stopSession(int sessionId) async {
+    print("DEBUG STOP LOGGING: $sessionId");
+  }
+} // Temporary Helper Class

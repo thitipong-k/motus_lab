@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
+import 'package:motus_lab/core/services/service_locator.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/dtc/dtc_bloc.dart';
 import 'package:motus_lab/core/widgets/motus_card.dart';
 import 'package:motus_lab/core/widgets/loading_indicator.dart';
 import 'package:motus_lab/core/widgets/empty_state.dart';
-// Note: Will implement injection later
 import 'package:motus_lab/features/scan/data/repositories/diagnostic_repository.dart';
 import 'package:get_it/get_it.dart';
+import 'package:motus_lab/features/reporting/domain/entities/report_entities.dart';
+import 'package:motus_lab/features/reporting/presentation/bloc/report_bloc.dart';
+import 'package:motus_lab/features/reporting/presentation/pages/report_preview_page.dart';
+import 'package:motus_lab/features/scan/domain/entities/dtc_result.dart';
 
 class DtcResultPage extends StatefulWidget {
   const DtcResultPage({super.key});
@@ -53,7 +57,16 @@ class _DtcResultPageState extends State<DtcResultPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("DIAGNOSTIC RESULTS")),
+      appBar: AppBar(
+        title: const Text("DIAGNOSTIC RESULTS"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            tooltip: "Generate Report",
+            onPressed: () => _generateReport(context),
+          ),
+        ],
+      ),
       body: BlocBuilder<DtcBloc, DtcState>(
         builder: (context, state) {
           if (state.codes.isEmpty) {
@@ -178,5 +191,80 @@ class _DtcResultPageState extends State<DtcResultPage> {
     if (score >= 80) return Colors.red;
     if (score >= 50) return Colors.orange;
     return Colors.green;
+  }
+
+  void _generateReport(BuildContext context) {
+    // Basic DTC List from Bloc state
+    // In real app, we need full entities. Mapping string codes to entities for now.
+    final state = context.read<DtcBloc>().state;
+    if (state.codes.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("No DTCs to report.")));
+      return;
+    }
+
+    final dtcList = state.codes
+        .map((c) => DtcResult(code: c, description: "Unknown - Check Database"))
+        .toList();
+
+    final report = DiagnosticReport(
+      id: "RPT-${DateTime.now().millisecondsSinceEpoch}",
+      vehicleVin:
+          "SIMULATED-VIN-123", // Should get from Live Data/Vehicle Profile
+      vehicleName: "Standard Vehicle",
+      timestamp: DateTime.now(),
+      dtcList: dtcList,
+      technicianName: "Admin", // Should get from User Profile in Settings
+    );
+
+    // Trigger Generation in ReportBloc
+    // We need to access ReportBloc. It is provided in DashboardPage or globally?
+    // It is registered in locator, so we can use BlocProvider.value or access via context if provided above.
+    // DashboardPage provides: ScanBloc, LiveDataBloc, DtcBloc.
+    // ReportBloc is NOT in DashboardPage providers yet. We should add it there or here.
+    // For now, let's use locator directly to show Preview Page wrapped in BlocProvider
+    // OR better, open Preview Page and let it handle generation?
+
+    // Approach: Open Preview Page, pass data, let it generate.
+    // Actually ReportBloc handles generation.
+    // Let's call Bloc here (assuming we add provider to Dashboard or here).
+
+    // Easier for now: Show loading, generate, then push preview.
+    // We can use a Dialog that provides the Bloc.
+
+    showDialog(
+      context: context,
+      builder: (ctx) => BlocProvider(
+        create: (context) =>
+            locator<ReportBloc>()..add(GenerateReportPdf(report)),
+        child: BlocConsumer<ReportBloc, ReportState>(
+          listener: (context, state) {
+            if (state.status == ReportStatus.success &&
+                state.generatedPdf != null) {
+              Navigator.pop(ctx); // Close loading dialog
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      ReportPreviewPage(pdfFile: state.generatedPdf!),
+                ),
+              );
+            }
+          },
+          builder: (context, state) {
+            return const AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text("Generating PDF..."),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 }

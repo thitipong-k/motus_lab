@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.8.2] - 2026-01-30
+
+### Added
+
+- **Professional Reporting**: Generate PDF reports with DTCs, Vehicle Info, and Shop Branding.
+- **Shop Settings**: Configure shop name, address, and logo for reports.
+- **PDF Preview**: View, print, and share diagnostic reports directly from the app.
+
+## [2.6.0] - 2025-01-31
+
+### Added
+
+- **Vehicle Topology (Phase 10)**:
+  - Dynamic CAN Bus scanning simulation.
+  - Interactive network map with node status (OK, Fault, Offline).
+  - Detailed ECU information dialog.
+- **Live Data Pro (Phase 7)**:
+  - Multi-series graphing support.
+  - Log recording with CSV export.
+  - Unit conversion system.
+
+## [2.5.1] - 2025-01-2930
+
+### Added
+
+- **Remote Expert**: Real-time chat interface with mock certified mechanics.
+- **ChatWidget**: Custom bubble chat UI with support for text messages.
+
 ## [0.8.1] - 2026-01-30
 
 ### Added

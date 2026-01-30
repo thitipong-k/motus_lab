@@ -2,9 +2,21 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
 
-class LiveDataGraph extends StatelessWidget {
+class GraphSeries {
   final String label;
   final List<FlSpot> points;
+  final Color color;
+
+  const GraphSeries({
+    required this.label,
+    required this.points,
+    required this.color,
+  });
+}
+
+class LiveDataGraph extends StatelessWidget {
+  final String title;
+  final List<GraphSeries> seriesList;
   final double minX;
   final double maxX;
   final double minY;
@@ -12,8 +24,8 @@ class LiveDataGraph extends StatelessWidget {
 
   const LiveDataGraph({
     super.key,
-    required this.label,
-    required this.points,
+    required this.title,
+    required this.seriesList,
     required this.minX,
     required this.maxX,
     required this.minY,
@@ -27,9 +39,16 @@ class LiveDataGraph extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 16, bottom: 8),
-          child: Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              if (seriesList.length > 1) _buildLegend(),
+            ],
           ),
         ),
         SizedBox(
@@ -55,24 +74,46 @@ class LiveDataGraph extends StatelessWidget {
               maxX: maxX,
               minY: minY,
               maxY: maxY,
-              lineBarsData: [
-                LineChartBarData(
-                  spots: points,
-                  isCurved: true,
-                  color: AppColors.primary,
-                  barWidth: 3,
-                  isStrokeCapRound: true,
-                  dotData: const FlDotData(show: false),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    color: AppColors.primary.withOpacity(0.1),
-                  ),
-                ),
-              ],
+              lineBarsData: seriesList
+                  .map((series) => LineChartBarData(
+                        spots: series.points,
+                        isCurved: true,
+                        color: series.color,
+                        barWidth: 3,
+                        isStrokeCapRound: true,
+                        dotData: const FlDotData(show: false),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: series.color.withOpacity(0.1),
+                        ),
+                      ))
+                  .toList(),
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildLegend() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: seriesList.map((s) {
+        return Padding(
+          padding: const EdgeInsets.only(left: 8.0),
+          child: Row(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                color: s.color,
+              ),
+              const SizedBox(width: 4),
+              Text(s.label, style: const TextStyle(fontSize: 12)),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

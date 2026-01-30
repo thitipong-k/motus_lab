@@ -13,7 +13,14 @@ class LiveDataState extends Equatable {
     this.isDiscovering = false,
     this.supportedPidCodes = const [],
     this.activeCommands = const [],
+    this.isLogging = false,
+    this.currentSessionId,
+    this.vin,
   });
+
+  final bool isLogging;
+  final int? currentSessionId;
+  final String? vin;
 
   LiveDataState copyWith({
     Map<String, double>? currentValues,
@@ -21,6 +28,9 @@ class LiveDataState extends Equatable {
     bool? isDiscovering,
     List<String>? supportedPidCodes,
     List<Command>? activeCommands,
+    bool? isLogging,
+    int? currentSessionId,
+    String? vin,
   }) {
     return LiveDataState(
       currentValues: currentValues ?? this.currentValues,
@@ -28,6 +38,9 @@ class LiveDataState extends Equatable {
       isDiscovering: isDiscovering ?? this.isDiscovering,
       supportedPidCodes: supportedPidCodes ?? this.supportedPidCodes,
       activeCommands: activeCommands ?? this.activeCommands,
+      isLogging: isLogging ?? this.isLogging,
+      currentSessionId: currentSessionId ?? this.currentSessionId,
+      vin: vin ?? this.vin,
     );
   }
 
@@ -37,6 +50,9 @@ class LiveDataState extends Equatable {
         isStreaming,
         isDiscovering,
         supportedPidCodes,
-        activeCommands
+        activeCommands,
+        isLogging,
+        currentSessionId,
+        vin,
       ];
 }

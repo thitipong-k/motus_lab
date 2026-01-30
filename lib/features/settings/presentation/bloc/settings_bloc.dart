@@ -28,7 +28,11 @@ class UpdateConnectionTimeout extends SettingsEvent {
   const UpdateConnectionTimeout(this.seconds);
 }
 
-// --- State ---
+class UpdateUnitSystem extends SettingsEvent {
+  final UnitSystem unitSystem;
+  const UpdateUnitSystem(this.unitSystem);
+}
+
 class SettingsState extends Equatable {
   final Settings settings;
   final bool isLoading;
@@ -71,6 +75,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<UpdateTheme>(_onUpdateTheme);
     on<UpdateAutoConnect>(_onUpdateAutoConnect);
     on<UpdateConnectionTimeout>(_onUpdateConnectionTimeout);
+    on<UpdateUnitSystem>(_onUpdateUnitSystem);
   }
 
   Future<void> _onLoadSettings(
@@ -97,6 +102,13 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       UpdateConnectionTimeout event, Emitter<SettingsState> emit) async {
     final newSettings =
         state.settings.copyWith(connectionTimeoutSeconds: event.seconds);
+    await _repository.saveSettings(newSettings);
+    emit(state.copyWith(settings: newSettings));
+  }
+
+  Future<void> _onUpdateUnitSystem(
+      UpdateUnitSystem event, Emitter<SettingsState> emit) async {
+    final newSettings = state.settings.copyWith(unitSystem: event.unitSystem);
     await _repository.saveSettings(newSettings);
     emit(state.copyWith(settings: newSettings));
   }

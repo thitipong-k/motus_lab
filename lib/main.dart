@@ -10,6 +10,11 @@ import 'package:motus_lab/core/services/service_locator.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/core/theme/theme_cubit.dart';
 import 'package:motus_lab/core/theme/app_style.dart';
+import 'package:motus_lab/features/settings/presentation/bloc/settings_bloc.dart';
+import 'package:motus_lab/features/scan/presentation/bloc/scan_bloc.dart';
+import 'package:motus_lab/features/scan/presentation/bloc/live_data/live_data_bloc.dart';
+import 'package:motus_lab/features/scan/presentation/bloc/dtc/dtc_bloc.dart';
+import 'package:motus_lab/features/reporting/presentation/bloc/report_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,20 +62,27 @@ class MotusApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      // สร้าง ThemeCubit เพื่อจัดการ State ของธีมที่เลือก
-      create: (context) => ThemeCubit(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => ThemeCubit()),
+        BlocProvider(
+            create: (_) => locator<SettingsBloc>()..add(LoadSettings())),
+        BlocProvider(create: (_) => locator<ScanBloc>()),
+        BlocProvider(create: (_) => locator<LiveDataBloc>()),
+        BlocProvider(create: (_) => locator<DtcBloc>()),
+        BlocProvider(create: (_) => locator<ReportBloc>()),
+      ],
       child: BlocBuilder<ThemeCubit, AppStyle>(
-        // เมื่อ State เปลี่ยน (เปลี่ยนธีม) UI จะ rebuild ใหม่ด้วย getTheme(style)
         builder: (context, style) {
+          // Listen to Settings to update ThemeCubit if needed (optional sync)
+          // For now, Settings Page updates ThemeCubit directly.
+
           return MaterialApp(
             title: 'Motus Lab',
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             debugShowCheckedModeBanner: false,
-            // Use configured themes dynamically
             theme: AppTheme.getTheme(style),
-            // Force Light mode logic because the theme itself defines brightness
             themeMode: ThemeMode.light,
             home: const DashboardPage(),
           );

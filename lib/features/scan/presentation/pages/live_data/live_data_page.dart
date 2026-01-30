@@ -6,6 +6,8 @@ import 'package:motus_lab/core/services/service_locator.dart';
 import 'package:motus_lab/domain/entities/command.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/live_data/live_data_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/pages/live_data/pid_selection_page.dart';
+import 'package:motus_lab/features/settings/presentation/bloc/settings_bloc.dart';
+import 'package:motus_lab/features/settings/domain/entities/settings.dart';
 import 'package:motus_lab/core/utils/unit_converter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/graphs/live_data_graph.dart';
@@ -24,8 +26,17 @@ class LiveDataPage extends StatefulWidget {
 }
 
 class _LiveDataPageState extends State<LiveDataPage> {
-  bool _useImperial = false;
+  // bool _useImperial = false; // Removed in favor of Global Settings
   ViewMode _viewMode = ViewMode.gauge;
+  bool _isCombinedGraph = false;
+
+  final List<Color> _seriesColors = [
+    AppColors.primary,
+    Colors.redAccent,
+    Colors.greenAccent,
+    Colors.orangeAccent,
+    Colors.purpleAccent
+  ];
 
   // เก็บประวัติข้อมูลสำหรับกราฟ (Key = Command Name)
   final Map<String, List<FlSpot>> _dataHistory = {};
@@ -81,18 +92,51 @@ class _LiveDataPageState extends State<LiveDataPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch SettingsBloc for Unit System changes
+    final settingsState = context.watch<SettingsBloc>().state;
+    final useImperial =
+        settingsState.settings.unitSystem == UnitSystem.imperial;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("LIVE DATA"),
         actions: [
-          // Unit Toggle
+          // Record Button
+          BlocBuilder<LiveDataBloc, LiveDataState>(
+            buildWhen: (previous, current) =>
+                previous.isLogging != current.isLogging ||
+                previous.activeCommands.length != current.activeCommands.length,
+            builder: (context, state) {
+              return IconButton(
+                icon: Icon(
+                  state.isLogging
+                      ? Icons.stop_circle
+                      : Icons.fiber_manual_record,
+                  color: state.isLogging ? Colors.red : null,
+                ),
+                tooltip: state.isLogging ? "Stop Recording" : "Start Recording",
+                onPressed: () {
+                  if (state.isLogging) {
+                    context.read<LiveDataBloc>().add(StopLogging());
+                  } else {
+                    if (state.activeCommands.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text("No active PIDs to record!")));
+                      return;
+                    }
+                    context.read<LiveDataBloc>().add(StartLogging());
+                  }
+                },
+              );
+            },
+          ),
+          // Unit Toggle (Updates Global Settings)
           TextButton(
             onPressed: () {
-              setState(() {
-                _useImperial = !_useImperial;
-              });
+              context.read<SettingsBloc>().add(UpdateUnitSystem(
+                  useImperial ? UnitSystem.metric : UnitSystem.imperial));
             },
-            child: Text(_useImperial ? "IMP" : "MET",
+            child: Text(useImperial ? "IMP" : "MET",
                 style: const TextStyle(
                     color: AppColors.primary, fontWeight: FontWeight.bold)),
           ),
@@ -102,6 +146,17 @@ class _LiveDataPageState extends State<LiveDataPage> {
             tooltip: "Switch View (Graph / Gauge)",
             onPressed: _cycleViewMode,
           ),
+          if (_viewMode == ViewMode.graph)
+            IconButton(
+              icon:
+                  Icon(_isCombinedGraph ? Icons.merge_type : Icons.call_split),
+              tooltip: _isCombinedGraph ? "Split Graphs" : "Combine Graphs",
+              onPressed: () {
+                setState(() {
+                  _isCombinedGraph = !_isCombinedGraph;
+                });
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
             tooltip: "Export PDF Report",
@@ -161,9 +216,9 @@ class _LiveDataPageState extends State<LiveDataPage> {
 
           switch (_viewMode) {
             case ViewMode.graph:
-              return _buildGraphView(state.activeCommands);
+              return _buildGraphView(state.activeCommands, useImperial);
             case ViewMode.gauge:
-              return _buildGaugeView(state, state.activeCommands);
+              return _buildGaugeView(state, state.activeCommands, useImperial);
           }
         },
       ),
@@ -191,7 +246,86 @@ class _LiveDataPageState extends State<LiveDataPage> {
     }
   }
 
-  Widget _buildGraphView(List<Command> activeCommands) {
+  // ... inside LiveDataPage
+
+  // ... (existing code)
+
+  Widget _buildGraphView(List<Command> activeCommands, bool useImperial) {
+    if (activeCommands.isEmpty) return const SizedBox();
+
+    if (_isCombinedGraph) {
+      // Build ONE graph with all series
+      List<GraphSeries> seriesList = [];
+      double overallMinX = double.infinity;
+      double overallMaxX = double.negativeInfinity;
+      double overallMinY = double.infinity;
+      double overallMaxY = double.negativeInfinity;
+
+      for (int i = 0; i < activeCommands.length; i++) {
+        final cmd = activeCommands[i];
+        final rawPoints = _dataHistory[cmd.name] ?? [];
+        if (rawPoints.isEmpty) continue;
+
+        // Convert points
+        final displayPoints = rawPoints.map((p) {
+          double val = p.y;
+          if (useImperial) {
+            if (cmd.unit == "km/h")
+              val = UnitConverter.kmhToMph(val);
+            else if (cmd.unit == "°C")
+              val = UnitConverter.celsiusToFahrenheit(val);
+            else if (cmd.unit == "kPa")
+              val = UnitConverter.kpaToPsi(val);
+            else if (cmd.unit == "g/s")
+              val = UnitConverter.gramsPerSecToLbsPerMin(val);
+          }
+          return FlSpot(p.x, val);
+        }).toList();
+
+        // Update Min/Max
+        if (displayPoints.first.x < overallMinX)
+          overallMinX = displayPoints.first.x;
+        if (displayPoints.last.x > overallMaxX)
+          overallMaxX = displayPoints.last.x;
+
+        double localMinY =
+            displayPoints.map((p) => p.y).reduce((a, b) => a < b ? a : b);
+        double localMaxY =
+            displayPoints.map((p) => p.y).reduce((a, b) => a > b ? a : b);
+        if (localMinY < overallMinY) overallMinY = localMinY;
+        if (localMaxY > overallMaxY) overallMaxY = localMaxY;
+
+        seriesList.add(GraphSeries(
+          label: cmd.name,
+          points: displayPoints,
+          color: _seriesColors[i % _seriesColors.length],
+        ));
+      }
+
+      if (seriesList.isEmpty) return const SizedBox();
+
+      // Pad Y axis
+      overallMinY = (overallMinY - 5).floorToDouble();
+      overallMaxY = (overallMaxY + 5).ceilToDouble();
+      if (overallMinY < 0) overallMinY = 0;
+
+      return MotusCard(
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: LiveDataGraph(
+            title: "Combined Graph",
+            seriesList: seriesList,
+            minX: overallMinX,
+            maxX: overallMaxX,
+            minY: overallMinY,
+            maxY: overallMaxY,
+          ),
+        ),
+      );
+    }
+
+    // Separate Graphs (Old Behavior)
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: activeCommands.length,
@@ -202,7 +336,7 @@ class _LiveDataPageState extends State<LiveDataPage> {
         // Convert points for display
         final displayPoints = rawPoints.map((p) {
           double val = p.y;
-          if (_useImperial) {
+          if (useImperial) {
             if (cmd.unit == "km/h")
               val = UnitConverter.kmhToMph(val);
             else if (cmd.unit == "°C")
@@ -233,9 +367,14 @@ class _LiveDataPageState extends State<LiveDataPage> {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: LiveDataGraph(
-              label:
-                  "${cmd.name} (${_useImperial && cmd.unit == '°C' ? '°F' : (_useImperial && cmd.unit == 'km/h' ? 'mph' : cmd.unit)})",
-              points: displayPoints,
+              title:
+                  "${cmd.name} (${useImperial && cmd.unit == '°C' ? '°F' : (useImperial && cmd.unit == 'km/h' ? 'mph' : cmd.unit)})",
+              seriesList: [
+                GraphSeries(
+                    label: cmd.name,
+                    points: displayPoints,
+                    color: AppColors.primary)
+              ],
               minX: displayPoints.first.x,
               maxX: displayPoints.last.x,
               minY: minY,
@@ -247,7 +386,8 @@ class _LiveDataPageState extends State<LiveDataPage> {
     );
   }
 
-  Widget _buildGaugeView(LiveDataState state, List<Command> activeCommands) {
+  Widget _buildGaugeView(
+      LiveDataState state, List<Command> activeCommands, bool useImperial) {
     // ใช้ GridView สำหรับแสดงเกจหลายๆ ตัว
     return GridView.builder(
       padding: const EdgeInsets.all(16),
@@ -268,7 +408,7 @@ class _LiveDataPageState extends State<LiveDataPage> {
         double min = cmd.min;
         double max = cmd.max;
 
-        if (_useImperial) {
+        if (useImperial) {
           if (unit == "km/h") {
             value = UnitConverter.kmhToMph(rawValue);
             unit = "mph";

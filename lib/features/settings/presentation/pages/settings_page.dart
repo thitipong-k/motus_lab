@@ -4,19 +4,16 @@ import 'package:motus_lab/core/services/service_locator.dart';
 import 'package:motus_lab/core/services/report_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/core/theme/app_style.dart';
-import 'package:motus_lab/features/reports/presentation/widgets/shop_branding_form.dart';
 import 'package:motus_lab/features/settings/presentation/bloc/settings_bloc.dart';
+import 'package:motus_lab/features/reporting/presentation/pages/report_settings_dialog.dart';
+import 'package:motus_lab/features/settings/domain/entities/settings.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Wrap with BlocProvider to ensure we have the SettingsBloc
-    return BlocProvider(
-      create: (context) => locator<SettingsBloc>()..add(LoadSettings()),
-      child: const _SettingsView(),
-    );
+    return const _SettingsView();
   }
 }
 
@@ -107,10 +104,18 @@ class _SettingsView extends StatelessWidget {
               const Text("Workshop Branding",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 16),
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: ShopBrandingForm(),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.store, color: AppColors.primary),
+                  title: const Text("Shop Information"),
+                  subtitle: const Text("Configure Name, Address, Tax ID"),
+                  trailing: const Icon(Icons.edit),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => const ReportSettingsDialog(),
+                    );
+                  },
                 ),
               ),
 
@@ -128,6 +133,22 @@ class _SettingsView extends StatelessWidget {
                 subtitle: Text(settings.theme.displayName),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _showThemeSelector(context, settings.theme),
+              ),
+
+              // Unit System
+              ListTile(
+                leading: const Icon(Icons.straighten),
+                title: const Text("Unit System"),
+                subtitle: Text(settings.unitSystem == UnitSystem.metric
+                    ? "Metric"
+                    : "Imperial"),
+                trailing: Switch(
+                  value: settings.unitSystem == UnitSystem.imperial,
+                  onChanged: (isImperial) {
+                    context.read<SettingsBloc>().add(UpdateUnitSystem(
+                        isImperial ? UnitSystem.imperial : UnitSystem.metric));
+                  },
+                ),
               ),
 
               const ListTile(

@@ -30,6 +30,12 @@ import 'package:motus_lab/features/crm/presentation/bloc/crm_bloc.dart';
 import 'package:motus_lab/features/remote/domain/repositories/remote_repository.dart';
 import 'package:motus_lab/features/remote/data/repositories/remote_repository_impl.dart';
 import 'package:motus_lab/features/remote/presentation/bloc/remote_bloc.dart';
+import 'package:motus_lab/features/reporting/domain/repositories/report_repository.dart';
+import 'package:motus_lab/features/reporting/data/repositories/report_repository_impl.dart';
+import 'package:motus_lab/features/reporting/data/services/pdf_generator_service.dart';
+import 'package:motus_lab/features/reporting/presentation/bloc/report_bloc.dart';
+import 'package:motus_lab/features/scan/domain/repositories/log_repository.dart';
+import 'package:motus_lab/features/scan/data/repositories/log_repository_impl.dart';
 
 final locator = GetIt.instance;
 
@@ -81,6 +87,7 @@ Future<void> setupLocator() async {
         profileRepository: locator<VehicleProfileRepository>(),
         getSupportedPids: locator<GetSupportedPidsUseCase>(),
         readVin: locator<ReadVinUseCase>(),
+        logRepository: locator<LogRepository>(),
       ));
 
   locator.registerFactory(() => DtcBloc(
@@ -106,7 +113,19 @@ Future<void> setupLocator() async {
       .registerLazySingleton<CrmRepository>(() => CrmRepositoryImpl(locator()));
   locator.registerFactory(() => CrmBloc(locator()));
 
+  // 7.1 Data Logging (Phase 7)
+  locator.registerLazySingleton<LogRepository>(() => LogRepositoryImpl());
+
   // 8. Remote Expert (Phase 5 Part 2)
   locator.registerLazySingleton<RemoteRepository>(() => RemoteRepositoryImpl());
   locator.registerFactory(() => RemoteBloc(locator()));
+
+  // 9. Professional Reporting (Phase 6)
+  locator
+      .registerLazySingleton<PdfGeneratorService>(() => PdfGeneratorService());
+  locator.registerLazySingleton<ReportRepository>(() => ReportRepositoryImpl(
+        pdfService: locator(),
+        prefs: locator(),
+      ));
+  locator.registerFactory(() => ReportBloc(locator()));
 }

@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:motus_lab/core/theme/app_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/live_data/live_data_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/graphs/live_data_graph.dart';
@@ -97,8 +98,14 @@ class _GraphAnalysisPageState extends State<GraphAnalysisPage> {
                   else if (cmd.unit == "kPa") maxY = 255;
 
                   return LiveDataGraph(
-                    label: cmd.name.toUpperCase(),
-                    points: List.from(points),
+                    title: cmd.name.toUpperCase(),
+                    seriesList: [
+                      GraphSeries(
+                        label: cmd.name.toUpperCase(),
+                        points: List.from(points),
+                        color: AppColors.primary,
+                      ),
+                    ],
                     minX: minX,
                     maxX: maxX,
                     minY: 0,

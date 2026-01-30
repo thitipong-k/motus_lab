@@ -37,6 +37,12 @@ class NewDataReceived extends LiveDataEvent {
   List<Object> get props => [values];
 }
 
+/// Start logging session
+class StartLogging extends LiveDataEvent {}
+
+/// Stop logging session
+class StopLogging extends LiveDataEvent {}
+
 /// โหลด Protocol Pack จาก Asset (สำหรับการทดสอบ)
 class LoadProtocol extends LiveDataEvent {
   final String assetPath;
