@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.8.0] - 2026-01-30
+
+### Added
+
+- **CRM Module**: Complete Customer Relationship Management system (Database, Domain, UI).
+- **Customers Table**: Drift database table for storing customer info.
+- **Vehicle Linking**: Ability to associate vehicles with customers.
+- **Web Support Fix**: Resolved platform crash on web by adding kIsWeb checks.
+
+### Changed
+
+- **MotusButton**: Fixed parameter error (removed width/height).
+- **Documentation**: Added Thai comments to core workflow files.
+
 ## [0.7.1] - 2026-01-30
 
 ### Documentation

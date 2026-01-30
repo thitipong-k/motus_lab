@@ -1,120 +1,111 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:motus_lab/core/services/service_locator.dart';
+import 'package:motus_lab/core/widgets/loading_indicator.dart';
+import 'package:motus_lab/core/widgets/motus_card.dart';
+import 'package:motus_lab/core/widgets/empty_state.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
-import 'package:motus_lab/features/crm/domain/models/customer.dart';
+import 'package:motus_lab/features/crm/presentation/bloc/crm_bloc.dart';
+import 'package:motus_lab/features/crm/presentation/pages/customer_detail_page.dart';
+import 'package:motus_lab/features/crm/presentation/widgets/customer_form_dialog.dart';
 
-/// หน้าจอจัดการรายชื่อลูกค้า (Customer List)
 class CustomerListPage extends StatelessWidget {
   const CustomerListPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // ข้อมูลลูกค้าจำลอง
-    final List<Customer> _customers = [
-      const Customer(
-          id: "C001",
-          name: "สมชาย รักรถ",
-          phone: "081-222-3333",
-          email: "somchai@email.com"),
-      const Customer(
-          id: "C002",
-          name: "วิภา แซ่แต้",
-          phone: "089-999-8888",
-          email: "wipa@email.com"),
-      const Customer(
-          id: "C003",
-          name: "John Doe",
-          phone: "085-555-4444",
-          email: "john@email.com"),
-    ];
+    // [WORKFLOW] CRM: เริ่มต้นโหลดข้อมูลลูกค้าเมื่อเข้ามาหน้านี้
+    // ใช้ BlocProvider เพื่อ inject CrmBloc เข้าสู่ Widget Tree
+    return BlocProvider(
+      create: (context) => locator<CrmBloc>()..add(const LoadCustomers()),
+      child: const _CustomerListView(),
+    );
+  }
+}
 
+class _CustomerListView extends StatelessWidget {
+  const _CustomerListView();
+
+  void _showAddDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const CustomerFormDialog(),
+    ).then((result) {
+      if (result == true) {
+        // Bloc handles reload internally on AddCustomer event success in dialog
+        // or we can trigger reload here if needed.
+        // Actually, the dialog should add the event to the bloc.
+        // But the dialog needs access to the Bloc.
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("WORKSHOP CRM"),
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _customers.length,
-        itemBuilder: (context, index) {
-          final customer = _customers[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: AppColors.primary,
-                child: Icon(Icons.person, color: Colors.black),
-              ),
-              title: Text(customer.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text("📞 ${customer.phone}"),
-              trailing: const Icon(Icons.history),
-              onTap: () => _showJobHistory(context, customer),
-            ),
-          );
-        },
+        title: const Text("CUSTOMERS"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              // TODO: Implement Search
+            },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {}, // เพิ่มลูกค้ารายใหม่ (จะทำในอนาคต)
+        onPressed: () => _showAddDialog(context),
         backgroundColor: AppColors.primary,
-        child: const Icon(Icons.person_add),
+        child: const Icon(Icons.add, color: Colors.black),
       ),
-    );
-  }
+      body: BlocBuilder<CrmBloc, CrmState>(
+        builder: (context, state) {
+          if (state is CrmLoading) {
+            return const LoadingIndicator(message: "Loading Customers...");
+          } else if (state is CrmError) {
+            return Center(child: Text("Error: ${state.message}"));
+          } else if (state is CrmLoaded) {
+            if (state.customers.isEmpty) {
+              return const EmptyState(
+                icon: Icons.people_outline,
+                message: "No customers found. Add a new customer.",
+              );
+            }
 
-  /// แสดงหน้าต่างประวัติการซ่อมของลูกค้าแต่ละราย
-  void _showJobHistory(BuildContext context, Customer customer) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("ประวัติของ ${customer.name}",
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView(
-                  children: [
-                    _buildHistoryItem("24/01/2026", "Honda Civic",
-                        "DTC: P0101 - MAF Sensor", 1200),
-                    const Divider(),
-                    _buildHistoryItem("10/12/2025", "Honda Civic",
-                        "Oil Reset & Brake Check", 800),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildHistoryItem(
-      String date, String car, String detail, double cost) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(date,
-                  style: const TextStyle(color: Colors.grey, fontSize: 12)),
-              Text("${cost.toStringAsFixed(0)} บาท",
-                  style: const TextStyle(color: AppColors.primary)),
-            ],
-          ),
-          Text(car, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(detail,
-              style: const TextStyle(color: Colors.white70, fontSize: 13)),
-        ],
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: state.customers.length,
+              itemBuilder: (context, index) {
+                final customer = state.customers[index];
+                return MotusCard(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            CustomerDetailPage(customer: customer),
+                      ),
+                    );
+                  },
+                  child: ListTile(
+                    leading: const CircleAvatar(
+                      backgroundColor: AppColors.background,
+                      child: Icon(Icons.person, color: AppColors.primary),
+                    ),
+                    title: Text(customer.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(customer.phone ?? "No phone"),
+                    trailing:
+                        const Icon(Icons.chevron_right, color: Colors.grey),
+                  ),
+                );
+              },
+            );
+          }
+          return const SizedBox.shrink();
+        },
       ),
     );
   }

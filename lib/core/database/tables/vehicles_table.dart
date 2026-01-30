@@ -9,6 +9,9 @@ class Vehicles extends Table {
   TextColumn get protocol =>
       text().nullable()(); // Saved protocol (e.g. ISO 15765-4)
 
+  // CRM Integration
+  IntColumn get customerId => integer().nullable()();
+
   // Offline Sync Columns
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();

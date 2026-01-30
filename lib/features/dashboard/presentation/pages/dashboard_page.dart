@@ -30,17 +30,17 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
-      const ConnectionPage(), // Tab 0: Connect
-      const LiveDataPage(), // Tab 1: Dashboard
-      const TopologyPage(), // Tab 2: Topology
-      const FreezeFramePage(), // Tab 3: Freeze Frame
-      const MaintenancePage(), // Tab 4: Service (Maintenance)
-      const CustomerListPage(), // Tab 5: CRM
-      const RemoteExpertPage(), // Tab 6: Remote (Phase 5)
-      const WalletPage(), // Tab 7: Wallet (Phase 5)
-      const AdaptationPage(), // Tab 8: Coding
-      const SnifferPage(), // Tab 9: Sniffer
-      const SettingsPage(), // Tab 10: Settings
+      const ConnectionPage(), // Tab 0: Connect (หน้าเขื่อมต่ออุปกรณ์)
+      const LiveDataPage(), // Tab 1: Dashboard (หน้าแสดงผลวัดค่าสด)
+      const TopologyPage(), // Tab 2: Topology (แผนผังโครงสร้างรถยนต์)
+      const FreezeFramePage(), // Tab 3: Freeze Frame (ดูค่าแช่แข็งเมื่อเกิด Error)
+      const MaintenancePage(), // Tab 4: Service (แจ้งเตือนเช็คระยะ)
+      const CustomerListPage(), // Tab 5: CRM (ระบบจัดการลูกค้า - Phase 5)
+      const RemoteExpertPage(), // Tab 6: Remote (ระบบ Expert ทางไกล - Phase 5)
+      const WalletPage(), // Tab 7: Wallet (กระเป๋าเงินเครดิต)
+      const AdaptationPage(), // Tab 8: Coding (ปรับแต่งค่า ECU)
+      const SnifferPage(), // Tab 9: Sniffer (ดักจับสัญญาณ CAN Bus)
+      const SettingsPage(), // Tab 10: Settings (ตั้งค่าแอป)
     ];
 
     return MultiBlocProvider(

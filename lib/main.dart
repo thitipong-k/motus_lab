@@ -1,4 +1,5 @@
 import 'dart:io'; // For Platform check
+import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/services.dart'; // For SystemChrome
 import 'package:window_manager/window_manager.dart'; // For Desktop
 import 'package:flutter/material.dart';
@@ -13,11 +14,13 @@ import 'package:motus_lab/core/theme/app_style.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // เริ่มต้นระบบ Service Locator
+  // [WORKFLOW STEP 0] Initialization: เริ่มต้นระบบและลงทะเบียน Dependencies
+  // โหลด Service Locator (GetIt) เพื่อเตรียมพร้อม injection ทั่วทั้งแอป
+  // และ Register Factory/Singleton ของ Bloc และ Repository ต่างๆ
   await setupLocator();
 
   // --- 1. Mobile: Immersive Mode ---
-  if (Platform.isAndroid || Platform.isIOS) {
+  if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
     // Hide Status Bar & Nav Bar
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     // Optional: Lock Orientation
@@ -28,7 +31,7 @@ void main() async {
   }
 
   // --- 2. Desktop: Full Screen ---
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
     await windowManager.ensureInitialized();
 
     WindowOptions windowOptions = const WindowOptions(

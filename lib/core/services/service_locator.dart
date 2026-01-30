@@ -24,6 +24,9 @@ import 'package:motus_lab/features/settings/presentation/bloc/settings_bloc.dart
 import 'package:motus_lab/features/maintenance/domain/repositories/maintenance_repository.dart';
 import 'package:motus_lab/features/maintenance/data/repositories/maintenance_repository_impl.dart';
 import 'package:motus_lab/features/maintenance/presentation/bloc/maintenance_bloc.dart';
+import 'package:motus_lab/features/crm/domain/repositories/crm_repository.dart';
+import 'package:motus_lab/features/crm/data/repositories/crm_repository_impl.dart';
+import 'package:motus_lab/features/crm/presentation/bloc/crm_bloc.dart';
 
 final locator = GetIt.instance;
 
@@ -92,4 +95,11 @@ Future<void> setupLocator() async {
   locator.registerLazySingleton<MaintenanceRepository>(
       () => MaintenanceRepositoryImpl(locator()));
   locator.registerFactory(() => MaintenanceBloc(locator()));
+
+  // 7. CRM Feature (Phase 5)
+  // ลงทะเบียน Repository และ Bloc สำหรับระบบจัดการลูกค้า (CRM)
+  // ให้สามารถเรียกใช้ได้จากหน้าจอต่างๆ ผ่าน Service Locator
+  locator
+      .registerLazySingleton<CrmRepository>(() => CrmRepositoryImpl(locator()));
+  locator.registerFactory(() => CrmBloc(locator()));
 }

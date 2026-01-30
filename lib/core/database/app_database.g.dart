@@ -45,6 +45,12 @@ class $VehiclesTable extends Vehicles with TableInfo<$VehiclesTable, Vehicle> {
   late final GeneratedColumn<String> protocol = GeneratedColumn<String>(
       'protocol', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _customerIdMeta =
+      const VerificationMeta('customerId');
+  @override
+  late final GeneratedColumn<int> customerId = GeneratedColumn<int>(
+      'customer_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _isSyncedMeta =
       const VerificationMeta('isSynced');
   @override
@@ -74,8 +80,18 @@ class $VehiclesTable extends Vehicles with TableInfo<$VehiclesTable, Vehicle> {
           GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
       defaultValue: const Constant(false));
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, vin, make, model, year, protocol, isSynced, updatedAt, isDeleted];
+  List<GeneratedColumn> get $columns => [
+        id,
+        vin,
+        make,
+        model,
+        year,
+        protocol,
+        customerId,
+        isSynced,
+        updatedAt,
+        isDeleted
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -111,6 +127,12 @@ class $VehiclesTable extends Vehicles with TableInfo<$VehiclesTable, Vehicle> {
       context.handle(_protocolMeta,
           protocol.isAcceptableOrUnknown(data['protocol']!, _protocolMeta));
     }
+    if (data.containsKey('customer_id')) {
+      context.handle(
+          _customerIdMeta,
+          customerId.isAcceptableOrUnknown(
+              data['customer_id']!, _customerIdMeta));
+    }
     if (data.containsKey('is_synced')) {
       context.handle(_isSyncedMeta,
           isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta));
@@ -144,6 +166,8 @@ class $VehiclesTable extends Vehicles with TableInfo<$VehiclesTable, Vehicle> {
           .read(DriftSqlType.int, data['${effectivePrefix}year']),
       protocol: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}protocol']),
+      customerId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}customer_id']),
       isSynced: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_synced'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -166,6 +190,7 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
   final String? model;
   final int? year;
   final String? protocol;
+  final int? customerId;
   final bool isSynced;
   final DateTime updatedAt;
   final bool isDeleted;
@@ -176,6 +201,7 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
       this.model,
       this.year,
       this.protocol,
+      this.customerId,
       required this.isSynced,
       required this.updatedAt,
       required this.isDeleted});
@@ -196,6 +222,9 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
     if (!nullToAbsent || protocol != null) {
       map['protocol'] = Variable<String>(protocol);
     }
+    if (!nullToAbsent || customerId != null) {
+      map['customer_id'] = Variable<int>(customerId);
+    }
     map['is_synced'] = Variable<bool>(isSynced);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['is_deleted'] = Variable<bool>(isDeleted);
@@ -213,6 +242,9 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
       protocol: protocol == null && nullToAbsent
           ? const Value.absent()
           : Value(protocol),
+      customerId: customerId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customerId),
       isSynced: Value(isSynced),
       updatedAt: Value(updatedAt),
       isDeleted: Value(isDeleted),
@@ -229,6 +261,7 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
       model: serializer.fromJson<String?>(json['model']),
       year: serializer.fromJson<int?>(json['year']),
       protocol: serializer.fromJson<String?>(json['protocol']),
+      customerId: serializer.fromJson<int?>(json['customerId']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       isDeleted: serializer.fromJson<bool>(json['isDeleted']),
@@ -244,6 +277,7 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
       'model': serializer.toJson<String?>(model),
       'year': serializer.toJson<int?>(year),
       'protocol': serializer.toJson<String?>(protocol),
+      'customerId': serializer.toJson<int?>(customerId),
       'isSynced': serializer.toJson<bool>(isSynced),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'isDeleted': serializer.toJson<bool>(isDeleted),
@@ -257,6 +291,7 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
           Value<String?> model = const Value.absent(),
           Value<int?> year = const Value.absent(),
           Value<String?> protocol = const Value.absent(),
+          Value<int?> customerId = const Value.absent(),
           bool? isSynced,
           DateTime? updatedAt,
           bool? isDeleted}) =>
@@ -267,6 +302,7 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
         model: model.present ? model.value : this.model,
         year: year.present ? year.value : this.year,
         protocol: protocol.present ? protocol.value : this.protocol,
+        customerId: customerId.present ? customerId.value : this.customerId,
         isSynced: isSynced ?? this.isSynced,
         updatedAt: updatedAt ?? this.updatedAt,
         isDeleted: isDeleted ?? this.isDeleted,
@@ -279,6 +315,8 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
       model: data.model.present ? data.model.value : this.model,
       year: data.year.present ? data.year.value : this.year,
       protocol: data.protocol.present ? data.protocol.value : this.protocol,
+      customerId:
+          data.customerId.present ? data.customerId.value : this.customerId,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
@@ -294,6 +332,7 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
           ..write('model: $model, ')
           ..write('year: $year, ')
           ..write('protocol: $protocol, ')
+          ..write('customerId: $customerId, ')
           ..write('isSynced: $isSynced, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isDeleted: $isDeleted')
@@ -302,8 +341,8 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, vin, make, model, year, protocol, isSynced, updatedAt, isDeleted);
+  int get hashCode => Object.hash(id, vin, make, model, year, protocol,
+      customerId, isSynced, updatedAt, isDeleted);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -314,6 +353,7 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
           other.model == this.model &&
           other.year == this.year &&
           other.protocol == this.protocol &&
+          other.customerId == this.customerId &&
           other.isSynced == this.isSynced &&
           other.updatedAt == this.updatedAt &&
           other.isDeleted == this.isDeleted);
@@ -326,6 +366,7 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
   final Value<String?> model;
   final Value<int?> year;
   final Value<String?> protocol;
+  final Value<int?> customerId;
   final Value<bool> isSynced;
   final Value<DateTime> updatedAt;
   final Value<bool> isDeleted;
@@ -336,6 +377,7 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
     this.model = const Value.absent(),
     this.year = const Value.absent(),
     this.protocol = const Value.absent(),
+    this.customerId = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isDeleted = const Value.absent(),
@@ -347,6 +389,7 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
     this.model = const Value.absent(),
     this.year = const Value.absent(),
     this.protocol = const Value.absent(),
+    this.customerId = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isDeleted = const Value.absent(),
@@ -358,6 +401,7 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
     Expression<String>? model,
     Expression<int>? year,
     Expression<String>? protocol,
+    Expression<int>? customerId,
     Expression<bool>? isSynced,
     Expression<DateTime>? updatedAt,
     Expression<bool>? isDeleted,
@@ -369,6 +413,7 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
       if (model != null) 'model': model,
       if (year != null) 'year': year,
       if (protocol != null) 'protocol': protocol,
+      if (customerId != null) 'customer_id': customerId,
       if (isSynced != null) 'is_synced': isSynced,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (isDeleted != null) 'is_deleted': isDeleted,
@@ -382,6 +427,7 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
       Value<String?>? model,
       Value<int?>? year,
       Value<String?>? protocol,
+      Value<int?>? customerId,
       Value<bool>? isSynced,
       Value<DateTime>? updatedAt,
       Value<bool>? isDeleted}) {
@@ -392,6 +438,7 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
       model: model ?? this.model,
       year: year ?? this.year,
       protocol: protocol ?? this.protocol,
+      customerId: customerId ?? this.customerId,
       isSynced: isSynced ?? this.isSynced,
       updatedAt: updatedAt ?? this.updatedAt,
       isDeleted: isDeleted ?? this.isDeleted,
@@ -419,6 +466,9 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
     if (protocol.present) {
       map['protocol'] = Variable<String>(protocol.value);
     }
+    if (customerId.present) {
+      map['customer_id'] = Variable<int>(customerId.value);
+    }
     if (isSynced.present) {
       map['is_synced'] = Variable<bool>(isSynced.value);
     }
@@ -440,6 +490,7 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
           ..write('model: $model, ')
           ..write('year: $year, ')
           ..write('protocol: $protocol, ')
+          ..write('customerId: $customerId, ')
           ..write('isSynced: $isSynced, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isDeleted: $isDeleted')
@@ -3385,6 +3436,339 @@ class ServiceRemindersCompanion extends UpdateCompanion<ServiceReminder> {
   }
 }
 
+class $CustomersTable extends Customers
+    with TableInfo<$CustomersTable, CustomerData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CustomersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
+  @override
+  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
+      'phone', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+      'email', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _addressMeta =
+      const VerificationMeta('address');
+  @override
+  late final GeneratedColumn<String> address = GeneratedColumn<String>(
+      'address', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, name, phone, email, address, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'customers';
+  @override
+  VerificationContext validateIntegrity(Insertable<CustomerData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('phone')) {
+      context.handle(
+          _phoneMeta, phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta));
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+          _emailMeta, email.isAcceptableOrUnknown(data['email']!, _emailMeta));
+    }
+    if (data.containsKey('address')) {
+      context.handle(_addressMeta,
+          address.isAcceptableOrUnknown(data['address']!, _addressMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CustomerData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CustomerData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      phone: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}phone']),
+      email: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}email']),
+      address: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}address']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $CustomersTable createAlias(String alias) {
+    return $CustomersTable(attachedDatabase, alias);
+  }
+}
+
+class CustomerData extends DataClass implements Insertable<CustomerData> {
+  final int id;
+  final String name;
+  final String? phone;
+  final String? email;
+  final String? address;
+  final DateTime createdAt;
+  const CustomerData(
+      {required this.id,
+      required this.name,
+      this.phone,
+      this.email,
+      this.address,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || phone != null) {
+      map['phone'] = Variable<String>(phone);
+    }
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || address != null) {
+      map['address'] = Variable<String>(address);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  CustomersCompanion toCompanion(bool nullToAbsent) {
+    return CustomersCompanion(
+      id: Value(id),
+      name: Value(name),
+      phone:
+          phone == null && nullToAbsent ? const Value.absent() : Value(phone),
+      email:
+          email == null && nullToAbsent ? const Value.absent() : Value(email),
+      address: address == null && nullToAbsent
+          ? const Value.absent()
+          : Value(address),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory CustomerData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CustomerData(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      phone: serializer.fromJson<String?>(json['phone']),
+      email: serializer.fromJson<String?>(json['email']),
+      address: serializer.fromJson<String?>(json['address']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'phone': serializer.toJson<String?>(phone),
+      'email': serializer.toJson<String?>(email),
+      'address': serializer.toJson<String?>(address),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  CustomerData copyWith(
+          {int? id,
+          String? name,
+          Value<String?> phone = const Value.absent(),
+          Value<String?> email = const Value.absent(),
+          Value<String?> address = const Value.absent(),
+          DateTime? createdAt}) =>
+      CustomerData(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        phone: phone.present ? phone.value : this.phone,
+        email: email.present ? email.value : this.email,
+        address: address.present ? address.value : this.address,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  CustomerData copyWithCompanion(CustomersCompanion data) {
+    return CustomerData(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      phone: data.phone.present ? data.phone.value : this.phone,
+      email: data.email.present ? data.email.value : this.email,
+      address: data.address.present ? data.address.value : this.address,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CustomerData(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('phone: $phone, ')
+          ..write('email: $email, ')
+          ..write('address: $address, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, phone, email, address, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CustomerData &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.phone == this.phone &&
+          other.email == this.email &&
+          other.address == this.address &&
+          other.createdAt == this.createdAt);
+}
+
+class CustomersCompanion extends UpdateCompanion<CustomerData> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String?> phone;
+  final Value<String?> email;
+  final Value<String?> address;
+  final Value<DateTime> createdAt;
+  const CustomersCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.email = const Value.absent(),
+    this.address = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  CustomersCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    this.phone = const Value.absent(),
+    this.email = const Value.absent(),
+    this.address = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : name = Value(name);
+  static Insertable<CustomerData> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? phone,
+    Expression<String>? email,
+    Expression<String>? address,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (phone != null) 'phone': phone,
+      if (email != null) 'email': email,
+      if (address != null) 'address': address,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  CustomersCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? name,
+      Value<String?>? phone,
+      Value<String?>? email,
+      Value<String?>? address,
+      Value<DateTime>? createdAt}) {
+    return CustomersCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      address: address ?? this.address,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (phone.present) {
+      map['phone'] = Variable<String>(phone.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (address.present) {
+      map['address'] = Variable<String>(address.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CustomersCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('phone: $phone, ')
+          ..write('email: $email, ')
+          ..write('address: $address, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3400,6 +3784,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ShopProfilesTable shopProfiles = $ShopProfilesTable(this);
   late final $ServiceRemindersTable serviceReminders =
       $ServiceRemindersTable(this);
+  late final $CustomersTable customers = $CustomersTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3413,7 +3798,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         solutions,
         diagnosticIntelligence,
         shopProfiles,
-        serviceReminders
+        serviceReminders,
+        customers
       ];
 }
 
@@ -3424,6 +3810,7 @@ typedef $$VehiclesTableCreateCompanionBuilder = VehiclesCompanion Function({
   Value<String?> model,
   Value<int?> year,
   Value<String?> protocol,
+  Value<int?> customerId,
   Value<bool> isSynced,
   Value<DateTime> updatedAt,
   Value<bool> isDeleted,
@@ -3435,6 +3822,7 @@ typedef $$VehiclesTableUpdateCompanionBuilder = VehiclesCompanion Function({
   Value<String?> model,
   Value<int?> year,
   Value<String?> protocol,
+  Value<int?> customerId,
   Value<bool> isSynced,
   Value<DateTime> updatedAt,
   Value<bool> isDeleted,
@@ -3486,6 +3874,9 @@ class $$VehiclesTableFilterComposer
 
   ColumnFilters<String> get protocol => $composableBuilder(
       column: $table.protocol, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get customerId => $composableBuilder(
+      column: $table.customerId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get isSynced => $composableBuilder(
       column: $table.isSynced, builder: (column) => ColumnFilters(column));
@@ -3545,6 +3936,9 @@ class $$VehiclesTableOrderingComposer
   ColumnOrderings<String> get protocol => $composableBuilder(
       column: $table.protocol, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get customerId => $composableBuilder(
+      column: $table.customerId, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<bool> get isSynced => $composableBuilder(
       column: $table.isSynced, builder: (column) => ColumnOrderings(column));
 
@@ -3581,6 +3975,9 @@ class $$VehiclesTableAnnotationComposer
 
   GeneratedColumn<String> get protocol =>
       $composableBuilder(column: $table.protocol, builder: (column) => column);
+
+  GeneratedColumn<int> get customerId => $composableBuilder(
+      column: $table.customerId, builder: (column) => column);
 
   GeneratedColumn<bool> get isSynced =>
       $composableBuilder(column: $table.isSynced, builder: (column) => column);
@@ -3642,6 +4039,7 @@ class $$VehiclesTableTableManager extends RootTableManager<
             Value<String?> model = const Value.absent(),
             Value<int?> year = const Value.absent(),
             Value<String?> protocol = const Value.absent(),
+            Value<int?> customerId = const Value.absent(),
             Value<bool> isSynced = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<bool> isDeleted = const Value.absent(),
@@ -3653,6 +4051,7 @@ class $$VehiclesTableTableManager extends RootTableManager<
             model: model,
             year: year,
             protocol: protocol,
+            customerId: customerId,
             isSynced: isSynced,
             updatedAt: updatedAt,
             isDeleted: isDeleted,
@@ -3664,6 +4063,7 @@ class $$VehiclesTableTableManager extends RootTableManager<
             Value<String?> model = const Value.absent(),
             Value<int?> year = const Value.absent(),
             Value<String?> protocol = const Value.absent(),
+            Value<int?> customerId = const Value.absent(),
             Value<bool> isSynced = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<bool> isDeleted = const Value.absent(),
@@ -3675,6 +4075,7 @@ class $$VehiclesTableTableManager extends RootTableManager<
             model: model,
             year: year,
             protocol: protocol,
+            customerId: customerId,
             isSynced: isSynced,
             updatedAt: updatedAt,
             isDeleted: isDeleted,
@@ -5734,6 +6135,186 @@ typedef $$ServiceRemindersTableProcessedTableManager = ProcessedTableManager<
     ),
     ServiceReminder,
     PrefetchHooks Function()>;
+typedef $$CustomersTableCreateCompanionBuilder = CustomersCompanion Function({
+  Value<int> id,
+  required String name,
+  Value<String?> phone,
+  Value<String?> email,
+  Value<String?> address,
+  Value<DateTime> createdAt,
+});
+typedef $$CustomersTableUpdateCompanionBuilder = CustomersCompanion Function({
+  Value<int> id,
+  Value<String> name,
+  Value<String?> phone,
+  Value<String?> email,
+  Value<String?> address,
+  Value<DateTime> createdAt,
+});
+
+class $$CustomersTableFilterComposer
+    extends Composer<_$AppDatabase, $CustomersTable> {
+  $$CustomersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get phone => $composableBuilder(
+      column: $table.phone, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get email => $composableBuilder(
+      column: $table.email, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get address => $composableBuilder(
+      column: $table.address, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$CustomersTableOrderingComposer
+    extends Composer<_$AppDatabase, $CustomersTable> {
+  $$CustomersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get phone => $composableBuilder(
+      column: $table.phone, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get email => $composableBuilder(
+      column: $table.email, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get address => $composableBuilder(
+      column: $table.address, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CustomersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CustomersTable> {
+  $$CustomersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get phone =>
+      $composableBuilder(column: $table.phone, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get address =>
+      $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$CustomersTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CustomersTable,
+    CustomerData,
+    $$CustomersTableFilterComposer,
+    $$CustomersTableOrderingComposer,
+    $$CustomersTableAnnotationComposer,
+    $$CustomersTableCreateCompanionBuilder,
+    $$CustomersTableUpdateCompanionBuilder,
+    (
+      CustomerData,
+      BaseReferences<_$AppDatabase, $CustomersTable, CustomerData>
+    ),
+    CustomerData,
+    PrefetchHooks Function()> {
+  $$CustomersTableTableManager(_$AppDatabase db, $CustomersTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CustomersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CustomersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CustomersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String?> phone = const Value.absent(),
+            Value<String?> email = const Value.absent(),
+            Value<String?> address = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+          }) =>
+              CustomersCompanion(
+            id: id,
+            name: name,
+            phone: phone,
+            email: email,
+            address: address,
+            createdAt: createdAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String name,
+            Value<String?> phone = const Value.absent(),
+            Value<String?> email = const Value.absent(),
+            Value<String?> address = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+          }) =>
+              CustomersCompanion.insert(
+            id: id,
+            name: name,
+            phone: phone,
+            email: email,
+            address: address,
+            createdAt: createdAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CustomersTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CustomersTable,
+    CustomerData,
+    $$CustomersTableFilterComposer,
+    $$CustomersTableOrderingComposer,
+    $$CustomersTableAnnotationComposer,
+    $$CustomersTableCreateCompanionBuilder,
+    $$CustomersTableUpdateCompanionBuilder,
+    (
+      CustomerData,
+      BaseReferences<_$AppDatabase, $CustomersTable, CustomerData>
+    ),
+    CustomerData,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5757,4 +6338,6 @@ class $AppDatabaseManager {
       $$ShopProfilesTableTableManager(_db, _db.shopProfiles);
   $$ServiceRemindersTableTableManager get serviceReminders =>
       $$ServiceRemindersTableTableManager(_db, _db.serviceReminders);
+  $$CustomersTableTableManager get customers =>
+      $$CustomersTableTableManager(_db, _db.customers);
 }
