@@ -3,11 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
 import 'package:motus_lab/domain/entities/command.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/live_data/live_data_bloc.dart';
-
 import 'package:motus_lab/features/scan/presentation/pages/live_data/pid_selection_page.dart';
 import 'package:motus_lab/core/utils/unit_converter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/graphs/live_data_graph.dart';
+import 'package:motus_lab/features/scan/presentation/widgets/gauges/simple_gauge.dart';
+
+enum ViewMode { gauge, graph }
 
 class LiveDataPage extends StatefulWidget {
   const LiveDataPage({super.key});
@@ -18,7 +20,7 @@ class LiveDataPage extends StatefulWidget {
 
 class _LiveDataPageState extends State<LiveDataPage> {
   bool _useImperial = false;
-  bool _isGraphMode = false;
+  ViewMode _viewMode = ViewMode.gauge;
 
   // เก็บประวัติข้อมูลสำหรับกราฟ (Key = Command Name)
   final Map<String, List<FlSpot>> _dataHistory = {};
@@ -55,12 +57,28 @@ class _LiveDataPageState extends State<LiveDataPage> {
     }
   }
 
+  void _cycleViewMode() {
+    setState(() {
+      // สลับโหมดการแสดงผล (Gauge <-> Graph) แบบวนลูป
+      int nextIndex = (_viewMode.index + 1) % ViewMode.values.length;
+      _viewMode = ViewMode.values[nextIndex];
+    });
+  }
+
+  IconData _getViewIcon() {
+    switch (_viewMode) {
+      case ViewMode.graph:
+        return Icons.show_chart;
+      case ViewMode.gauge:
+        return Icons.speed;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("LIVE DATA"),
-        // ... actions omitted for brevity, keeping same structure ...
         actions: [
           // Unit Toggle
           TextButton(
@@ -75,12 +93,9 @@ class _LiveDataPageState extends State<LiveDataPage> {
           ),
           // View Toggle
           IconButton(
-            icon: Icon(_isGraphMode ? Icons.list : Icons.show_chart),
-            onPressed: () {
-              setState(() {
-                _isGraphMode = !_isGraphMode;
-              });
-            },
+            icon: Icon(_getViewIcon()),
+            tooltip: "Switch View (Graph / Gauge)",
+            onPressed: _cycleViewMode,
           ),
           IconButton(
             icon: const Icon(Icons.settings),
@@ -113,7 +128,7 @@ class _LiveDataPageState extends State<LiveDataPage> {
         },
         builder: (context, state) {
           if (state.isDiscovering) {
-            return Center(
+            return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -129,16 +144,18 @@ class _LiveDataPageState extends State<LiveDataPage> {
             return const Center(child: Text("Connecting / No PIDs selected"));
           }
 
-          if (_isGraphMode) {
-            return _buildGraphView(state.activeCommands);
-          } else {
-            return _buildListView(state, state.activeCommands);
+          switch (_viewMode) {
+            case ViewMode.graph:
+              return _buildGraphView(state.activeCommands);
+            case ViewMode.gauge:
+              return _buildGaugeView(state, state.activeCommands);
           }
         },
       ),
     );
   }
 
+  // อัปเดตประวัติข้อมูลกราฟเมื่อมีค่าใหม่เข้ามา
   void _updateHistory(
       Map<String, double> values, List<Command> activeCommands) {
     _timeCounter += 0.2; // เพิ่มเวลาตาม Timer (200ms)
@@ -149,14 +166,10 @@ class _LiveDataPageState extends State<LiveDataPage> {
       }
 
       double val = values[cmd.name] ?? 0.0;
-
-      // Convert unit before saving points if needed?
-      // No, keep raw value and convert on render to support toggling.
-
       final points = _dataHistory[cmd.name]!;
       points.add(FlSpot(_timeCounter, val));
 
-      // Keep last 50 points
+      // เก็บประวัติย้อนหลังสูงสุด 50 จุด เพื่อประสิทธิภาพ
       if (points.length > 50) {
         points.removeAt(0);
       }
@@ -219,56 +232,56 @@ class _LiveDataPageState extends State<LiveDataPage> {
     );
   }
 
-  Widget _buildListView(LiveDataState state, List<Command> activeCommands) {
-    return ListView.builder(
+  Widget _buildGaugeView(LiveDataState state, List<Command> activeCommands) {
+    // ใช้ GridView สำหรับแสดงเกจหลายๆ ตัว
+    return GridView.builder(
       padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 220, // Responsive: More columns on wide screen
+        childAspectRatio: 0.85,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
       itemCount: activeCommands.length,
       itemBuilder: (context, index) {
         final cmd = activeCommands[index];
         final rawValue = state.currentValues[cmd.name] ?? 0.0;
-        final displayValue =
-            UnitConverter.formatValue(rawValue, cmd.unit, _useImperial);
+
+        // Convert value and unit based on logic
+        double value = rawValue;
+        String unit = cmd.unit;
+        double min = cmd.min;
+        double max = cmd.max;
+
+        if (_useImperial) {
+          if (unit == "km/h") {
+            value = UnitConverter.kmhToMph(rawValue);
+            unit = "mph";
+            max = 160; // Approximate 240kmh
+          } else if (unit == "°C") {
+            value = UnitConverter.celsiusToFahrenheit(rawValue);
+            unit = "°F";
+            min = 32;
+            max = 300;
+          } else if (unit == "kPa") {
+            value = UnitConverter.kpaToPsi(rawValue);
+            unit = "psi";
+            max = max * 0.145;
+          }
+        }
 
         return Card(
-          elevation: 2,
-          margin: const EdgeInsets.only(bottom: 12),
+          elevation: 4,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(cmd.name,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 4),
-                      Text(cmd.description,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    displayValue,
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary),
-                  ),
-                ),
-              ],
+            child: SimpleGauge(
+              label: cmd.name,
+              value: value,
+              min: min,
+              max: max,
+              unit: unit,
             ),
           ),
         );

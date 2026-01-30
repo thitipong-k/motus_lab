@@ -9,7 +9,8 @@ class StandardPids {
       code: "0104",
       description: "Calculated Engine Load",
       unit: "%",
-      formula: "A*100/255");
+      formula: "A*100/255",
+      max: 100.0);
 
   static const Command engineCoolantTemp = Command(
       name: "Coolant Temp",
@@ -17,6 +18,8 @@ class StandardPids {
       description: "Engine Coolant Temperature",
       unit: "°C",
       formula: "A-40",
+      min: -40,
+      max: 215,
       priority: CommandPriority.low);
 
   static const Command shortTermFuelTrim1 = Command(
@@ -24,21 +27,26 @@ class StandardPids {
       code: "0106",
       description: "Short Term Fuel Trim - Bank 1",
       unit: "%",
-      formula: "(A-128)*100/128");
+      formula: "(A-128)*100/128",
+      min: -100,
+      max: 99.2);
 
   static const Command longTermFuelTrim1 = Command(
       name: "Long Term Fuel Trim B1",
       code: "0107",
       description: "Long Term Fuel Trim - Bank 1",
       unit: "%",
-      formula: "(A-128)*100/128");
+      formula: "(A-128)*100/128",
+      min: -100,
+      max: 99.2);
 
   static const Command intakeManifoldPressure = Command(
       name: "Intake Manifold Pressure",
       code: "010B",
       description: "Intake Manifold Absolute Pressure",
       unit: "kPa",
-      formula: "A");
+      formula: "A",
+      max: 255);
 
   static const Command engineRpm = Command(
       name: "Engine RPM",
@@ -46,6 +54,7 @@ class StandardPids {
       description: "Engine Revolutions Per Minute",
       unit: "rpm",
       formula: "((A*256)+B)/4",
+      max: 8000,
       priority: CommandPriority.high);
 
   static const Command vehicleSpeed = Command(
@@ -54,6 +63,7 @@ class StandardPids {
       description: "Vehicle Speed",
       unit: "km/h",
       formula: "A",
+      max: 255,
       priority: CommandPriority.high);
 
   static const Command timingAdvance = Command(
@@ -62,6 +72,8 @@ class StandardPids {
       description: "Timing Advance for Cylinder 1",
       unit: "°",
       formula: "(A/2)-64",
+      min: -64,
+      max: 63.5,
       priority: CommandPriority.high);
 
   static const Command intakeAirTemp = Command(
@@ -69,14 +81,17 @@ class StandardPids {
       code: "010F",
       description: "Intake Air Temperature",
       unit: "°C",
-      formula: "A-40");
+      formula: "A-40",
+      min: -40,
+      max: 215);
 
   static const Command mafAirFlow = Command(
       name: "MAF Air Flow",
       code: "0110",
       description: "Mass Air Flow Rate",
       unit: "g/s",
-      formula: "((A*256)+B)/100");
+      formula: "((A*256)+B)/100",
+      max: 655.35);
 
   static const Command throttlePosition = Command(
       name: "Throttle Position",
@@ -84,6 +99,7 @@ class StandardPids {
       description: "Throttle Position",
       unit: "%",
       formula: "A*100/255",
+      max: 100,
       priority: CommandPriority.high);
 
   static const Command runtimeSinceStart = Command(
@@ -91,14 +107,16 @@ class StandardPids {
       code: "011F",
       description: "Run time since engine start",
       unit: "sec",
-      formula: "(A*256)+B");
+      formula: "(A*256)+B",
+      max: 65535);
 
   static const Command fuelRailPressure = Command(
       name: "Fuel Rail Pressure",
       code: "0123",
       description: "Fuel Rail Gauge Pressure",
       unit: "kPa",
-      formula: "((A*256)+B)*10");
+      formula: "((A*256)+B)*10",
+      max: 655350);
 
   static const Command fuelLevel = Command(
       name: "Fuel Level",
@@ -106,6 +124,7 @@ class StandardPids {
       description: "Fuel Tank Level Input",
       unit: "%",
       formula: "A*100/255",
+      max: 100,
       priority: CommandPriority.low);
 
   static const Command controlModuleVoltage = Command(
@@ -113,14 +132,16 @@ class StandardPids {
       code: "0142",
       description: "Control Module Voltage",
       unit: "V",
-      formula: "((A*256)+B)/1000");
+      formula: "((A*256)+B)/1000",
+      max: 20);
 
   static const Command absoluteLoad = Command(
       name: "Absolute Load",
       code: "0143",
       description: "Absolute Load Value",
       unit: "%",
-      formula: "((A*256)+B)*100/255");
+      formula: "((A*256)+B)*100/255",
+      max: 100);
 
   static const Command ambientAirTemp = Command(
       name: "Ambient Air Temp",
@@ -128,6 +149,8 @@ class StandardPids {
       description: "Ambient Air Temperature",
       unit: "°C",
       formula: "A-40",
+      min: -40,
+      max: 215,
       priority: CommandPriority.low);
 
   // --- Supported PIDs Check ---

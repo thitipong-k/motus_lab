@@ -1,7 +1,7 @@
 name: motus_lab
 description: "Motus Lab - Automotive Diagnostic Platform"
 publish_to: "none"
-version: 0.6.0+1
+version: 0.7.0+1
 
 environment:
   sdk: ">=3.2.0 <4.0.0"
@@ -43,6 +43,7 @@ dependencies:
   flutter_libserialport: ^0.4.0
   flutter_js: ^0.8.1
   sqlite3: ^2.9.4
+  window_manager: ^0.3.8
 
 dev_dependencies:
   flutter_test:

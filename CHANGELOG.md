@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.7.0] - 2026-01-30
+
+### Added
+
+- **Full Screen / Immersive Mode**: Automatically hides system bars on Mobile and launches full screen on Desktop.
+- **Improved Dashboard Navigation**: Implemented `IndexedStack` to preserve state between tabs (fixed crashes).
+- **Freeze Frame UI**: New responsive layout for viewing DTC snapshot data.
+- **Enhanced Themes**: Major upgrade to "Cyberpunk Neon" theme (Glowing text, Orbitron font).
+
+### Changed
+
+- **Live Data Refactor**: Removed "List View" to focus on "Gauge" and "Graph" modes.
+- **Graphing Engine**: Optimized `fl_chart` integration for real-time history (50 points buffer).
+
+### Fixed
+
+- **App Crash**: Resolves `RenderFlex overflow` in Freeze Frame page.
+- **Demo Mode**: Fixed "Enter Demo Mode" button not connecting to mock device.
+- **Layout Stability**: Fixed "GlobalKey" collision errors by refactoring navigation.
+
 ## [0.6.0] - 2026-01-30
 
 ### Added

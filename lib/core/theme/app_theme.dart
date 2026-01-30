@@ -25,44 +25,74 @@ class AppTheme {
     }
   }
 
-  // Option 1: Cyberpunk Neon
+  // Option 1: Cyberpunk Neon (Enhanced)
   static ThemeData get _cyberpunkTheme {
-    const primary = Color(0xFF00E5FF);
-    const background = Color(0xFF101010);
-    const surface = Color(0xFF1E1E1E);
+    const primary = Color(0xFF00FFC2); // Neon Turquoise (Brighter)
+    const secondary = Color(0xFFFF00FF); // Neon Magenta
+    const background = Color(0xFF050510); // Deep Space Blue/Black
+    const surface = Color(0xFF151525);
+
+    // Base Text Style with Google Font
+    final baseText = GoogleFonts.orbitronTextTheme(ThemeData.dark().textTheme);
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: background,
       primaryColor: primary,
+      textTheme: baseText.apply(
+        bodyColor: Colors.white,
+        displayColor: primary,
+      ),
       colorScheme: const ColorScheme.dark(
         primary: primary,
-        secondary: Color(0xFFFF4081),
+        secondary: secondary,
         surface: surface,
         background: background,
-        error: Color(0xFFFF1744),
+        error: Color(0xFFFF3040),
       ),
       cardTheme: CardThemeData(
-        color: surface,
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-            side: BorderSide(color: primary.withOpacity(0.3), width: 1)),
+        color: surface.withOpacity(0.9),
+        elevation: 10,
+        shadowColor: primary.withOpacity(0.4),
+        shape: BeveledRectangleBorder(
+            // Cut corners (Iconic Cyberpunk shape)
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(color: primary.withOpacity(0.5), width: 1.5)),
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: background,
+      appBarTheme: AppBarTheme(
+        backgroundColor: background.withOpacity(0.8),
         centerTitle: true,
         elevation: 0,
-        titleTextStyle:
-            TextStyle(fontFamily: 'Orbitron', fontSize: 20, color: primary),
+        titleTextStyle: GoogleFonts.orbitron(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: primary,
+          letterSpacing: 2.0,
+          shadows: [
+            Shadow(color: primary.withOpacity(0.8), blurRadius: 10), // Glow
+          ],
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
           foregroundColor: Colors.black,
+          textStyle: GoogleFonts.orbitron(fontWeight: FontWeight.bold),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: BeveledRectangleBorder(
-              borderRadius: BorderRadius.circular(4)), // Sharp edges
+              borderRadius: BorderRadius.circular(8)), // Angular buttons
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surface,
+        labelStyle: const TextStyle(color: primary),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: primary.withOpacity(0.3)),
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: primary, width: 2),
         ),
       ),
     );

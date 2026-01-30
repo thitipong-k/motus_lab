@@ -27,8 +27,12 @@ class BluetoothService {
 
   // หยุดการค้นหา
   Future<void> stopScan() async {
-    await FlutterBluePlus.stopScan();
-    _logger.i("Scan stopped");
+    try {
+      await FlutterBluePlus.stopScan();
+      _logger.i("Scan stopped");
+    } catch (e) {
+      _logger.w("Error stopping scan: $e");
+    }
   }
 
   // ตรวจสอบสิทธิ์ (Android 12+)

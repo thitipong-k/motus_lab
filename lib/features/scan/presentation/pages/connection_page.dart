@@ -66,6 +66,24 @@ class ConnectionPage extends StatelessWidget {
                         },
                       ),
               ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    // Directly connect to Mock Device
+                    context.read<ScanBloc>().add(ConnectToDevice("MOCK-001"));
+
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text("Entering Simulation Mode...")));
+                  },
+                  icon: const Icon(Icons.gamepad),
+                  label: const Text("ENTER DEMO MODE"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber[800],
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
             ],
           );
         },

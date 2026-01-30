@@ -1,3 +1,6 @@
+import 'dart:io'; // For Platform check
+import 'package:flutter/services.dart'; // For SystemChrome
+import 'package:window_manager/window_manager.dart'; // For Desktop
 import 'package:flutter/material.dart';
 import 'package:motus_lab/l10n/app_localizations.dart';
 import 'package:motus_lab/core/theme/app_theme.dart';
@@ -7,9 +10,42 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/core/theme/theme_cubit.dart';
 import 'package:motus_lab/core/theme/app_style.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   // เริ่มต้นระบบ Service Locator
   setupLocator();
+
+  // --- 1. Mobile: Immersive Mode ---
+  if (Platform.isAndroid || Platform.isIOS) {
+    // Hide Status Bar & Nav Bar
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    // Optional: Lock Orientation
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
+
+  // --- 2. Desktop: Full Screen ---
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    await windowManager.ensureInitialized();
+
+    WindowOptions windowOptions = const WindowOptions(
+      // size: Size(800, 600),
+      center: true,
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.hidden, // Clean look, no title bar
+    );
+
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+      await windowManager.setFullScreen(true); // Force Full Screen
+    });
+  }
+
   runApp(const MotusApp());
 }
 
