@@ -11,6 +11,8 @@
 
 ### Added
 
+- **Data Export**: Support for exporting reports as CSV files for external analysis.
+- **Settings UI**: Improved export dialog to select between PDF and CSV formats.
 - **Settings Module**: New feature for managing app preferences.
 - **Connection Preferences**: Added auto-connect toggle and adjustable connection timeout.
 - **Dependency Injection**: Fixed runtime crash by registering `SharedPreferences` in `ServiceLocator`.

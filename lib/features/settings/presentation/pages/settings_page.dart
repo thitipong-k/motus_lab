@@ -93,23 +93,13 @@ class _SettingsView extends StatelessWidget {
               const SizedBox(height: 16),
               Card(
                 child: ListTile(
-                  leading:
-                      const Icon(Icons.picture_as_pdf, color: AppColors.error),
+                  leading: const Icon(Icons.print, color: AppColors.error),
                   title: const Text("Export Last Scan Report"),
                   subtitle:
                       const Text("Generate a PDF for the current vehicle"),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
-                    // Mock data for demo
-                    locator<ReportService>().generateHealthReport(
-                      vin: "1234567890ABCDEFG",
-                      dtcs: ["P0101", "P0300"],
-                      liveData: {
-                        "Engine RPM": 750.0,
-                        "Coolant Temp": 92.0,
-                        "Vehicle Speed": 0.0,
-                      },
-                    );
+                    _showExportDialog(context);
                   },
                 ),
               ),
@@ -188,5 +178,62 @@ class _SettingsView extends StatelessWidget {
         );
       },
     );
+  }
+
+  void _showExportDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Export Report",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.picture_as_pdf, color: Colors.orange),
+                title: const Text("Export as PDF"),
+                subtitle: const Text("Professional Report for Print"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _generateReport(false); // PDF
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.table_chart, color: Colors.green),
+                title: const Text("Export as CSV"),
+                subtitle: const Text("Raw Data for Excel/Analysis"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _generateReport(true); // CSV
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _generateReport(bool isCsv) {
+    // Mock Data for Demo (In real app, this should come from Bloc State or Cache)
+    const vin = "1234567890ABCDEFG";
+    const dtcs = ["P0101", "P0300"];
+    const liveData = {
+      "Engine RPM": 750.0,
+      "Coolant Temp": 92.0,
+      "Vehicle Speed": 0.0,
+    };
+
+    if (isCsv) {
+      locator<ReportService>()
+          .generateCsvReport(vin: vin, dtcs: dtcs, liveData: liveData);
+    } else {
+      locator<ReportService>()
+          .generateHealthReport(vin: vin, dtcs: dtcs, liveData: liveData);
+    }
   }
 }
