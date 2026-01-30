@@ -64,34 +64,49 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
       ],
-      child: AdaptiveScaffold(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+      child: BlocListener<ScanBloc, ScanState>(
+        listener: (context, state) {
+          if (state.status == ScanStatus.connected) {
+            // Trigger Live Data discovery/streaming immediately after connection
+            context.read<LiveDataBloc>().add(const StartStreaming([]));
+
+            setState(() {
+              _currentIndex = 1; // Switch to Live Data tab
+            });
+
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text("Connection Successful! Starting Live Data...")));
+          }
         },
-        destinations: const [
-          NavigationDestination(
-              icon: Icon(Icons.bluetooth_searching), label: 'Connect'),
-          NavigationDestination(icon: Icon(Icons.speed), label: 'Dash'),
-          NavigationDestination(icon: Icon(Icons.account_tree), label: 'Map'),
-          NavigationDestination(
-              icon: Icon(Icons.backup_table), label: 'Freeze Frame'),
-          NavigationDestination(icon: Icon(Icons.build), label: 'Service'),
-          NavigationDestination(icon: Icon(Icons.people), label: 'CRM'),
-          NavigationDestination(icon: Icon(Icons.hub), label: 'Remote'),
-          NavigationDestination(
-              icon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
-          NavigationDestination(icon: Icon(Icons.edit_note), label: 'Coding'),
-          NavigationDestination(icon: Icon(Icons.terminal), label: 'Sniff'),
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Set'),
-        ],
-        // ใช้ IndexedStack เพื่อเก็บ State ของแต่ละหน้าไว้ ไม่ให้หายเมื่อเปลี่ยน Tab
-        // (ช่วยแก้ปัญหา Rebuild บ่อย และอาการกระตุก)
-        body: IndexedStack(
-          index: _currentIndex,
-          children: pages,
+        child: AdaptiveScaffold(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          destinations: const [
+            NavigationDestination(
+                icon: Icon(Icons.bluetooth_searching), label: 'Connect'),
+            NavigationDestination(icon: Icon(Icons.speed), label: 'Dash'),
+            NavigationDestination(icon: Icon(Icons.account_tree), label: 'Map'),
+            NavigationDestination(
+                icon: Icon(Icons.backup_table), label: 'Freeze Frame'),
+            NavigationDestination(icon: Icon(Icons.build), label: 'Service'),
+            NavigationDestination(icon: Icon(Icons.people), label: 'CRM'),
+            NavigationDestination(icon: Icon(Icons.hub), label: 'Remote'),
+            NavigationDestination(
+                icon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
+            NavigationDestination(icon: Icon(Icons.edit_note), label: 'Coding'),
+            NavigationDestination(icon: Icon(Icons.terminal), label: 'Sniff'),
+            NavigationDestination(icon: Icon(Icons.settings), label: 'Set'),
+          ],
+          // ใช้ IndexedStack เพื่อเก็บ State ของแต่ละหน้าไว้ ไม่ให้หายเมื่อเปลี่ยน Tab
+          // (ช่วยแก้ปัญหา Rebuild บ่อย และอาการกระตุก)
+          body: IndexedStack(
+            index: _currentIndex,
+            children: pages,
+          ),
         ),
       ),
     );

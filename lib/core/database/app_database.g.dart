@@ -2634,6 +2634,414 @@ class DiagnosticIntelligenceCompanion
   }
 }
 
+class $ShopProfilesTable extends ShopProfiles
+    with TableInfo<$ShopProfilesTable, ShopProfile> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ShopProfilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('My Workshop'));
+  static const VerificationMeta _addressMeta =
+      const VerificationMeta('address');
+  @override
+  late final GeneratedColumn<String> address = GeneratedColumn<String>(
+      'address', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
+  @override
+  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
+      'phone', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+      'email', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _taxIdMeta = const VerificationMeta('taxId');
+  @override
+  late final GeneratedColumn<String> taxId = GeneratedColumn<String>(
+      'tax_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _logoPathMeta =
+      const VerificationMeta('logoPath');
+  @override
+  late final GeneratedColumn<String> logoPath = GeneratedColumn<String>(
+      'logo_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, name, address, phone, email, taxId, logoPath, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'shop_profiles';
+  @override
+  VerificationContext validateIntegrity(Insertable<ShopProfile> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    }
+    if (data.containsKey('address')) {
+      context.handle(_addressMeta,
+          address.isAcceptableOrUnknown(data['address']!, _addressMeta));
+    }
+    if (data.containsKey('phone')) {
+      context.handle(
+          _phoneMeta, phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta));
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+          _emailMeta, email.isAcceptableOrUnknown(data['email']!, _emailMeta));
+    }
+    if (data.containsKey('tax_id')) {
+      context.handle(
+          _taxIdMeta, taxId.isAcceptableOrUnknown(data['tax_id']!, _taxIdMeta));
+    }
+    if (data.containsKey('logo_path')) {
+      context.handle(_logoPathMeta,
+          logoPath.isAcceptableOrUnknown(data['logo_path']!, _logoPathMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ShopProfile map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ShopProfile(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      address: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}address']),
+      phone: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}phone']),
+      email: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}email']),
+      taxId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}tax_id']),
+      logoPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}logo_path']),
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $ShopProfilesTable createAlias(String alias) {
+    return $ShopProfilesTable(attachedDatabase, alias);
+  }
+}
+
+class ShopProfile extends DataClass implements Insertable<ShopProfile> {
+  final int id;
+  final String name;
+  final String? address;
+  final String? phone;
+  final String? email;
+  final String? taxId;
+  final String? logoPath;
+  final DateTime updatedAt;
+  const ShopProfile(
+      {required this.id,
+      required this.name,
+      this.address,
+      this.phone,
+      this.email,
+      this.taxId,
+      this.logoPath,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || address != null) {
+      map['address'] = Variable<String>(address);
+    }
+    if (!nullToAbsent || phone != null) {
+      map['phone'] = Variable<String>(phone);
+    }
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || taxId != null) {
+      map['tax_id'] = Variable<String>(taxId);
+    }
+    if (!nullToAbsent || logoPath != null) {
+      map['logo_path'] = Variable<String>(logoPath);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ShopProfilesCompanion toCompanion(bool nullToAbsent) {
+    return ShopProfilesCompanion(
+      id: Value(id),
+      name: Value(name),
+      address: address == null && nullToAbsent
+          ? const Value.absent()
+          : Value(address),
+      phone:
+          phone == null && nullToAbsent ? const Value.absent() : Value(phone),
+      email:
+          email == null && nullToAbsent ? const Value.absent() : Value(email),
+      taxId:
+          taxId == null && nullToAbsent ? const Value.absent() : Value(taxId),
+      logoPath: logoPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(logoPath),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ShopProfile.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ShopProfile(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      address: serializer.fromJson<String?>(json['address']),
+      phone: serializer.fromJson<String?>(json['phone']),
+      email: serializer.fromJson<String?>(json['email']),
+      taxId: serializer.fromJson<String?>(json['taxId']),
+      logoPath: serializer.fromJson<String?>(json['logoPath']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'address': serializer.toJson<String?>(address),
+      'phone': serializer.toJson<String?>(phone),
+      'email': serializer.toJson<String?>(email),
+      'taxId': serializer.toJson<String?>(taxId),
+      'logoPath': serializer.toJson<String?>(logoPath),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ShopProfile copyWith(
+          {int? id,
+          String? name,
+          Value<String?> address = const Value.absent(),
+          Value<String?> phone = const Value.absent(),
+          Value<String?> email = const Value.absent(),
+          Value<String?> taxId = const Value.absent(),
+          Value<String?> logoPath = const Value.absent(),
+          DateTime? updatedAt}) =>
+      ShopProfile(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        address: address.present ? address.value : this.address,
+        phone: phone.present ? phone.value : this.phone,
+        email: email.present ? email.value : this.email,
+        taxId: taxId.present ? taxId.value : this.taxId,
+        logoPath: logoPath.present ? logoPath.value : this.logoPath,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  ShopProfile copyWithCompanion(ShopProfilesCompanion data) {
+    return ShopProfile(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      address: data.address.present ? data.address.value : this.address,
+      phone: data.phone.present ? data.phone.value : this.phone,
+      email: data.email.present ? data.email.value : this.email,
+      taxId: data.taxId.present ? data.taxId.value : this.taxId,
+      logoPath: data.logoPath.present ? data.logoPath.value : this.logoPath,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShopProfile(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('address: $address, ')
+          ..write('phone: $phone, ')
+          ..write('email: $email, ')
+          ..write('taxId: $taxId, ')
+          ..write('logoPath: $logoPath, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, name, address, phone, email, taxId, logoPath, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ShopProfile &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.address == this.address &&
+          other.phone == this.phone &&
+          other.email == this.email &&
+          other.taxId == this.taxId &&
+          other.logoPath == this.logoPath &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ShopProfilesCompanion extends UpdateCompanion<ShopProfile> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String?> address;
+  final Value<String?> phone;
+  final Value<String?> email;
+  final Value<String?> taxId;
+  final Value<String?> logoPath;
+  final Value<DateTime> updatedAt;
+  const ShopProfilesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.address = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.email = const Value.absent(),
+    this.taxId = const Value.absent(),
+    this.logoPath = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  ShopProfilesCompanion.insert({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.address = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.email = const Value.absent(),
+    this.taxId = const Value.absent(),
+    this.logoPath = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  static Insertable<ShopProfile> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? address,
+    Expression<String>? phone,
+    Expression<String>? email,
+    Expression<String>? taxId,
+    Expression<String>? logoPath,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (address != null) 'address': address,
+      if (phone != null) 'phone': phone,
+      if (email != null) 'email': email,
+      if (taxId != null) 'tax_id': taxId,
+      if (logoPath != null) 'logo_path': logoPath,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  ShopProfilesCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? name,
+      Value<String?>? address,
+      Value<String?>? phone,
+      Value<String?>? email,
+      Value<String?>? taxId,
+      Value<String?>? logoPath,
+      Value<DateTime>? updatedAt}) {
+    return ShopProfilesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      address: address ?? this.address,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      taxId: taxId ?? this.taxId,
+      logoPath: logoPath ?? this.logoPath,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (address.present) {
+      map['address'] = Variable<String>(address.value);
+    }
+    if (phone.present) {
+      map['phone'] = Variable<String>(phone.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (taxId.present) {
+      map['tax_id'] = Variable<String>(taxId.value);
+    }
+    if (logoPath.present) {
+      map['logo_path'] = Variable<String>(logoPath.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShopProfilesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('address: $address, ')
+          ..write('phone: $phone, ')
+          ..write('email: $email, ')
+          ..write('taxId: $taxId, ')
+          ..write('logoPath: $logoPath, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2646,6 +3054,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SolutionsTable solutions = $SolutionsTable(this);
   late final $DiagnosticIntelligenceTable diagnosticIntelligence =
       $DiagnosticIntelligenceTable(this);
+  late final $ShopProfilesTable shopProfiles = $ShopProfilesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2657,7 +3066,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         dtcLibrary,
         possibleCauses,
         solutions,
-        diagnosticIntelligence
+        diagnosticIntelligence,
+        shopProfiles
       ];
 }
 
@@ -4583,6 +4993,218 @@ typedef $$DiagnosticIntelligenceTableProcessedTableManager
         (DiagnosticIntelligenceData, $$DiagnosticIntelligenceTableReferences),
         DiagnosticIntelligenceData,
         PrefetchHooks Function({bool causeId})>;
+typedef $$ShopProfilesTableCreateCompanionBuilder = ShopProfilesCompanion
+    Function({
+  Value<int> id,
+  Value<String> name,
+  Value<String?> address,
+  Value<String?> phone,
+  Value<String?> email,
+  Value<String?> taxId,
+  Value<String?> logoPath,
+  Value<DateTime> updatedAt,
+});
+typedef $$ShopProfilesTableUpdateCompanionBuilder = ShopProfilesCompanion
+    Function({
+  Value<int> id,
+  Value<String> name,
+  Value<String?> address,
+  Value<String?> phone,
+  Value<String?> email,
+  Value<String?> taxId,
+  Value<String?> logoPath,
+  Value<DateTime> updatedAt,
+});
+
+class $$ShopProfilesTableFilterComposer
+    extends Composer<_$AppDatabase, $ShopProfilesTable> {
+  $$ShopProfilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get address => $composableBuilder(
+      column: $table.address, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get phone => $composableBuilder(
+      column: $table.phone, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get email => $composableBuilder(
+      column: $table.email, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get taxId => $composableBuilder(
+      column: $table.taxId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get logoPath => $composableBuilder(
+      column: $table.logoPath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$ShopProfilesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ShopProfilesTable> {
+  $$ShopProfilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get address => $composableBuilder(
+      column: $table.address, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get phone => $composableBuilder(
+      column: $table.phone, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get email => $composableBuilder(
+      column: $table.email, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get taxId => $composableBuilder(
+      column: $table.taxId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get logoPath => $composableBuilder(
+      column: $table.logoPath, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ShopProfilesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ShopProfilesTable> {
+  $$ShopProfilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get address =>
+      $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<String> get phone =>
+      $composableBuilder(column: $table.phone, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get taxId =>
+      $composableBuilder(column: $table.taxId, builder: (column) => column);
+
+  GeneratedColumn<String> get logoPath =>
+      $composableBuilder(column: $table.logoPath, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ShopProfilesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ShopProfilesTable,
+    ShopProfile,
+    $$ShopProfilesTableFilterComposer,
+    $$ShopProfilesTableOrderingComposer,
+    $$ShopProfilesTableAnnotationComposer,
+    $$ShopProfilesTableCreateCompanionBuilder,
+    $$ShopProfilesTableUpdateCompanionBuilder,
+    (
+      ShopProfile,
+      BaseReferences<_$AppDatabase, $ShopProfilesTable, ShopProfile>
+    ),
+    ShopProfile,
+    PrefetchHooks Function()> {
+  $$ShopProfilesTableTableManager(_$AppDatabase db, $ShopProfilesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ShopProfilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ShopProfilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ShopProfilesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String?> address = const Value.absent(),
+            Value<String?> phone = const Value.absent(),
+            Value<String?> email = const Value.absent(),
+            Value<String?> taxId = const Value.absent(),
+            Value<String?> logoPath = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+          }) =>
+              ShopProfilesCompanion(
+            id: id,
+            name: name,
+            address: address,
+            phone: phone,
+            email: email,
+            taxId: taxId,
+            logoPath: logoPath,
+            updatedAt: updatedAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String?> address = const Value.absent(),
+            Value<String?> phone = const Value.absent(),
+            Value<String?> email = const Value.absent(),
+            Value<String?> taxId = const Value.absent(),
+            Value<String?> logoPath = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+          }) =>
+              ShopProfilesCompanion.insert(
+            id: id,
+            name: name,
+            address: address,
+            phone: phone,
+            email: email,
+            taxId: taxId,
+            logoPath: logoPath,
+            updatedAt: updatedAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ShopProfilesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ShopProfilesTable,
+    ShopProfile,
+    $$ShopProfilesTableFilterComposer,
+    $$ShopProfilesTableOrderingComposer,
+    $$ShopProfilesTableAnnotationComposer,
+    $$ShopProfilesTableCreateCompanionBuilder,
+    $$ShopProfilesTableUpdateCompanionBuilder,
+    (
+      ShopProfile,
+      BaseReferences<_$AppDatabase, $ShopProfilesTable, ShopProfile>
+    ),
+    ShopProfile,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4602,4 +5224,6 @@ class $AppDatabaseManager {
   $$DiagnosticIntelligenceTableTableManager get diagnosticIntelligence =>
       $$DiagnosticIntelligenceTableTableManager(
           _db, _db.diagnosticIntelligence);
+  $$ShopProfilesTableTableManager get shopProfiles =>
+      $$ShopProfilesTableTableManager(_db, _db.shopProfiles);
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1] - 2026-01-30
+
+### Documentation
+
+- **Workflow Comments**: Added Thai comments to `scan_bloc.dart` and `live_data_bloc.dart` explaining system internals.
+- **Roadmap Update**: Updated Phase 7 status for PID library and persistence.
+
 ## [0.7.0] - 2026-01-30
 
 ### Added

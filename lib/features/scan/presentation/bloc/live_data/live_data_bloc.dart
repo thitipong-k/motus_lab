@@ -11,6 +11,7 @@ part 'live_data_event.dart';
 part 'live_data_state.dart';
 
 /// Bloc สำหรับจัดการค่าสด (Live Data)
+/// [WORKFLOW STEP 2] Live Data Loop: หัวใจหลักของระบบ (Pull PIDs > Adaptive Polling > Display)
 /// ทำหน้าที่ส่งคำสั่งชุดเดิมวนซ้ำ (Round-robin) เพื่อให้ UI อัพเดตตลอดเวลา
 class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
   final ProtocolEngine _engine;
@@ -50,6 +51,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       emit(state.copyWith(isStreaming: true, isDiscovering: true));
 
       // --- ระบบจดจำรถยนต์ (Vehicle Identity) และการทำ Caching ---
+      // [WORKFLOW STEP 1.2] Identity Check: อ่านค่า VIN -> เช็ค Profile ใน DB
       List<String> supportedKeyCodes = [];
       String? currentVin;
 
@@ -82,6 +84,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       }
 
       if (!cacheHit) {
+        // [WORKFLOW STEP 1.3] Full Discovery: ถ้าไม่เคยเจอรถคันนี้ ให้สแกนหา PIDs ทั้งหมด
         // Cache MISS -> เริ่มกระบวนการค้นหาเต็มรูปแบบ (Full Discovery)
         print("Cache MISS. Starting Full Discovery...");
 
@@ -135,6 +138,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     const int _maxErrorsBeforeQuarantine = 5;
 
     // ปรับ Base Loop ให้เร็วขึ้นเป็น 50ms เพื่อรองรับ High Priority
+    // [WORKFLOW STEP 2.1] Adaptive Polling Loop: วนลูปอ่านค่าตาม Active List
     _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) async {
       if (!_connection.isConnected) {
         add(StopStreaming());
@@ -145,6 +149,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       Map<String, double> updatedValues = Map.from(state.currentValues);
 
       // --- Recovery Phase (Probing Quarantined PIDs) ---
+      // [WORKFLOW STEP 2.4] Probing: แอบลองถามใหม่เผื่อมันหายดีแล้ว (Recovery)
       // ทุกๆ 200 ticks (~10 วินาที) ลองกู้คืน 1 PID
       if (tick % 200 == 0 && _quarantinedCommands.isNotEmpty) {
         final probeCmd = _quarantinedCommands.first;
@@ -167,6 +172,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       }
 
       // กรองคำสั่งที่จะส่งในรอบนี้ (Weighted Polling)
+      // [WORKFLOW STEP 2.2] Priority Management: แยกความถี่ตาม Priority (High=50ms, Low=2s)
       final commandsToPoll = _activeCommands.where((cmd) {
         // Skip if quarantined (Safety check, though they should be removed from active)
         if (_quarantinedCommands.contains(cmd)) return false;
@@ -205,6 +211,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
           }
         } catch (e) {
           // Adaptive logic: Increment error count
+          // [WORKFLOW STEP 2.3] Quarantine Logic: นับ Error Count
           int errors = (_consecutiveErrors[cmd.code] ?? 0) + 1;
           _consecutiveErrors[cmd.code] = errors;
 

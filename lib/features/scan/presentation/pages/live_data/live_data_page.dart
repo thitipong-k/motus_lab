@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
+import 'package:motus_lab/core/services/report_service.dart';
+import 'package:motus_lab/core/services/service_locator.dart';
 import 'package:motus_lab/domain/entities/command.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/live_data/live_data_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/pages/live_data/pid_selection_page.dart';
@@ -96,6 +98,19 @@ class _LiveDataPageState extends State<LiveDataPage> {
             icon: Icon(_getViewIcon()),
             tooltip: "Switch View (Graph / Gauge)",
             onPressed: _cycleViewMode,
+          ),
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            tooltip: "Export PDF Report",
+            onPressed: () {
+              final state = context.read<LiveDataBloc>().state;
+              locator<ReportService>().generateHealthReport(
+                vin:
+                    state.activeCommands.isNotEmpty ? "SCANNING..." : "UNKNOWN",
+                dtcs: [], // Link with DtcBloc if needed
+                liveData: state.currentValues,
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.settings),

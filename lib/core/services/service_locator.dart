@@ -10,6 +10,9 @@ import 'package:motus_lab/core/database/app_database.dart';
 import 'package:motus_lab/data/repositories/diagnostic_repository.dart';
 import 'package:motus_lab/data/repositories/protocol_repository.dart';
 import 'package:motus_lab/data/repositories/vehicle_profile_repository.dart';
+import 'package:motus_lab/domain/repositories/shop_profile_repository.dart';
+import 'package:motus_lab/data/repositories/shop_profile_repository_impl.dart';
+import 'package:motus_lab/core/services/report_service.dart';
 
 final locator = GetIt.instance;
 
@@ -30,6 +33,9 @@ void setupLocator() {
   locator.registerLazySingleton(() => DiagnosticRepository(locator()));
   locator.registerLazySingleton(() => ProtocolRepository());
   locator.registerLazySingleton(() => VehicleProfileRepository(locator()));
+  locator.registerLazySingleton<ShopProfileRepository>(
+      () => ShopProfileRepositoryImpl(locator()));
+  locator.registerLazySingleton(() => ReportService(locator()));
 
   // 3. Blocs
   locator.registerFactory(() => LiveDataBloc(

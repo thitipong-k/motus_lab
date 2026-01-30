@@ -11,6 +11,7 @@ part 'scan_state.dart';
 
 /// Bloc สำหรับจัดการหน้า Scan
 /// ทำงานประสานกันระหว่าง BluetoothService (หน้าบ้าน) และ ConnectionInterface (หลังบ้าน)
+/// [WORKFLOW STEP 1] Connection Flow: จุดเริ่มต้นการเชื่อมต่อ
 class ScanBloc extends Bloc<ScanEvent, ScanState> {
   final motus.BluetoothService _bluetoothService;
   final ConnectionInterface _connection;
@@ -87,17 +88,21 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   }
 
   // เมื่อกดเชื่อมต่อ
+  // [WORKFLOW STEP 1.1] User กด Connect -> เริ่มกระบวนการเชื่อมต่อ Device
   Future<void> _onConnectToDevice(
       ConnectToDevice event, Emitter<ScanState> emit) async {
+    print("ScanBloc: Connecting to ${event.deviceId}...");
     emit(state.copyWith(
         status: ScanStatus.connecting, connectedDeviceId: event.deviceId));
 
     try {
       await _bluetoothService.stopScan();
       await _connection.connect(event.deviceId);
+      print("ScanBloc: Connected to ${event.deviceId}!");
       emit(state.copyWith(
           status: ScanStatus.connected, connectedDeviceId: event.deviceId));
     } catch (e) {
+      print("ScanBloc: Connection Failed: $e");
       emit(
           state.copyWith(status: ScanStatus.error, errorMessage: e.toString()));
     }

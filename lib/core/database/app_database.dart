@@ -4,6 +4,7 @@ import 'package:motus_lab/core/database/tables/vehicle_profiles_table.dart';
 import 'package:motus_lab/core/database/tables/scan_history_table.dart';
 import 'package:motus_lab/core/database/tables/dtc_library_table.dart';
 import 'package:motus_lab/core/database/tables/expert_tables.dart';
+import 'package:motus_lab/core/database/tables/shop_profile_table.dart';
 import 'connection/connection.dart'
     if (dart.library.io) 'connection/native.dart'
     if (dart.library.html) 'connection/web.dart';
@@ -17,13 +18,27 @@ part 'app_database.g.dart';
   DtcLibrary,
   PossibleCauses,
   Solutions,
-  DiagnosticIntelligence
+  DiagnosticIntelligence,
+  ShopProfiles
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(openConnection());
 
   @override
-  int get schemaVersion => 2; // Incremented for VehicleProfiles
+  int get schemaVersion => 3; // Incremented for ShopProfiles
 
-  // Migration logic would go here
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (m, from, to) async {
+          if (from < 3) {
+            await m.createTable(shopProfiles);
+          }
+        },
+        beforeOpen: (details) async {
+          // pre-populate shop profile if empty
+          if (details.wasCreated) {
+            // ...
+          }
+        },
+      );
 }

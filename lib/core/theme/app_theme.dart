@@ -22,6 +22,10 @@ class AppTheme {
         return _tacticalTheme;
       case AppStyle.eco:
         return _ecoTheme;
+      case AppStyle.neuralNexus:
+        return _neuralNexusTheme;
+      case AppStyle.precisionClarity:
+        return _precisionClarityTheme;
     }
   }
 
@@ -260,6 +264,112 @@ class AppTheme {
           elevation: 0,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        ),
+      ),
+    );
+  }
+
+  // Option 6: The Neural Nexus (Futuristic Dark)
+  static ThemeData get _neuralNexusTheme {
+    const primary = Color(0xFF00B2FF); // Electric Blue
+    const secondary = Color(0xFF00FF77); // Neon Brain Green
+    const background = Color(0xFF0A0E14); // Deep Charcoal
+    const surface = Color(0xFF141A23);
+
+    final baseText = GoogleFonts.orbitronTextTheme(ThemeData.dark().textTheme);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: background,
+      primaryColor: primary,
+      colorScheme: const ColorScheme.dark(
+        primary: primary,
+        secondary: secondary,
+        surface: surface,
+        background: background,
+        onSurface: Colors.white70,
+      ),
+      textTheme: baseText.apply(
+        bodyColor: Colors.white.withOpacity(0.9),
+        displayColor: primary,
+      ),
+      cardTheme: CardThemeData(
+        color: surface,
+        elevation: 4,
+        shadowColor: primary.withOpacity(0.2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: primary.withOpacity(0.1), width: 1),
+        ),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: background,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.orbitron(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: primary,
+          letterSpacing: 1.5,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          textStyle: GoogleFonts.orbitron(fontWeight: FontWeight.w600),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+    );
+  }
+
+  // Option 7: Precision Clarity (Professional Light)
+  static ThemeData get _precisionClarityTheme {
+    const primary = Color(0xFF1565C0); // Professional Blue
+    const accent = Color(0xFF2E7D32); // Vivid Green
+    const background = Color(0xFFFFFFFF);
+    const surface = Color(0xFFF8F9FA);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: background,
+      primaryColor: primary,
+      colorScheme: ColorScheme.light(
+        primary: primary,
+        secondary: accent,
+        surface: surface,
+        background: background,
+        onBackground: Colors.blueGrey.shade900,
+      ),
+      textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
+      cardTheme: CardThemeData(
+        color: background,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: Colors.grey.shade200),
+        ),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: background,
+        foregroundColor: primary,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+          color: primary,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+          textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
         ),
       ),
     );

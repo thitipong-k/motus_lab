@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
-import 'package:motus_lab/features/reports/domain/services/report_generator.dart';
+import 'package:motus_lab/core/services/service_locator.dart';
+import 'package:motus_lab/core/services/report_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/core/theme/theme_cubit.dart';
 import 'package:motus_lab/core/theme/app_style.dart';
+import 'package:motus_lab/features/reports/presentation/widgets/shop_branding_form.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -27,8 +29,7 @@ class SettingsPage extends StatelessWidget {
               subtitle: const Text("Generate a PDF for the current vehicle"),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
-                // จำลองการส่งข้อมูล
-                ReportGenerator.generateAndPrintReport(
+                locator<ReportService>().generateHealthReport(
                   vin: "1234567890ABCDEFG",
                   dtcs: ["P0101", "P0300"],
                   liveData: {
@@ -40,6 +41,17 @@ class SettingsPage extends StatelessWidget {
               },
             ),
           ),
+          const SizedBox(height: 24),
+          const Text("Workshop Branding",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          const SizedBox(height: 16),
+          const Card(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: ShopBrandingForm(),
+            ),
+          ),
+
           const SizedBox(height: 24),
           const Text("App Preferences",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
@@ -76,29 +88,31 @@ class SettingsPage extends StatelessWidget {
         // Use BlocProvider.value to pass the existing cubit to the modal sheet
         return BlocProvider.value(
           value: context.read<ThemeCubit>(),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text("Select Visual Theme",
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              ),
-              ...AppStyle.values.map((style) => RadioListTile<AppStyle>(
-                    title: Text(style.displayName),
-                    subtitle: Text(_getStyleDesc(style)),
-                    value: style,
-                    groupValue: currentStyle,
-                    onChanged: (val) {
-                      if (val != null) {
-                        context.read<ThemeCubit>().setStyle(val);
-                        Navigator.pop(ctx);
-                      }
-                    },
-                  )),
-              const SizedBox(height: 20),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text("Select Visual Theme",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                ),
+                ...AppStyle.values.map((style) => RadioListTile<AppStyle>(
+                      title: Text(style.displayName),
+                      subtitle: Text(_getStyleDesc(style)),
+                      value: style,
+                      groupValue: currentStyle,
+                      onChanged: (val) {
+                        if (val != null) {
+                          context.read<ThemeCubit>().setStyle(val);
+                          Navigator.pop(ctx);
+                        }
+                      },
+                    )),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         );
       },
@@ -117,6 +131,10 @@ class SettingsPage extends StatelessWidget {
         return "Rugged / Industrial";
       case AppStyle.eco:
         return "Minimal / Green";
+      case AppStyle.neuralNexus:
+        return "Futuristic / Data Flow";
+      case AppStyle.precisionClarity:
+        return "Clean / Professional";
     }
   }
 }

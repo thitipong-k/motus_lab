@@ -1,7 +1,7 @@
 name: motus_lab
 description: "Motus Lab - Automotive Diagnostic Platform"
 publish_to: "none"
-version: 0.7.0+1
+version: 0.7.1+2
 
 environment:
   sdk: ">=3.2.0 <4.0.0"
@@ -33,6 +33,7 @@ dependencies:
   math_expressions: ^2.4.0
   flutter_blue_plus: ^1.30.0
   logger: ^2.0.0
+  file_picker: ^6.1.1
 
   # Phase 3 Expansion
   fl_chart: ^0.66.0
@@ -63,4 +64,9 @@ flutter:
       fonts:
         - asset: assets/fonts/Inter-Regular.ttf
         - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
+    - family: Sarabun
+      fonts:
+        - asset: assets/fonts/Sarabun-Regular.ttf
+        - asset: assets/fonts/Sarabun-Bold.ttf
           weight: 700
