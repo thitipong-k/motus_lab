@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:motus_lab/core/protocol/protocol_engine.dart';
 import 'package:motus_lab/core/services/service_locator.dart';
 import 'package:motus_lab/core/theme/app_theme.dart';
+import 'package:motus_lab/core/theme/app_style.dart';
 import 'package:motus_lab/features/service/presentation/pages/service_catalog_page.dart';
 import 'package:motus_lab/features/crm/presentation/pages/customer_list_page.dart';
 import 'package:motus_lab/features/remote/presentation/pages/remote_expert_page.dart';
@@ -23,7 +24,7 @@ void main() {
         (WidgetTester tester) async {
       // ทดสอบหน้าจอเลือกงานบริการ
       await tester.pumpWidget(MaterialApp(
-        theme: AppTheme.darkTheme,
+        theme: AppTheme.getTheme(AppStyle.cyberpunk),
         home: const ServiceCatalogPage(),
       ));
 
@@ -42,7 +43,7 @@ void main() {
         (WidgetTester tester) async {
       // ทดสอบหน้าจอจัดการลูกค้า
       await tester.pumpWidget(MaterialApp(
-        theme: AppTheme.darkTheme,
+        theme: AppTheme.getTheme(AppStyle.cyberpunk),
         home: const CustomerListPage(),
       ));
 
@@ -60,7 +61,7 @@ void main() {
         (WidgetTester tester) async {
       // ทดสอบหน้าจอ Remote Expert
       await tester.pumpWidget(MaterialApp(
-        theme: AppTheme.darkTheme,
+        theme: AppTheme.getTheme(AppStyle.cyberpunk),
         home: const RemoteExpertPage(),
       ));
 
@@ -73,7 +74,7 @@ void main() {
         (WidgetTester tester) async {
       // ทดสอบหน้าจอประเป๋าเงิน
       await tester.pumpWidget(MaterialApp(
-        theme: AppTheme.darkTheme,
+        theme: AppTheme.getTheme(AppStyle.cyberpunk),
         home: const WalletPage(),
       ));
 
