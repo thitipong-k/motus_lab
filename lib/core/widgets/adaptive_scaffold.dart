@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:motus_lab/core/theme/app_colors.dart';
 
 class AdaptiveScaffold extends StatelessWidget {
   final int selectedIndex;
@@ -19,7 +18,9 @@ class AdaptiveScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // หากหน้าจอกว้างกว่า 600px ให้ใช้ NavigationRail (Tablet/Desktop)
+        // [Responsive Design] ฟังก์ชันตรวจสอบความกว้างหน้าจอ
+        // กรณีหน้าจอ Tablet/Desktop (ความกว้าง >= 600px)
+        // ใช้ NavigationRail ด้านซ้าย เพื่อให้มีพื้นที่เนื้อหามากขึ้นและเหมาะสมกับการใช้งาน Landscape
         if (constraints.maxWidth >= 600) {
           return Scaffold(
             body: Row(
@@ -33,16 +34,25 @@ class AdaptiveScaffold extends StatelessWidget {
                         selectedIndex: selectedIndex,
                         onDestinationSelected: onDestinationSelected,
                         labelType: NavigationRailLabelType.all,
-                        backgroundColor: AppColors.background,
-                        indicatorColor: AppColors.primary.withOpacity(0.2),
-                        unselectedIconTheme:
-                            const IconThemeData(color: Colors.white54),
-                        selectedIconTheme:
-                            const IconThemeData(color: AppColors.primary),
-                        selectedLabelTextStyle:
-                            const TextStyle(color: AppColors.primary),
-                        unselectedLabelTextStyle:
-                            const TextStyle(color: Colors.white54),
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        indicatorColor: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.2),
+                        unselectedIconTheme: IconThemeData(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withOpacity(0.6)),
+                        selectedIconTheme: IconThemeData(
+                            color: Theme.of(context).colorScheme.primary),
+                        selectedLabelTextStyle: TextStyle(
+                            color: Theme.of(context).colorScheme.primary),
+                        unselectedLabelTextStyle: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withOpacity(0.6)),
                         destinations: destinations
                             .map((d) => NavigationRailDestination(
                                   icon: d.icon,
@@ -54,21 +64,27 @@ class AdaptiveScaffold extends StatelessWidget {
                     ),
                   ),
                 ),
-                const VerticalDivider(thickness: 1, width: 1),
+                VerticalDivider(
+                    thickness: 1,
+                    width: 1,
+                    color: Theme.of(context).dividerColor),
                 Expanded(child: body),
               ],
             ),
           );
         }
 
-        // หากหน้าจอแคบ (Mobile) ให้ใช้ NavigationBar แบบเดิม
+        // [Mobile Design] กรณีหน้าจอ Mobile (ความกว้าง < 600px)
+        // ใช้ NavigationBar ด้านล่าง (Bottom Navigation)
+        // เพื่อความสะดวกในการกดด้วยนิ้วโป้ง (Thumb-friendly UX)
         return Scaffold(
           body: body,
           bottomNavigationBar: NavigationBar(
             selectedIndex: selectedIndex,
             onDestinationSelected: onDestinationSelected,
-            backgroundColor: AppColors.background,
-            indicatorColor: AppColors.primary.withOpacity(0.2),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            indicatorColor:
+                Theme.of(context).colorScheme.primary.withOpacity(0.2),
             destinations: destinations,
           ),
         );

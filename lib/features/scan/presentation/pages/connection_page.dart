@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:motus_lab/l10n/app_localizations.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
+import 'package:motus_lab/core/widgets/empty_state.dart';
+import 'package:motus_lab/core/widgets/motus_button.dart';
+import 'package:motus_lab/core/widgets/motus_card.dart';
+import 'package:motus_lab/core/widgets/motus_snackbar.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/radar_view.dart';
-import 'package:motus_lab/core/widgets/motus_card.dart';
-import 'package:motus_lab/core/widgets/motus_button.dart';
-import 'package:motus_lab/core/widgets/empty_state.dart';
+import 'package:motus_lab/l10n/app_localizations.dart';
 
 /// หน้าสำหรับค้นหาและเชื่อมต่ออุปกรณ์ Bluetooth (รองรับหลายภาษา: EN/TH)
 class ConnectionPage extends StatelessWidget {
@@ -80,8 +81,8 @@ class ConnectionPage extends StatelessWidget {
                         .read<ScanBloc>()
                         .add(const ConnectToDevice("MOCK-001"));
 
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text("Entering Simulation Mode...")));
+                    MotusSnackbar.showWarning(
+                        context, "Entering Simulation Mode...");
                   },
                   icon: Icons.gamepad,
                   label: "ENTER DEMO MODE",
@@ -99,6 +100,7 @@ class ConnectionPage extends StatelessWidget {
                 ? () => context.read<ScanBloc>().add(StopScan())
                 : () => context.read<ScanBloc>().add(StartScan()),
             backgroundColor: AppColors.primary,
+            heroTag: "fab_connection",
             child: Icon(state.status == ScanStatus.scanning
                 ? Icons.stop
                 : Icons.refresh),

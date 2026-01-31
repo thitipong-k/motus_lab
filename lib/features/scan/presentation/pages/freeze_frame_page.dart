@@ -62,7 +62,11 @@ class FreezeFramePage extends StatelessWidget {
                       ? constraints.maxWidth
                       : 600), // Fallback width for safety
               child: DataTable(
-                headingRowColor: MaterialStateProperty.all(Colors.grey[200]),
+                // [Theme Compatibility] ใช้สีโปร่งแสงตาม Theme ของตัวอักษรเป็นพื้นหลัง
+                // แทนการใช้สีเทาอ่อน (Colors.grey[200]) แบบเดิม
+                // เพื่อให้มองเห็นชัดเจนทั้งใน Dark Mode และ Light Mode
+                headingRowColor: MaterialStateProperty.all(
+                    Theme.of(context).colorScheme.onSurface.withOpacity(0.1)),
                 columnSpacing: 20, // Add some spacing
                 horizontalMargin: 20,
                 // Center columns by expanding? DataTable doesn't support expanded columns easily.

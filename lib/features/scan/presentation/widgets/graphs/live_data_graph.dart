@@ -38,16 +38,19 @@ class LiveDataGraph extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 16, bottom: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          padding: const EdgeInsets.only(left: 16, bottom: 8, right: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
                 style:
                     const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              if (seriesList.length > 1) _buildLegend(),
+              if (seriesList.length > 1) ...[
+                const SizedBox(height: 4),
+                _buildLegend(),
+              ],
             ],
           ),
         ),
@@ -96,22 +99,24 @@ class LiveDataGraph extends StatelessWidget {
   }
 
   Widget _buildLegend() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    // [Overflow Protection] ใช้ Wrap แทน Row
+    // กรณีมีหลายกราฟ หรือชื่อยาวๆ จะได้ปัดลงบรรทัดใหม่ได้
+    // ช่วยป้องกัน Error "RenderFlex overflowed" ในหน้าจอมือถือ
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
       children: seriesList.map((s) {
-        return Padding(
-          padding: const EdgeInsets.only(left: 8.0),
-          child: Row(
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                color: s.color,
-              ),
-              const SizedBox(width: 4),
-              Text(s.label, style: const TextStyle(fontSize: 12)),
-            ],
-          ),
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              color: s.color,
+            ),
+            const SizedBox(width: 4),
+            Text(s.label, style: const TextStyle(fontSize: 12)),
+          ],
         );
       }).toList(),
     );

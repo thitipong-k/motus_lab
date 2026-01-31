@@ -76,12 +76,16 @@ class _TopologyPageState extends State<TopologyPage> {
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2)),
                   const SizedBox(width: 8),
-                  Text(
-                    _isScanning
-                        ? "Scanning Vehicle Network..."
-                        : "Scan Complete: ${_modules.length} Modules Found",
-                    style: const TextStyle(
-                        color: AppColors.primary, fontWeight: FontWeight.bold),
+                  Flexible(
+                    child: Text(
+                      _isScanning
+                          ? "Scanning Vehicle Network..."
+                          : "Scan Complete: ${_modules.length} Modules Found",
+                      style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),

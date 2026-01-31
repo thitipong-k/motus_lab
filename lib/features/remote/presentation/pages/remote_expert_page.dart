@@ -42,6 +42,7 @@ class _RemoteExpertViewState extends State<_RemoteExpertView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text("REMOTE SUPPORT")),
       backgroundColor: Colors.transparent, // Uses dashboard background
       body: BlocConsumer<RemoteBloc, RemoteState>(
         listener: (context, state) {

@@ -102,22 +102,23 @@ Future<void> setupLocator() async {
   // 6. Maintenance Feature
   locator.registerLazySingleton<MaintenanceRepository>(
       () => MaintenanceRepositoryImpl(locator()));
-  locator
-      .registerLazySingleton<MaintenanceBloc>(() => MaintenanceBloc(locator()));
+  locator.registerFactory<MaintenanceBloc>(() => MaintenanceBloc(locator()));
 
   // 7. CRM Feature (Phase 5)
-  // ลงทะเบียน Repository และ Bloc สำหรับระบบจัดการลูกค้า (CRM)
-  // ให้สามารถเรียกใช้ได้จากหน้าจอต่างๆ ผ่าน Service Locator
+  // [Bug Fix] เปลี่ยนจาก registerLazySingleton เป็น registerFactory
+  // เนื่องจากเมื่อ user ปิดหน้า CRM (Widget disposed) ตัว Bloc จะถูกปิดไปด้วย
+  // หากใช้ Singleton จะทำให้กลับมาเปิดหน้านี้ใหม่ไม่ได้ (เพราะ Bloc ปิดไปแล้ว)
+  // จึงต้องใช้ Factory เพื่อสร้าง Instance ใหม่ทุกครั้งที่เข้าหน้า
   locator
       .registerLazySingleton<CrmRepository>(() => CrmRepositoryImpl(locator()));
-  locator.registerLazySingleton<CrmBloc>(() => CrmBloc(locator()));
+  locator.registerFactory<CrmBloc>(() => CrmBloc(locator()));
 
   // 7.1 Data Logging (Phase 7)
   locator.registerLazySingleton<LogRepository>(() => LogRepositoryImpl());
 
   // 8. Remote Expert (Phase 5 Part 2)
   locator.registerLazySingleton<RemoteRepository>(() => RemoteRepositoryImpl());
-  locator.registerLazySingleton<RemoteBloc>(() => RemoteBloc(locator()));
+  locator.registerFactory<RemoteBloc>(() => RemoteBloc(locator()));
 
   // 9. Professional Reporting (Phase 6)
   locator
@@ -126,7 +127,7 @@ Future<void> setupLocator() async {
         pdfService: locator(),
         prefs: locator(),
       ));
-  locator.registerLazySingleton<ReportBloc>(() => ReportBloc(locator()));
+  locator.registerFactory<ReportBloc>(() => ReportBloc(locator()));
 
   // 10. Vehicle Integration (Phase 4.1 & 7.1)
   locator.registerLazySingleton(() => HomeWidgetService());

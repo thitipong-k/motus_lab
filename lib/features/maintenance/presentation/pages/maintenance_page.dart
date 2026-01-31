@@ -27,6 +27,7 @@ class _MaintenanceView extends StatelessWidget {
         title: const Text("SERVICE REMINDERS"),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: "fab_maintenance",
         onPressed: () => _showAddDialog(context),
         child: const Icon(Icons.add),
       ),
