@@ -7,6 +7,7 @@ import 'package:motus_lab/features/scan/domain/usecases/connect_to_device.dart';
 import 'package:motus_lab/core/connection/connection_interface.dart'; // Keep for type check if needed, or refactor
 import 'package:motus_lab/core/connection/mock_connection.dart';
 import 'package:motus_lab/features/settings/domain/repositories/settings_repository.dart';
+import 'package:motus_lab/core/services/vehicle_integration/home_widget_service.dart';
 
 part 'scan_event.dart';
 part 'scan_state.dart';
@@ -19,6 +20,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   final ConnectToDeviceUseCase _connectToDevice;
   final SettingsRepository _settingsRepository;
   final ConnectionInterface _connection; // Keep for Mock check
+  final HomeWidgetService _homeWidgetService;
   StreamSubscription? _resultsSubscription;
 
   ScanBloc({
@@ -26,10 +28,12 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     required ConnectToDeviceUseCase connectToDevice,
     required ConnectionInterface connection,
     required SettingsRepository settingsRepository,
+    HomeWidgetService? homeWidgetService,
   })  : _bluetoothService = bluetoothService,
         _connectToDevice = connectToDevice,
         _connection = connection,
         _settingsRepository = settingsRepository,
+        _homeWidgetService = homeWidgetService ?? HomeWidgetService(),
         super(const ScanState()) {
     // ลงทะเบียนจัดการ Event
     on<StartScan>(_onStartScan);
@@ -113,10 +117,15 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       await _connectToDevice(event.deviceId)
           .timeout(Duration(seconds: settings.connectionTimeoutSeconds));
       print("ScanBloc: Connected to ${event.deviceId}!");
+
+      // Update Widget
+      _homeWidgetService.updateConnectionStatus(isConnected: true);
+
       emit(state.copyWith(
           status: ScanStatus.connected, connectedDeviceId: event.deviceId));
     } catch (e) {
       print("ScanBloc: Connection Failed: $e");
+      _homeWidgetService.updateConnectionStatus(isConnected: false);
       emit(
           state.copyWith(status: ScanStatus.error, errorMessage: e.toString()));
     }

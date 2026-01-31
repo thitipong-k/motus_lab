@@ -17,6 +17,8 @@ import 'package:motus_lab/features/scan/data/repositories/vehicle_profile_reposi
 import 'package:motus_lab/features/settings/data/datasources/settings_local_data_source.dart';
 import 'package:motus_lab/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:motus_lab/features/settings/domain/repositories/settings_repository.dart';
+import 'package:motus_lab/core/services/vehicle_integration/home_widget_service.dart';
+import 'package:motus_lab/core/services/vehicle_integration/carplay_service.dart';
 import 'package:motus_lab/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:motus_lab/features/maintenance/domain/repositories/maintenance_repository.dart';
 import 'package:motus_lab/features/maintenance/data/repositories/maintenance_repository_impl.dart';
@@ -73,7 +75,8 @@ Future<void> setupLocator() async {
       bluetoothService: locator<motus.BluetoothService>(),
       connection: locator<ConnectionInterface>(),
       connectToDevice: locator<ConnectToDeviceUseCase>(),
-      settingsRepository: locator<SettingsRepository>()));
+      settingsRepository: locator<SettingsRepository>(),
+      homeWidgetService: locator<HomeWidgetService>()));
   locator.registerLazySingleton(() => LiveDataBloc(
         engine: locator<ProtocolEngine>(),
         connection: locator<ConnectionInterface>(),
@@ -124,4 +127,8 @@ Future<void> setupLocator() async {
         prefs: locator(),
       ));
   locator.registerLazySingleton<ReportBloc>(() => ReportBloc(locator()));
+
+  // 10. Vehicle Integration (Phase 4.1 & 7.1)
+  locator.registerLazySingleton(() => HomeWidgetService());
+  locator.registerLazySingleton(() => CarPlayService());
 }

@@ -8,14 +8,8 @@ import 'package:motus_lab/features/scan/presentation/bloc/dtc/dtc_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/pages/connection_page.dart';
 import 'package:motus_lab/features/scan/presentation/pages/live_data/live_data_page.dart';
 import 'package:motus_lab/features/scan/presentation/pages/topology/topology_page.dart';
-import 'package:motus_lab/features/scan/presentation/pages/freeze_frame_page.dart';
-import 'package:motus_lab/features/settings/presentation/pages/settings_page.dart';
-import 'package:motus_lab/features/coding/presentation/pages/adaptation_page.dart';
-import 'package:motus_lab/features/sniffer/presentation/pages/sniffer_page.dart';
 import 'package:motus_lab/features/maintenance/presentation/pages/maintenance_page.dart';
-import 'package:motus_lab/features/crm/presentation/pages/customer_list_page.dart';
-import 'package:motus_lab/features/remote/presentation/pages/remote_expert_page.dart';
-import 'package:motus_lab/features/profile/presentation/pages/wallet_page.dart';
+import 'package:motus_lab/features/dashboard/presentation/pages/more_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -29,18 +23,14 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    // รายการหน้าหลัก (Main Tabs) ที่ถูกจัดกลุ่มใหม่เหลือ 5 หน้า เพื่อความสะอาดตา
+    // และให้แสดงผลเหมือนกันทั้งบน Mobile และ Desktop (Unified UX)
     final List<Widget> pages = [
-      const ConnectionPage(), // Tab 0: Connect (หน้าเขื่อมต่ออุปกรณ์)
-      const LiveDataPage(), // Tab 1: Dashboard (หน้าแสดงผลวัดค่าสด)
-      const TopologyPage(), // Tab 2: Topology (แผนผังโครงสร้างรถยนต์)
-      const FreezeFramePage(), // Tab 3: Freeze Frame (ดูค่าแช่แข็งเมื่อเกิด Error)
-      const MaintenancePage(), // Tab 4: Service (แจ้งเตือนเช็คระยะ)
-      const CustomerListPage(), // Tab 5: CRM (ระบบจัดการลูกค้า - Phase 5)
-      const RemoteExpertPage(), // Tab 6: Remote (ระบบ Expert ทางไกล - Phase 5)
-      const WalletPage(), // Tab 7: Wallet (กระเป๋าเงินเครดิต)
-      const AdaptationPage(), // Tab 8: Coding (ปรับแต่งค่า ECU)
-      const SnifferPage(), // Tab 9: Sniffer (ดักจับสัญญาณ CAN Bus)
-      const SettingsPage(), // Tab 10: Settings (ตั้งค่าแอป)
+      const ConnectionPage(), // Tab 0: Connect (เชื่อมต่ออุปกรณ์)
+      const LiveDataPage(), // Tab 1: Dashboard (หน้าปัดวัดค่าสด)
+      const TopologyPage(), // Tab 2: Map (แผนผังโครงสร้าง)
+      const MaintenancePage(), // Tab 3: Service (บริการและซ่อมบำรุง)
+      const MorePage(), // Tab 4: Menu (รวมฟีเจอร์ย่อยอื่นๆ ไว้ในหน้านี้ เช่น Settings, CRM)
     ];
 
     return MultiBlocProvider(
@@ -81,16 +71,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 icon: Icon(Icons.bluetooth_searching), label: 'Connect'),
             NavigationDestination(icon: Icon(Icons.speed), label: 'Dash'),
             NavigationDestination(icon: Icon(Icons.account_tree), label: 'Map'),
-            NavigationDestination(
-                icon: Icon(Icons.backup_table), label: 'Freeze Frame'),
             NavigationDestination(icon: Icon(Icons.build), label: 'Service'),
-            NavigationDestination(icon: Icon(Icons.people), label: 'CRM'),
-            NavigationDestination(icon: Icon(Icons.hub), label: 'Remote'),
-            NavigationDestination(
-                icon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
-            NavigationDestination(icon: Icon(Icons.edit_note), label: 'Coding'),
-            NavigationDestination(icon: Icon(Icons.terminal), label: 'Sniff'),
-            NavigationDestination(icon: Icon(Icons.settings), label: 'Set'),
+            NavigationDestination(icon: Icon(Icons.grid_view), label: 'Menu'),
           ],
           // ใช้ IndexedStack เพื่อเก็บ State ของแต่ละหน้าไว้ ไม่ให้หายเมื่อเปลี่ยน Tab
           // (ช่วยแก้ปัญหา Rebuild บ่อย และอาการกระตุก)
