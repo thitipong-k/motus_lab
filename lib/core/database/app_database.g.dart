@@ -3769,6 +3769,423 @@ class CustomersCompanion extends UpdateCompanion<CustomerData> {
   }
 }
 
+class $VehicleScanStatsTable extends VehicleScanStats
+    with TableInfo<$VehicleScanStatsTable, VehicleScanStat> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VehicleScanStatsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _makeMeta = const VerificationMeta('make');
+  @override
+  late final GeneratedColumn<String> make = GeneratedColumn<String>(
+      'make', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _modelMeta = const VerificationMeta('model');
+  @override
+  late final GeneratedColumn<String> model = GeneratedColumn<String>(
+      'model', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _yearMeta = const VerificationMeta('year');
+  @override
+  late final GeneratedColumn<int> year = GeneratedColumn<int>(
+      'year', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _scanCountMeta =
+      const VerificationMeta('scanCount');
+  @override
+  late final GeneratedColumn<int> scanCount = GeneratedColumn<int>(
+      'scan_count', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _lastScannedMeta =
+      const VerificationMeta('lastScanned');
+  @override
+  late final GeneratedColumn<DateTime> lastScanned = GeneratedColumn<DateTime>(
+      'last_scanned', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _priorityScoreMeta =
+      const VerificationMeta('priorityScore');
+  @override
+  late final GeneratedColumn<int> priorityScore = GeneratedColumn<int>(
+      'priority_score', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _isSyncedMeta =
+      const VerificationMeta('isSynced');
+  @override
+  late final GeneratedColumn<bool> isSynced = GeneratedColumn<bool>(
+      'is_synced', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_synced" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, make, model, year, scanCount, lastScanned, priorityScore, isSynced];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'vehicle_scan_stats';
+  @override
+  VerificationContext validateIntegrity(Insertable<VehicleScanStat> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('make')) {
+      context.handle(
+          _makeMeta, make.isAcceptableOrUnknown(data['make']!, _makeMeta));
+    } else if (isInserting) {
+      context.missing(_makeMeta);
+    }
+    if (data.containsKey('model')) {
+      context.handle(
+          _modelMeta, model.isAcceptableOrUnknown(data['model']!, _modelMeta));
+    } else if (isInserting) {
+      context.missing(_modelMeta);
+    }
+    if (data.containsKey('year')) {
+      context.handle(
+          _yearMeta, year.isAcceptableOrUnknown(data['year']!, _yearMeta));
+    } else if (isInserting) {
+      context.missing(_yearMeta);
+    }
+    if (data.containsKey('scan_count')) {
+      context.handle(_scanCountMeta,
+          scanCount.isAcceptableOrUnknown(data['scan_count']!, _scanCountMeta));
+    }
+    if (data.containsKey('last_scanned')) {
+      context.handle(
+          _lastScannedMeta,
+          lastScanned.isAcceptableOrUnknown(
+              data['last_scanned']!, _lastScannedMeta));
+    }
+    if (data.containsKey('priority_score')) {
+      context.handle(
+          _priorityScoreMeta,
+          priorityScore.isAcceptableOrUnknown(
+              data['priority_score']!, _priorityScoreMeta));
+    }
+    if (data.containsKey('is_synced')) {
+      context.handle(_isSyncedMeta,
+          isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+        {year, make, model},
+      ];
+  @override
+  VehicleScanStat map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VehicleScanStat(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      make: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}make'])!,
+      model: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}model'])!,
+      year: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}year'])!,
+      scanCount: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}scan_count'])!,
+      lastScanned: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_scanned'])!,
+      priorityScore: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}priority_score'])!,
+      isSynced: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_synced'])!,
+    );
+  }
+
+  @override
+  $VehicleScanStatsTable createAlias(String alias) {
+    return $VehicleScanStatsTable(attachedDatabase, alias);
+  }
+}
+
+class VehicleScanStat extends DataClass implements Insertable<VehicleScanStat> {
+  final int id;
+  final String make;
+  final String model;
+  final int year;
+  final int scanCount;
+  final DateTime lastScanned;
+  final int priorityScore;
+  final bool isSynced;
+  const VehicleScanStat(
+      {required this.id,
+      required this.make,
+      required this.model,
+      required this.year,
+      required this.scanCount,
+      required this.lastScanned,
+      required this.priorityScore,
+      required this.isSynced});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['make'] = Variable<String>(make);
+    map['model'] = Variable<String>(model);
+    map['year'] = Variable<int>(year);
+    map['scan_count'] = Variable<int>(scanCount);
+    map['last_scanned'] = Variable<DateTime>(lastScanned);
+    map['priority_score'] = Variable<int>(priorityScore);
+    map['is_synced'] = Variable<bool>(isSynced);
+    return map;
+  }
+
+  VehicleScanStatsCompanion toCompanion(bool nullToAbsent) {
+    return VehicleScanStatsCompanion(
+      id: Value(id),
+      make: Value(make),
+      model: Value(model),
+      year: Value(year),
+      scanCount: Value(scanCount),
+      lastScanned: Value(lastScanned),
+      priorityScore: Value(priorityScore),
+      isSynced: Value(isSynced),
+    );
+  }
+
+  factory VehicleScanStat.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VehicleScanStat(
+      id: serializer.fromJson<int>(json['id']),
+      make: serializer.fromJson<String>(json['make']),
+      model: serializer.fromJson<String>(json['model']),
+      year: serializer.fromJson<int>(json['year']),
+      scanCount: serializer.fromJson<int>(json['scanCount']),
+      lastScanned: serializer.fromJson<DateTime>(json['lastScanned']),
+      priorityScore: serializer.fromJson<int>(json['priorityScore']),
+      isSynced: serializer.fromJson<bool>(json['isSynced']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'make': serializer.toJson<String>(make),
+      'model': serializer.toJson<String>(model),
+      'year': serializer.toJson<int>(year),
+      'scanCount': serializer.toJson<int>(scanCount),
+      'lastScanned': serializer.toJson<DateTime>(lastScanned),
+      'priorityScore': serializer.toJson<int>(priorityScore),
+      'isSynced': serializer.toJson<bool>(isSynced),
+    };
+  }
+
+  VehicleScanStat copyWith(
+          {int? id,
+          String? make,
+          String? model,
+          int? year,
+          int? scanCount,
+          DateTime? lastScanned,
+          int? priorityScore,
+          bool? isSynced}) =>
+      VehicleScanStat(
+        id: id ?? this.id,
+        make: make ?? this.make,
+        model: model ?? this.model,
+        year: year ?? this.year,
+        scanCount: scanCount ?? this.scanCount,
+        lastScanned: lastScanned ?? this.lastScanned,
+        priorityScore: priorityScore ?? this.priorityScore,
+        isSynced: isSynced ?? this.isSynced,
+      );
+  VehicleScanStat copyWithCompanion(VehicleScanStatsCompanion data) {
+    return VehicleScanStat(
+      id: data.id.present ? data.id.value : this.id,
+      make: data.make.present ? data.make.value : this.make,
+      model: data.model.present ? data.model.value : this.model,
+      year: data.year.present ? data.year.value : this.year,
+      scanCount: data.scanCount.present ? data.scanCount.value : this.scanCount,
+      lastScanned:
+          data.lastScanned.present ? data.lastScanned.value : this.lastScanned,
+      priorityScore: data.priorityScore.present
+          ? data.priorityScore.value
+          : this.priorityScore,
+      isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VehicleScanStat(')
+          ..write('id: $id, ')
+          ..write('make: $make, ')
+          ..write('model: $model, ')
+          ..write('year: $year, ')
+          ..write('scanCount: $scanCount, ')
+          ..write('lastScanned: $lastScanned, ')
+          ..write('priorityScore: $priorityScore, ')
+          ..write('isSynced: $isSynced')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id, make, model, year, scanCount, lastScanned, priorityScore, isSynced);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VehicleScanStat &&
+          other.id == this.id &&
+          other.make == this.make &&
+          other.model == this.model &&
+          other.year == this.year &&
+          other.scanCount == this.scanCount &&
+          other.lastScanned == this.lastScanned &&
+          other.priorityScore == this.priorityScore &&
+          other.isSynced == this.isSynced);
+}
+
+class VehicleScanStatsCompanion extends UpdateCompanion<VehicleScanStat> {
+  final Value<int> id;
+  final Value<String> make;
+  final Value<String> model;
+  final Value<int> year;
+  final Value<int> scanCount;
+  final Value<DateTime> lastScanned;
+  final Value<int> priorityScore;
+  final Value<bool> isSynced;
+  const VehicleScanStatsCompanion({
+    this.id = const Value.absent(),
+    this.make = const Value.absent(),
+    this.model = const Value.absent(),
+    this.year = const Value.absent(),
+    this.scanCount = const Value.absent(),
+    this.lastScanned = const Value.absent(),
+    this.priorityScore = const Value.absent(),
+    this.isSynced = const Value.absent(),
+  });
+  VehicleScanStatsCompanion.insert({
+    this.id = const Value.absent(),
+    required String make,
+    required String model,
+    required int year,
+    this.scanCount = const Value.absent(),
+    this.lastScanned = const Value.absent(),
+    this.priorityScore = const Value.absent(),
+    this.isSynced = const Value.absent(),
+  })  : make = Value(make),
+        model = Value(model),
+        year = Value(year);
+  static Insertable<VehicleScanStat> custom({
+    Expression<int>? id,
+    Expression<String>? make,
+    Expression<String>? model,
+    Expression<int>? year,
+    Expression<int>? scanCount,
+    Expression<DateTime>? lastScanned,
+    Expression<int>? priorityScore,
+    Expression<bool>? isSynced,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (make != null) 'make': make,
+      if (model != null) 'model': model,
+      if (year != null) 'year': year,
+      if (scanCount != null) 'scan_count': scanCount,
+      if (lastScanned != null) 'last_scanned': lastScanned,
+      if (priorityScore != null) 'priority_score': priorityScore,
+      if (isSynced != null) 'is_synced': isSynced,
+    });
+  }
+
+  VehicleScanStatsCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? make,
+      Value<String>? model,
+      Value<int>? year,
+      Value<int>? scanCount,
+      Value<DateTime>? lastScanned,
+      Value<int>? priorityScore,
+      Value<bool>? isSynced}) {
+    return VehicleScanStatsCompanion(
+      id: id ?? this.id,
+      make: make ?? this.make,
+      model: model ?? this.model,
+      year: year ?? this.year,
+      scanCount: scanCount ?? this.scanCount,
+      lastScanned: lastScanned ?? this.lastScanned,
+      priorityScore: priorityScore ?? this.priorityScore,
+      isSynced: isSynced ?? this.isSynced,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (make.present) {
+      map['make'] = Variable<String>(make.value);
+    }
+    if (model.present) {
+      map['model'] = Variable<String>(model.value);
+    }
+    if (year.present) {
+      map['year'] = Variable<int>(year.value);
+    }
+    if (scanCount.present) {
+      map['scan_count'] = Variable<int>(scanCount.value);
+    }
+    if (lastScanned.present) {
+      map['last_scanned'] = Variable<DateTime>(lastScanned.value);
+    }
+    if (priorityScore.present) {
+      map['priority_score'] = Variable<int>(priorityScore.value);
+    }
+    if (isSynced.present) {
+      map['is_synced'] = Variable<bool>(isSynced.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VehicleScanStatsCompanion(')
+          ..write('id: $id, ')
+          ..write('make: $make, ')
+          ..write('model: $model, ')
+          ..write('year: $year, ')
+          ..write('scanCount: $scanCount, ')
+          ..write('lastScanned: $lastScanned, ')
+          ..write('priorityScore: $priorityScore, ')
+          ..write('isSynced: $isSynced')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3785,6 +4202,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ServiceRemindersTable serviceReminders =
       $ServiceRemindersTable(this);
   late final $CustomersTable customers = $CustomersTable(this);
+  late final $VehicleScanStatsTable vehicleScanStats =
+      $VehicleScanStatsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3799,7 +4218,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         diagnosticIntelligence,
         shopProfiles,
         serviceReminders,
-        customers
+        customers,
+        vehicleScanStats
       ];
 }
 
@@ -6315,6 +6735,220 @@ typedef $$CustomersTableProcessedTableManager = ProcessedTableManager<
     ),
     CustomerData,
     PrefetchHooks Function()>;
+typedef $$VehicleScanStatsTableCreateCompanionBuilder
+    = VehicleScanStatsCompanion Function({
+  Value<int> id,
+  required String make,
+  required String model,
+  required int year,
+  Value<int> scanCount,
+  Value<DateTime> lastScanned,
+  Value<int> priorityScore,
+  Value<bool> isSynced,
+});
+typedef $$VehicleScanStatsTableUpdateCompanionBuilder
+    = VehicleScanStatsCompanion Function({
+  Value<int> id,
+  Value<String> make,
+  Value<String> model,
+  Value<int> year,
+  Value<int> scanCount,
+  Value<DateTime> lastScanned,
+  Value<int> priorityScore,
+  Value<bool> isSynced,
+});
+
+class $$VehicleScanStatsTableFilterComposer
+    extends Composer<_$AppDatabase, $VehicleScanStatsTable> {
+  $$VehicleScanStatsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get make => $composableBuilder(
+      column: $table.make, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get model => $composableBuilder(
+      column: $table.model, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get year => $composableBuilder(
+      column: $table.year, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get scanCount => $composableBuilder(
+      column: $table.scanCount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get lastScanned => $composableBuilder(
+      column: $table.lastScanned, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get priorityScore => $composableBuilder(
+      column: $table.priorityScore, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isSynced => $composableBuilder(
+      column: $table.isSynced, builder: (column) => ColumnFilters(column));
+}
+
+class $$VehicleScanStatsTableOrderingComposer
+    extends Composer<_$AppDatabase, $VehicleScanStatsTable> {
+  $$VehicleScanStatsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get make => $composableBuilder(
+      column: $table.make, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get model => $composableBuilder(
+      column: $table.model, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get year => $composableBuilder(
+      column: $table.year, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get scanCount => $composableBuilder(
+      column: $table.scanCount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get lastScanned => $composableBuilder(
+      column: $table.lastScanned, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get priorityScore => $composableBuilder(
+      column: $table.priorityScore,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isSynced => $composableBuilder(
+      column: $table.isSynced, builder: (column) => ColumnOrderings(column));
+}
+
+class $$VehicleScanStatsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VehicleScanStatsTable> {
+  $$VehicleScanStatsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get make =>
+      $composableBuilder(column: $table.make, builder: (column) => column);
+
+  GeneratedColumn<String> get model =>
+      $composableBuilder(column: $table.model, builder: (column) => column);
+
+  GeneratedColumn<int> get year =>
+      $composableBuilder(column: $table.year, builder: (column) => column);
+
+  GeneratedColumn<int> get scanCount =>
+      $composableBuilder(column: $table.scanCount, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastScanned => $composableBuilder(
+      column: $table.lastScanned, builder: (column) => column);
+
+  GeneratedColumn<int> get priorityScore => $composableBuilder(
+      column: $table.priorityScore, builder: (column) => column);
+
+  GeneratedColumn<bool> get isSynced =>
+      $composableBuilder(column: $table.isSynced, builder: (column) => column);
+}
+
+class $$VehicleScanStatsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $VehicleScanStatsTable,
+    VehicleScanStat,
+    $$VehicleScanStatsTableFilterComposer,
+    $$VehicleScanStatsTableOrderingComposer,
+    $$VehicleScanStatsTableAnnotationComposer,
+    $$VehicleScanStatsTableCreateCompanionBuilder,
+    $$VehicleScanStatsTableUpdateCompanionBuilder,
+    (
+      VehicleScanStat,
+      BaseReferences<_$AppDatabase, $VehicleScanStatsTable, VehicleScanStat>
+    ),
+    VehicleScanStat,
+    PrefetchHooks Function()> {
+  $$VehicleScanStatsTableTableManager(
+      _$AppDatabase db, $VehicleScanStatsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VehicleScanStatsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$VehicleScanStatsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$VehicleScanStatsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> make = const Value.absent(),
+            Value<String> model = const Value.absent(),
+            Value<int> year = const Value.absent(),
+            Value<int> scanCount = const Value.absent(),
+            Value<DateTime> lastScanned = const Value.absent(),
+            Value<int> priorityScore = const Value.absent(),
+            Value<bool> isSynced = const Value.absent(),
+          }) =>
+              VehicleScanStatsCompanion(
+            id: id,
+            make: make,
+            model: model,
+            year: year,
+            scanCount: scanCount,
+            lastScanned: lastScanned,
+            priorityScore: priorityScore,
+            isSynced: isSynced,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String make,
+            required String model,
+            required int year,
+            Value<int> scanCount = const Value.absent(),
+            Value<DateTime> lastScanned = const Value.absent(),
+            Value<int> priorityScore = const Value.absent(),
+            Value<bool> isSynced = const Value.absent(),
+          }) =>
+              VehicleScanStatsCompanion.insert(
+            id: id,
+            make: make,
+            model: model,
+            year: year,
+            scanCount: scanCount,
+            lastScanned: lastScanned,
+            priorityScore: priorityScore,
+            isSynced: isSynced,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$VehicleScanStatsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $VehicleScanStatsTable,
+    VehicleScanStat,
+    $$VehicleScanStatsTableFilterComposer,
+    $$VehicleScanStatsTableOrderingComposer,
+    $$VehicleScanStatsTableAnnotationComposer,
+    $$VehicleScanStatsTableCreateCompanionBuilder,
+    $$VehicleScanStatsTableUpdateCompanionBuilder,
+    (
+      VehicleScanStat,
+      BaseReferences<_$AppDatabase, $VehicleScanStatsTable, VehicleScanStat>
+    ),
+    VehicleScanStat,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6340,4 +6974,6 @@ class $AppDatabaseManager {
       $$ServiceRemindersTableTableManager(_db, _db.serviceReminders);
   $$CustomersTableTableManager get customers =>
       $$CustomersTableTableManager(_db, _db.customers);
+  $$VehicleScanStatsTableTableManager get vehicleScanStats =>
+      $$VehicleScanStatsTableTableManager(_db, _db.vehicleScanStats);
 }

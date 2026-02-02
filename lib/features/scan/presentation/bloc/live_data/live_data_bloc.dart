@@ -12,6 +12,7 @@ import 'package:motus_lab/features/scan/domain/repositories/log_repository.dart'
 import 'package:motus_lab/features/scan/domain/entities/log_record.dart';
 import 'package:motus_lab/features/scan/domain/entities/log_session.dart';
 import 'package:motus_lab/core/services/logger.dart';
+import 'package:motus_lab/features/scan/data/repositories/vehicle_stats_repository.dart';
 
 part 'live_data_event.dart';
 part 'live_data_state.dart';
@@ -27,6 +28,8 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
   final GetSupportedPidsUseCase _getSupportedPids;
   final ReadVinUseCase _readVin;
   final LogRepository _logRepository;
+  final VehicleStatsRepository
+      _vehicleStatsRepository; // เพิ่มเพื่อรองรับ Predictive Caching
   Timer? _timer;
   List<Command> _activeCommands = [];
 
@@ -37,6 +40,8 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     required VehicleProfileRepository profileRepository,
     required GetSupportedPidsUseCase getSupportedPids,
     required ReadVinUseCase readVin,
+    required VehicleStatsRepository
+        vehicleStatsRepository, // บังคับใส่เพื่อเก็บสถิติ
     LogRepository? logRepository, // Optional for backward compatibility/testing
   })  : _engine = engine,
         _connection = connection,
@@ -44,6 +49,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
         _profileRepository = profileRepository,
         _getSupportedPids = getSupportedPids,
         _readVin = readVin,
+        _vehicleStatsRepository = vehicleStatsRepository,
         _logRepository = logRepository ??
             _DebugLogRepository(), // Fallback if not injected (mostly test/debug)
         super(const LiveDataState()) {
@@ -81,6 +87,16 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       // Update VIN in state as soon as we have it
       if (currentVin != null) {
         emit(state.copyWith(vin: currentVin));
+
+        // [Predictive Caching Logic]
+        // เมื่อระบุรถได้แล้ว (ผ่าน VIN) ให้บันทึกสถิติการใช้งานทันที
+        // หมายเหตุ: ในขั้นพื้นฐานนี้จะใช้การ Mock ข้อมูลรุ่นรถจาก VIN ไปก่อน
+        // ในระบบจริงจะมีการใช้ VIN Decoder เพื่อหา Year/Make/Model ที่ถูกต้อง
+        _vehicleStatsRepository.incrementScanCount(
+          year: currentVin.contains("2024") ? 2024 : 2022, // Example Logic
+          make: "Honda",
+          model: "Civic FE",
+        );
       }
 
       bool cacheHit = false;

@@ -10,6 +10,7 @@ import 'package:motus_lab/features/scan/presentation/pages/live_data/live_data_p
 import 'package:motus_lab/features/scan/presentation/pages/topology/topology_page.dart';
 import 'package:motus_lab/features/maintenance/presentation/pages/maintenance_page.dart';
 import 'package:motus_lab/features/dashboard/presentation/pages/more_page.dart';
+import 'package:motus_lab/l10n/app_localizations.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -66,13 +67,22 @@ class _DashboardPageState extends State<DashboardPage> {
               _currentIndex = index;
             });
           },
-          destinations: const [
+          destinations: [
             NavigationDestination(
-                icon: Icon(Icons.bluetooth_searching), label: 'Connect'),
-            NavigationDestination(icon: Icon(Icons.speed), label: 'Dash'),
-            NavigationDestination(icon: Icon(Icons.account_tree), label: 'Map'),
-            NavigationDestination(icon: Icon(Icons.build), label: 'Service'),
-            NavigationDestination(icon: Icon(Icons.grid_view), label: 'Menu'),
+                icon: const Icon(Icons.bluetooth_searching),
+                label: AppLocalizations.of(context)!.navConnect),
+            NavigationDestination(
+                icon: const Icon(Icons.speed),
+                label: AppLocalizations.of(context)!.navDash),
+            NavigationDestination(
+                icon: const Icon(Icons.account_tree),
+                label: AppLocalizations.of(context)!.navMap),
+            NavigationDestination(
+                icon: const Icon(Icons.build),
+                label: AppLocalizations.of(context)!.navService),
+            NavigationDestination(
+                icon: const Icon(Icons.grid_view),
+                label: AppLocalizations.of(context)!.navMenu),
           ],
           // ใช้ IndexedStack เพื่อเก็บ State ของแต่ละหน้าไว้ ไม่ให้หายเมื่อเปลี่ยน Tab
           // (ช่วยแก้ปัญหา Rebuild บ่อย และอาการกระตุก)

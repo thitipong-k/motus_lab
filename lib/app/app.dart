@@ -36,6 +36,7 @@ class MotusApp extends StatelessWidget {
             title: 'Motus Lab',
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
+            locale: Locale(state.settings.languageCode),
             debugShowCheckedModeBanner: false,
             theme: AppTheme.getTheme(style),
             themeMode: ThemeMode.light,

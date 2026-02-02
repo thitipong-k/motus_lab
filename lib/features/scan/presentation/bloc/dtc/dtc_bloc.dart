@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:motus_lab/core/protocol/protocol_engine.dart';
 import 'package:motus_lab/core/connection/connection_interface.dart';
+import 'package:motus_lab/features/scan/data/repositories/vehicle_stats_repository.dart';
 
 part 'dtc_event.dart';
 part 'dtc_state.dart';
@@ -11,12 +12,16 @@ part 'dtc_state.dart';
 /// รองรับการอ่าน (Mode 03) และการลบ (Mode 04)
 class DtcBloc extends Bloc<DtcEvent, DtcState> {
   final ConnectionInterface _connection;
+  final VehicleStatsRepository
+      _vehicleStatsRepository; // เพิ่มเพื่อรองรับ Predictive Caching
 
   DtcBloc({
     required ProtocolEngine
         engine, // Kept for now as it's part of the constructor signature, but _engine field is removed.
     required ConnectionInterface connection,
+    required VehicleStatsRepository vehicleStatsRepository,
   })  : _connection = connection,
+        _vehicleStatsRepository = vehicleStatsRepository,
         super(const DtcState()) {
     on<ReadDtcCodes>(_onReadDtcCodes);
     on<ClearDtcCodes>(_onClearDtcCodes);
@@ -24,6 +29,11 @@ class DtcBloc extends Bloc<DtcEvent, DtcState> {
 
   Future<void> _onReadDtcCodes(
       ReadDtcCodes event, Emitter<DtcState> emit) async {
+    // [Predictive Caching Logic] บันทึกสถิติการเข้าดูข้อมูล
+    // ในที่นี้สมมติเป็นรุ่นหลักที่สแกนบ่อยเพื่อเป็นตัวอย่าง (Honda Civic FE)
+    _vehicleStatsRepository.incrementScanCount(
+        year: 2022, make: "Honda", model: "Civic FE");
+
     emit(const DtcState(status: DtcStatus.loading));
 
     try {

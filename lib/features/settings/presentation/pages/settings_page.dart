@@ -318,15 +318,65 @@ class _SettingsView extends StatelessWidget {
                 ),
               ),
 
-              const ListTile(
-                leading: Icon(Icons.language),
-                title: Text("Language"),
-                subtitle: Text("English (Device Default)"),
+              ListTile(
+                leading: const Icon(Icons.language),
+                title: const Text("Language"),
+                subtitle: Text(currentSettings.languageCode == 'th'
+                    ? "ภาษาไทย (Thai)"
+                    : "English"),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _showLanguageSelector(
+                    context, currentSettings.languageCode),
               ),
             ],
           );
         },
       ),
+    );
+  }
+
+  void _showLanguageSelector(BuildContext context, String currentCode) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return BlocProvider.value(
+          value: context.read<SettingsBloc>(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text("Select Language / เลือกภาษา",
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              ),
+              RadioListTile<String>(
+                title: const Text("English"),
+                value: 'en',
+                groupValue: currentCode,
+                onChanged: (val) {
+                  if (val != null) {
+                    context.read<SettingsBloc>().add(UpdateLanguage(val));
+                    Navigator.pop(ctx);
+                  }
+                },
+              ),
+              RadioListTile<String>(
+                title: const Text("ภาษาไทย (Thai)"),
+                value: 'th',
+                groupValue: currentCode,
+                onChanged: (val) {
+                  if (val != null) {
+                    context.read<SettingsBloc>().add(UpdateLanguage(val));
+                    Navigator.pop(ctx);
+                  }
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
     );
   }
 

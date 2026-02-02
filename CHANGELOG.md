@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.0.4] - 2026-02-02
+
+### Added
+
+- **Multi-language Support (Phase 17)**: Full localization infrastructure for EN/TH.
+  - Language Selector in Settings page with bottom sheet UI.
+  - Localized Navigation Bar (Connect, Dash, Map, Service, Menu).
+  - Localized Menu Grid (12 feature tiles with Thai translations).
+  - Persistent language setting via SharedPreferences.
+- **Thai Documentation**: Added comprehensive Thai comments to localization files.
+- **Cloud Seeding Script**: External Python script for bulk Firestore uploads.
+
+### Changed
+
+- **SettingsBloc**: Added `UpdateLanguage` event for dynamic locale switching.
+- **MotusApp**: `MaterialApp.locale` now dynamically updates from `SettingsState`.
+
+### Fixed
+
+- **Manual l10n Sync**: Resolved code generator lag by manually syncing AppLocalizations classes.
+
 ## [1.0.0] - 2026-01-30
 
 ### Added

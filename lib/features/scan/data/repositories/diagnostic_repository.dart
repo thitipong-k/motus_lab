@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'package:drift/drift.dart';
+import 'package:flutter/services.dart';
 import 'package:motus_lab/core/database/app_database.dart';
+import 'package:motus_lab/core/utils/logger.dart';
 
 class DiagnosticRepository {
   final AppDatabase _db;
@@ -69,9 +72,79 @@ class DiagnosticRepository {
         .write(
       const DiagnosticIntelligenceCompanion(
         verifiedByMechanic: Value(true),
-        // Future: Increment score logic here
       ),
     );
+  }
+
+  /// 4. CRUD Operations สำหรับ Knowledge Base (Phase 14.2)
+
+  /// ดึงข้อมูลทั้งหมดเพื่อแสดงในรายการ Knowledge Base
+  Future<List<DiagnosticIntelligenceData>> getAllIntelligence() async {
+    return await _db.select(_db.diagnosticIntelligence).get();
+  }
+
+  /// เพิ่มหรือแก้ไขข้อมูล DTC
+  Future<void> upsertDtcKnowledge({
+    required String code,
+    required String title,
+    String? description,
+    required List<String> steps,
+    String? vehicleModel,
+  }) async {
+    await _db.transaction(() async {
+      // 1. บันทึก PossibleCauses
+      final causeId = await _db.into(_db.possibleCauses).insert(
+            PossibleCausesCompanion.insert(
+              title: title,
+              description: Value(description),
+              difficultyLevel: const Value(3),
+            ),
+          );
+
+      // 2. บันทึก Solutions
+      await _db.into(_db.solutions).insert(
+            SolutionsCompanion.insert(
+              causeId: causeId,
+              steps: steps.join("\n"),
+            ),
+          );
+
+      // 3. เชื่อมโยงกับ DiagnosticIntelligence
+      await _db.into(_db.diagnosticIntelligence).insert(
+            DiagnosticIntelligenceCompanion.insert(
+              dtcCode: code,
+              vehicleModel: Value(vehicleModel),
+              causeId: causeId,
+              likelihoodScore: const Value(100), // แมนนวลแอดให้ความสำคัญสูงสุด
+            ),
+          );
+    });
+  }
+
+  /// 5. Seeding Logic (นำเข้าข้อมูลชุดใหญ่จาก Assets)
+  Future<void> seedFromAssets(String assetPath) async {
+    try {
+      final String jsonString = await rootBundle.loadString(assetPath);
+      final List<dynamic> data = jsonDecode(jsonString);
+
+      for (var item in data) {
+        final String code = item['code'];
+        final String mainDesc = item['description'];
+        final List<dynamic> causes = item['causes'];
+
+        for (var cause in causes) {
+          await upsertDtcKnowledge(
+            code: code,
+            title: cause['title'],
+            description: mainDesc,
+            steps: List<String>.from(cause['steps']),
+          );
+        }
+      }
+      Logger.info("DiagnosticRepository: Seeded data from $assetPath");
+    } catch (e) {
+      Logger.error("DiagnosticRepository: Seeding failed", e);
+    }
   }
 }
 

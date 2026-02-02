@@ -33,6 +33,23 @@ class UpdateUnitSystem extends SettingsEvent {
   const UpdateUnitSystem(this.unitSystem);
 }
 
+class UpdateLanguage extends SettingsEvent {
+  /// ===================================================================
+  /// UpdateLanguage Event - คำสั่งเปลี่ยนภาษาของแอป
+  /// ===================================================================
+  ///
+  /// เมื่อผู้ใช้เลือกภาษาในหน้า Settings → Language ระบบจะ:
+  /// 1. ส่ง Event นี้ไปยัง SettingsBloc
+  /// 2. Bloc จะอัปเดต `languageCode` ใน Domain State
+  /// 3. บันทึก `languageCode` ลง SharedPreferences ผ่าน Repository
+  /// 4. ส่ง State ใหม่ไปยัง `MotusApp` ซึ่งจะ Rebuild ด้วย Locale ใหม่
+  ///
+  /// ค่า languageCode ที่รองรับ: 'en' (English), 'th' (Thai)
+  /// ===================================================================
+  final String languageCode;
+  const UpdateLanguage(this.languageCode);
+}
+
 class UpdateAppLock extends SettingsEvent {
   final bool isEnabled;
   const UpdateAppLock(this.isEnabled);
@@ -79,6 +96,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<LoadSettings>(_onLoadSettings);
     on<UpdateTheme>(_onUpdateTheme);
     on<UpdateAutoConnect>(_onUpdateAutoConnect);
+    on<UpdateLanguage>(_onUpdateLanguage);
     on<UpdateConnectionTimeout>(_onUpdateConnectionTimeout);
     on<UpdateUnitSystem>(_onUpdateUnitSystem);
     on<UpdateAppLock>(_onUpdateAppLock);
@@ -100,6 +118,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   Future<void> _onUpdateAutoConnect(
       UpdateAutoConnect event, Emitter<SettingsState> emit) async {
     final newSettings = state.settings.copyWith(isAutoConnect: event.isEnabled);
+    await _repository.saveSettings(newSettings);
+    emit(state.copyWith(settings: newSettings));
+  }
+
+  Future<void> _onUpdateLanguage(
+      UpdateLanguage event, Emitter<SettingsState> emit) async {
+    final newSettings =
+        state.settings.copyWith(languageCode: event.languageCode);
     await _repository.saveSettings(newSettings);
     emit(state.copyWith(settings: newSettings));
   }

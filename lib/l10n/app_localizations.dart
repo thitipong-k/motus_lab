@@ -10,6 +10,27 @@ import 'app_localizations_th.dart';
 
 // ignore_for_file: type=lint
 
+/// ===================================================================
+/// AppLocalizations - ระบบแปลภาษาหลักของแอป Motus Lab
+/// ===================================================================
+///
+/// ไฟล์นี้เป็น "Abstract Class" สำหรับระบบแปลภาษา (Localization)
+/// โดยจะมีไฟล์ลูกสองไฟล์ที่ implement แตกต่างกันไปตามภาษา:
+/// - `app_localizations_en.dart` - ภาษาอังกฤษ
+/// - `app_localizations_th.dart` - ภาษาไทย
+///
+/// วิธีการใช้งานในหน้า Widget:
+/// ```dart
+/// final l10n = AppLocalizations.of(context)!;
+/// Text(l10n.navConnect); // จะแสดง "Connect" หรือ "เชื่อมต่อ" ตามภาษาที่เลือก
+/// ```
+///
+/// การเพิ่มคำศัพท์ใหม่:
+/// 1. เพิ่ม Key ใน `app_en.arb` และ `app_th.arb`
+/// 2. เพิ่ม getter ใน Abstract Class นี้
+/// 3. Implement getter ใน `app_localizations_en.dart` และ `app_localizations_th.dart`
+/// ===================================================================
+
 /// Callers can lookup localized strings with an instance of AppLocalizations
 /// returned by `AppLocalizations.of(context)`.
 ///
@@ -170,11 +191,146 @@ abstract class AppLocalizations {
   /// **'No devices found. Tap refresh to scan.'**
   String get msgNoDevices;
 
-  /// No description provided for @msgTapToScan.
-  ///
-  /// In en, this message translates to:
   /// **'Tap refresh to start scanning'**
   String get msgTapToScan;
+
+  /// No description provided for @menuSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get menuSettings;
+
+  /// No description provided for @lblVisualTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Visual Theme'**
+  String get lblVisualTheme;
+
+  /// No description provided for @lblUnitSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit System'**
+  String get lblUnitSystem;
+
+  /// No description provided for @lblLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get lblLanguage;
+
+  /// No description provided for @lblImperial.
+  ///
+  /// In en, this message translates to:
+  /// **'Imperial (mph, °F)'**
+  String get lblImperial;
+
+  /// No description provided for @lblMetric.
+  ///
+  /// In en, this message translates to:
+  /// **'Metric (km/h, °C)'**
+  String get lblMetric;
+
+  /// No description provided for @navConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get navConnect;
+
+  /// No description provided for @navDash.
+  ///
+  /// In en, this message translates to:
+  /// **'Dash'**
+  String get navDash;
+
+  /// No description provided for @navMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Map'**
+  String get navMap;
+
+  /// No description provided for @navService.
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get navService;
+
+  /// No description provided for @navMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu'**
+  String get navMenu;
+
+  /// No description provided for @moreHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help Center'**
+  String get moreHelp;
+
+  /// No description provided for @moreDiagnostics.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics'**
+  String get moreDiagnostics;
+
+  /// No description provided for @moreFreezeFrame.
+  ///
+  /// In en, this message translates to:
+  /// **'Freeze Frame'**
+  String get moreFreezeFrame;
+
+  /// No description provided for @moreDataLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Logs'**
+  String get moreDataLogs;
+
+  /// No description provided for @moreCRM.
+  ///
+  /// In en, this message translates to:
+  /// **'CRM'**
+  String get moreCRM;
+
+  /// No description provided for @moreRemoteExpert.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote Expert'**
+  String get moreRemoteExpert;
+
+  /// No description provided for @moreWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get moreWallet;
+
+  /// No description provided for @moreCoding.
+  ///
+  /// In en, this message translates to:
+  /// **'Coding'**
+  String get moreCoding;
+
+  /// No description provided for @moreSniffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Sniffer'**
+  String get moreSniffer;
+
+  /// No description provided for @moreKnowledge.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge'**
+  String get moreKnowledge;
+
+  /// No description provided for @moreSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get moreSettings;
+
+  /// No description provided for @moreSeedCloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Seed Cloud'**
+  String get moreSeedCloud;
 }
 
 class _AppLocalizationsDelegate

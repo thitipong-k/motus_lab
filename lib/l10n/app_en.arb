@@ -1,4 +1,5 @@
 {
+    "@@locale": "en",
     "appTitle": "Motus Lab",
     "titleDeviceSelection": "Device Selection",
     "@appTitle": {
@@ -21,5 +22,28 @@
         }
     },
     "msgNoDevices": "No devices found. Tap refresh to scan.",
-    "msgTapToScan": "Tap refresh to start scanning"
+    "msgTapToScan": "Tap refresh to start scanning",
+    "menuSettings": "Settings",
+    "lblVisualTheme": "Visual Theme",
+    "lblUnitSystem": "Unit System",
+    "lblLanguage": "Language",
+    "lblImperial": "Imperial (mph, °F)",
+    "lblMetric": "Metric (km/h, °C)",
+    "navConnect": "Connect",
+    "navDash": "Dash",
+    "navMap": "Map",
+    "navService": "Service",
+    "navMenu": "Menu",
+    "moreHelp": "Help Center",
+    "moreDiagnostics": "Diagnostics",
+    "moreFreezeFrame": "Freeze Frame",
+    "moreDataLogs": "Data Logs",
+    "moreCRM": "CRM",
+    "moreRemoteExpert": "Remote Expert",
+    "moreWallet": "Wallet",
+    "moreCoding": "Coding",
+    "moreSniffer": "Sniffer",
+    "moreKnowledge": "Knowledge",
+    "moreSettings": "Settings",
+    "moreSeedCloud": "Seed Cloud"
 }

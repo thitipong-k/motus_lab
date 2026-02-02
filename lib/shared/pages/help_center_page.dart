@@ -21,9 +21,11 @@ class HelpCenterPage extends StatelessWidget {
             "Connectivity",
             Icons.bluetooth,
             [
-              "How to pair your OBD2 adapter",
+              "How to pair your Bluetooth adapter",
+              "WiFi: IP 192.168.0.10 & Port 35000",
+              "How to choose the correct USB COM Port",
+              "Baudrate settings (38400 vs 115200)",
               "Common connection issues",
-              "Supported devices list",
             ],
           ),
           const SizedBox(height: 16),

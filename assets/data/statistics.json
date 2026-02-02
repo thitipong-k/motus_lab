@@ -1,0 +1,308 @@
+[
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "ACURA",
+        "p_codes": 94,
+        "total_codes": 94,
+        "u_codes": 0,
+        "unique_codes": 94
+    },
+    {
+        "b_codes": 1,
+        "c_codes": 1,
+        "manufacturer": "AUDI",
+        "p_codes": 121,
+        "total_codes": 128,
+        "u_codes": 5,
+        "unique_codes": 128
+    },
+    {
+        "b_codes": 300,
+        "c_codes": 498,
+        "manufacturer": "GENERIC",
+        "p_codes": 7387,
+        "total_codes": 9415,
+        "u_codes": 1230,
+        "unique_codes": 9415
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "BMW",
+        "p_codes": 250,
+        "total_codes": 250,
+        "u_codes": 0,
+        "unique_codes": 250
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "BUICK",
+        "p_codes": 403,
+        "total_codes": 403,
+        "u_codes": 0,
+        "unique_codes": 403
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "CADILLAC",
+        "p_codes": 402,
+        "total_codes": 402,
+        "u_codes": 0,
+        "unique_codes": 402
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "CHEVY",
+        "p_codes": 403,
+        "total_codes": 403,
+        "u_codes": 0,
+        "unique_codes": 403
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "CHRYSLER",
+        "p_codes": 283,
+        "total_codes": 283,
+        "u_codes": 0,
+        "unique_codes": 283
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "DODGE",
+        "p_codes": 101,
+        "total_codes": 101,
+        "u_codes": 0,
+        "unique_codes": 101
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "FORD",
+        "p_codes": 413,
+        "total_codes": 413,
+        "u_codes": 0,
+        "unique_codes": 413
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "GEO",
+        "p_codes": 19,
+        "total_codes": 19,
+        "u_codes": 0,
+        "unique_codes": 19
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "GM",
+        "p_codes": 402,
+        "total_codes": 402,
+        "u_codes": 0,
+        "unique_codes": 402
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "GMC",
+        "p_codes": 402,
+        "total_codes": 402,
+        "u_codes": 0,
+        "unique_codes": 402
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "HONDA",
+        "p_codes": 94,
+        "total_codes": 94,
+        "u_codes": 0,
+        "unique_codes": 94
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "INFINITI",
+        "p_codes": 94,
+        "total_codes": 94,
+        "u_codes": 0,
+        "unique_codes": 94
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "JAGUAR",
+        "p_codes": 163,
+        "total_codes": 163,
+        "u_codes": 0,
+        "unique_codes": 163
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "JEEP",
+        "p_codes": 97,
+        "total_codes": 97,
+        "u_codes": 0,
+        "unique_codes": 97
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "KIA",
+        "p_codes": 76,
+        "total_codes": 76,
+        "u_codes": 0,
+        "unique_codes": 76
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "LEXUS",
+        "p_codes": 49,
+        "total_codes": 49,
+        "u_codes": 0,
+        "unique_codes": 49
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "LINCOLN",
+        "p_codes": 413,
+        "total_codes": 413,
+        "u_codes": 0,
+        "unique_codes": 413
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "MAZDA",
+        "p_codes": 233,
+        "total_codes": 233,
+        "u_codes": 0,
+        "unique_codes": 233
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "MERCEDES",
+        "p_codes": 32,
+        "total_codes": 32,
+        "u_codes": 0,
+        "unique_codes": 32
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "MERCURY",
+        "p_codes": 413,
+        "total_codes": 413,
+        "u_codes": 0,
+        "unique_codes": 413
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "MITSUBISHI",
+        "p_codes": 33,
+        "total_codes": 33,
+        "u_codes": 0,
+        "unique_codes": 33
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "NISSAN",
+        "p_codes": 59,
+        "total_codes": 59,
+        "u_codes": 0,
+        "unique_codes": 59
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "OLDSMOBILE",
+        "p_codes": 401,
+        "total_codes": 401,
+        "u_codes": 0,
+        "unique_codes": 401
+    },
+    {
+        "b_codes": 1164,
+        "c_codes": 486,
+        "manufacturer": "OTHER",
+        "p_codes": 671,
+        "total_codes": 2620,
+        "u_codes": 299,
+        "unique_codes": 2620
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "PLYMOUTH",
+        "p_codes": 113,
+        "total_codes": 113,
+        "u_codes": 0,
+        "unique_codes": 113
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "PONTIAC",
+        "p_codes": 115,
+        "total_codes": 115,
+        "u_codes": 0,
+        "unique_codes": 115
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "SATURN",
+        "p_codes": 402,
+        "total_codes": 402,
+        "u_codes": 0,
+        "unique_codes": 402
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "SUBARU",
+        "p_codes": 93,
+        "total_codes": 93,
+        "u_codes": 0,
+        "unique_codes": 93
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "SUZUKI",
+        "p_codes": 17,
+        "total_codes": 17,
+        "u_codes": 0,
+        "unique_codes": 17
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "TOYOTA",
+        "p_codes": 45,
+        "total_codes": 45,
+        "u_codes": 0,
+        "unique_codes": 45
+    },
+    {
+        "b_codes": 0,
+        "c_codes": 0,
+        "manufacturer": "VOLKSWAGEN",
+        "p_codes": 528,
+        "total_codes": 528,
+        "u_codes": 0,
+        "unique_codes": 528
+    }
+]

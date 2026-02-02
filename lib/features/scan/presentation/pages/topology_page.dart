@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:motus_lab/core/services/service_locator.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/topology/topology_bloc.dart';
-import 'package:motus_lab/features/scan/data/repositories/topology_repository_impl.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/topology/topology_painter.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/topology/ecu_detail_dialog.dart';
 
@@ -11,7 +11,7 @@ class TopologyPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => TopologyBloc(repository: TopologyRepositoryImpl()),
+      create: (context) => locator<TopologyBloc>(),
       child: const _TopologyView(),
     );
   }

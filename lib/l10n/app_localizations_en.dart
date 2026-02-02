@@ -48,4 +48,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get msgTapToScan => 'Tap refresh to start scanning';
+
+  @override
+  String get menuSettings => 'Settings';
+
+  @override
+  String get lblVisualTheme => 'Visual Theme';
+
+  @override
+  String get lblUnitSystem => 'Unit System';
+
+  @override
+  String get lblLanguage => 'Language';
+
+  @override
+  String get lblImperial => 'Imperial (mph, °F)';
+
+  @override
+  String get lblMetric => 'Metric (km/h, °C)';
+
+  @override
+  String get navConnect => 'Connect';
+
+  @override
+  String get navDash => 'Dash';
+
+  @override
+  String get navMap => 'Map';
+
+  @override
+  String get navService => 'Service';
+
+  @override
+  String get navMenu => 'Menu';
+
+  @override
+  String get moreHelp => 'Help Center';
+
+  @override
+  String get moreDiagnostics => 'Diagnostics';
+
+  @override
+  String get moreFreezeFrame => 'Freeze Frame';
+
+  @override
+  String get moreDataLogs => 'Data Logs';
+
+  @override
+  String get moreCRM => 'CRM';
+
+  @override
+  String get moreRemoteExpert => 'Remote Expert';
+
+  @override
+  String get moreWallet => 'Wallet';
+
+  @override
+  String get moreCoding => 'Coding';
+
+  @override
+  String get moreSniffer => 'Sniffer';
+
+  @override
+  String get moreKnowledge => 'Knowledge';
+
+  @override
+  String get moreSettings => 'Settings';
+
+  @override
+  String get moreSeedCloud => 'Seed Cloud';
 }

@@ -10,6 +10,9 @@ import 'package:motus_lab/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:motus_lab/features/scan/domain/usecases/connect_to_device.dart';
 import 'package:motus_lab/features/scan/domain/usecases/get_supported_pids.dart';
 import 'package:motus_lab/features/scan/domain/usecases/read_vin.dart';
+import 'package:motus_lab/features/scan/data/repositories/topology_repository_impl.dart';
+import 'package:motus_lab/features/scan/domain/repositories/topology_repository.dart';
+import 'package:motus_lab/features/scan/presentation/bloc/topology/topology_bloc.dart';
 import 'package:motus_lab/core/database/app_database.dart';
 import 'package:motus_lab/features/scan/data/repositories/diagnostic_repository.dart';
 import 'package:motus_lab/features/scan/data/repositories/protocol_repository.dart';
@@ -36,37 +39,38 @@ import 'package:motus_lab/features/reporting/data/services/pdf_generator_service
 import 'package:motus_lab/features/reporting/presentation/bloc/report_bloc.dart';
 import 'package:motus_lab/features/scan/domain/repositories/log_repository.dart';
 import 'package:motus_lab/features/scan/data/repositories/log_repository_impl.dart';
-import 'package:motus_lab/core/services/security/auth_service.dart'; // Phase 12
-import 'package:motus_lab/core/services/sync_service.dart'; // Phase 12
-import 'package:motus_lab/features/auth/presentation/bloc/auth_bloc.dart'; // Phase 12
+import 'package:motus_lab/core/services/security/auth_service.dart';
+import 'package:motus_lab/core/services/sync_service.dart';
+import 'package:motus_lab/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:motus_lab/features/scan/domain/services/diagnostic_expert_service.dart';
+import 'package:motus_lab/features/scan/data/repositories/vehicle_stats_repository.dart';
+import 'package:motus_lab/core/services/cloud_seed_service.dart';
 
 final locator = GetIt.instance;
 
-/// ฟังก์ชันสำหรับลงทะเบียน Service ทั้งหมดในแอป
-/// ช่วยให้เรียกใช้ Instance เดิมซ้ำได้จากทุกที่ (Singleton)
-/// [WORKFLOW STEP 0] Initialization: เริ่มต้นระบบและลงทะเบียน Dependencies
-/// [WORKFLOW STEP 0] Initialization: เริ่มต้นระบบและลงทะเบียน Dependencies
 Future<void> setupLocator() async {
   // 0. External Services
   final sharedPreferences = await SharedPreferences.getInstance();
   locator.registerSingleton<SharedPreferences>(sharedPreferences);
 
-  // 1. Core Logic (ระบบประมวลผลคำสั่ง OBD)
+  // 1. Core Logic
   locator.registerLazySingleton(() => ProtocolEngine());
+  locator.registerLazySingleton(() => DiagnosticExpertService(locator()));
 
-  // 2. Connection Logic (ระบบเชื่อมต่อ Hardware)
+  // 2. Connection Logic
   locator.registerLazySingleton(() => motus.BluetoothService());
-
   locator.registerLazySingleton<ConnectionInterface>(() => MockConnection());
-  // locator.registerLazySingleton<ConnectionInterface>(() => BleConnection());
 
-  // Database & Repositories (ระบบฐานข้อมูลและการจัดการข้อมูล)
+  // Database & Repositories
   locator.registerLazySingleton(() => AppDatabase());
   locator.registerLazySingleton(() => DiagnosticRepository(locator()));
   locator.registerLazySingleton(() => ProtocolRepository());
   locator.registerLazySingleton(() => VehicleProfileRepository(locator()));
+  locator.registerLazySingleton(() => VehicleStatsRepository(locator()));
+  locator.registerLazySingleton<TopologyRepository>(
+      () => TopologyRepositoryImpl(locator(), locator()));
 
-  // 2.1 UseCases (คำสั่งดำเนินการตามหลัก Clean Architecture)
+  // 2.1 UseCases
   locator.registerLazySingleton(
       () => GetSupportedPidsUseCase(locator<VehicleProfileRepository>()));
   locator.registerLazySingleton(
@@ -74,7 +78,7 @@ Future<void> setupLocator() async {
   locator.registerLazySingleton(() => ReadVinUseCase(locator<ProtocolEngine>(),
       locator<ConnectionInterface>(), locator<ProtocolRepository>()));
 
-  // 3. Blocs (ระบบจัดการสถานะหน้าจอ - ทุกตัวเป็น Singleton เพื่อความเสถียร)
+  // 3. Blocs
   locator.registerLazySingleton(() => ScanBloc(
       bluetoothService: locator<motus.BluetoothService>(),
       connection: locator<ConnectionInterface>(),
@@ -89,12 +93,17 @@ Future<void> setupLocator() async {
         getSupportedPids: locator<GetSupportedPidsUseCase>(),
         readVin: locator<ReadVinUseCase>(),
         logRepository: locator<LogRepository>(),
+        vehicleStatsRepository: locator<VehicleStatsRepository>(),
       ));
 
   locator.registerLazySingleton(() => DtcBloc(
         engine: locator<ProtocolEngine>(),
         connection: locator<ConnectionInterface>(),
+        vehicleStatsRepository: locator<VehicleStatsRepository>(),
       ));
+
+  locator.registerFactory(() => TopologyBloc(repository: locator()));
+
   // 5. Settings Feature
   locator.registerLazySingleton<SettingsLocalDataSource>(
       () => SettingsLocalDataSourceImpl(locator()));
@@ -108,23 +117,22 @@ Future<void> setupLocator() async {
       () => MaintenanceRepositoryImpl(locator()));
   locator.registerFactory<MaintenanceBloc>(() => MaintenanceBloc(locator()));
 
-  // 7. CRM Feature (Phase 5)
-  // [Bug Fix] เปลี่ยนจาก registerLazySingleton เป็น registerFactory
-  // เนื่องจากเมื่อ user ปิดหน้า CRM (Widget disposed) ตัว Bloc จะถูกปิดไปด้วย
-  // หากใช้ Singleton จะทำให้กลับมาเปิดหน้านี้ใหม่ไม่ได้ (เพราะ Bloc ปิดไปแล้ว)
-  // จึงต้องใช้ Factory เพื่อสร้าง Instance ใหม่ทุกครั้งที่เข้าหน้า
+  // 7. CRM Feature
   locator
       .registerLazySingleton<CrmRepository>(() => CrmRepositoryImpl(locator()));
   locator.registerFactory<CrmBloc>(() => CrmBloc(locator()));
 
-  // 7.1 Data Logging (Phase 7)
+  // 7.1 Data Logging
+  locator.registerLazySingleton<MaintenanceRepository>(
+      () => MaintenanceRepositoryImpl(locator()),
+      instanceName: 'maintenance_repo_duplicate'); // Avoid conflict
   locator.registerLazySingleton<LogRepository>(() => LogRepositoryImpl());
 
-  // 8. Remote Expert (Phase 5 Part 2)
+  // 8. Remote Expert
   locator.registerLazySingleton<RemoteRepository>(() => RemoteRepositoryImpl());
   locator.registerFactory<RemoteBloc>(() => RemoteBloc(locator()));
 
-  // 9. Professional Reporting (Phase 6)
+  // 9. Professional Reporting
   locator
       .registerLazySingleton<PdfGeneratorService>(() => PdfGeneratorService());
   locator.registerLazySingleton<ReportRepository>(() => ReportRepositoryImpl(
@@ -133,17 +141,23 @@ Future<void> setupLocator() async {
       ));
   locator.registerFactory<ReportBloc>(() => ReportBloc(locator()));
 
-  // 10. Vehicle Integration (Phase 4.1 & 7.1)
+  // 10. Vehicle Integration
   locator.registerLazySingleton(() => HomeWidgetService());
   locator.registerLazySingleton(() => CarPlayService());
-  // 8. Security (Phase 11 & 12)
+
+  // 8. Security
   locator.registerLazySingleton<BiometricService>(() => BiometricService());
   locator.registerLazySingleton<AuthService>(() => AuthService());
   locator.registerLazySingleton<SyncService>(
       () => SyncService(locator(), locator()));
 
-  // 11. Auth Feature (Phase 12)
+  // 11. Auth Feature
   locator.registerFactory<AuthBloc>(() => AuthBloc(locator()));
-  // Initialize Sync System (Phase 12)
+
+  // 12. Seeding Service
+  locator.registerLazySingleton<CloudSeedService>(
+      () => CloudSeedService(locator()));
+
+  // Initialize Sync System
   locator<SyncService>().init();
 }

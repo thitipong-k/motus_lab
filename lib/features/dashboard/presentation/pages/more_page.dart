@@ -15,6 +15,10 @@ import 'package:motus_lab/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:motus_lab/features/auth/presentation/pages/login_page.dart';
 import 'package:motus_lab/shared/pages/help_center_page.dart';
 import 'package:motus_lab/features/scan/presentation/pages/dtc_result_page.dart';
+import 'package:motus_lab/features/scan/presentation/pages/live_data/log_sessions_page.dart';
+import 'package:motus_lab/features/scan/presentation/pages/expert/knowledge_base_page.dart';
+import 'package:motus_lab/features/scan/presentation/pages/expert/cloud_seed_page.dart';
+import 'package:motus_lab/l10n/app_localizations.dart';
 
 /// หน้า Menu (More) สำหรับรวมฟีเจอร์รองต่างๆ ไว้ในที่เดียว
 /// แสดงผลแบบ Grid เพื่อให้เข้าถึงง่ายและประหยัดพื้นที่บน Navigation Bar
@@ -23,66 +27,90 @@ class MorePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final List<Map<String, dynamic>> menuItems = [
       {
-        'label': 'Help Center',
+        'label': l10n.moreHelp,
         'icon': Icons.help_outline,
         'page': const HelpCenterPage(),
         'color': AppColors.primary,
       },
       {
-        'label': 'Diagnostics',
+        'label': l10n.moreDiagnostics,
         'icon': Icons.troubleshoot,
         'page': const DtcResultPage(),
         'color': AppColors.error,
       },
       {
-        'label': 'Freeze Frame',
+        'label': l10n.moreFreezeFrame,
         'icon': Icons.backup_table,
         'page': const FreezeFramePage(),
         'color': AppColors.secondary,
       },
       {
-        'label': 'CRM',
+        'label': l10n.moreDataLogs,
+        'icon': Icons.history,
+        'page': const LogSessionsPage(),
+        'color': AppColors.primary,
+      },
+      {
+        'label': l10n.moreCRM,
         'icon': Icons.people,
         'page': const CustomerListPage(),
         'color': AppColors.primary,
       },
       {
-        'label': 'Remote Expert',
+        'label': l10n.moreRemoteExpert,
         'icon': Icons.hub,
         'page': const RemoteExpertPage(),
         'color': AppColors.warning,
       },
       {
-        'label': 'Wallet',
+        'label': l10n.moreWallet,
         'icon': Icons.account_balance_wallet,
         'page': const WalletPage(),
         'color': AppColors.success,
       },
       {
-        'label': 'Coding',
+        'label': l10n.moreCoding,
         'icon': Icons.edit_note,
         'page': const AdaptationPage(),
         'color': AppColors.secondary,
       },
       {
-        'label': 'Sniffer',
+        'label': l10n.moreSniffer,
         'icon': Icons.terminal,
         'page': const SnifferPage(),
         'color': AppColors.error,
       },
       {
-        'label': 'Settings',
+        'label': l10n.moreKnowledge,
+        'icon': Icons.menu_book,
+        'page': const KnowledgeBasePage(),
+        'color': AppColors.primary,
+      },
+      {
+        'label': l10n.moreSettings,
         'icon': Icons.settings,
         'page': const SettingsPage(),
         'color': AppColors.surface,
+      },
+      {
+        'label': l10n.moreSeedCloud,
+        'icon': Icons.cloud_upload,
+        'action': (BuildContext context) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CloudSeedPage()),
+          );
+        },
+        'color': Colors.blueAccent,
       },
     ];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Menu'),
+        title: Text(l10n.navMenu),
         centerTitle: true,
         automaticallyImplyLeading: false,
         actions: [
@@ -156,6 +184,11 @@ class MorePage extends StatelessWidget {
               return; // Stop navigation
             }
           }
+        }
+
+        if (item['action'] != null) {
+          item['action'](context);
+          return;
         }
 
         Navigator.push(

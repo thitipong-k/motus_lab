@@ -70,6 +70,11 @@ class MockConnection implements ConnectionInterface {
         // So Byte 4 = 0000 0001 -> 0x01
 
         response = [0x41, 0x00, 0x1E, 0x19, 0x00, 0x01];
+
+        // --- SIMULATE CAN TOPOLOGY (Multi-Node Responses) ---
+        // เมื่อส่ง 01 00 ไปที่ Broadcast Address (จำลอง)
+        // กล่องอื่นๆ จะส่งคำถามพื้นฐานกลับมาด้วย
+        _simulateMultiNodeResponse(0x00);
       }
       // 01 20: Supported PIDs [21-40]
       else if (pid == 0x20) {
@@ -312,5 +317,24 @@ class MockConnection implements ConnectionInterface {
     }
 
     return response;
+  }
+
+  /// จำลองการตอบสนองจากหลายโมดูล (ECU)
+  void _simulateMultiNodeResponse(int pid) {
+    // รายชื่อ Header (IDs) ของกล่องต่างๆ ในระบบ CAN
+    final nodeHeaders = [
+      [0x7E1, 0x41, pid, 0x00], // TCM
+      [0x7E2, 0x41, pid, 0x00], // ABS
+      [0x7E3, 0x41, pid, 0x00], // BCM
+      [0x7E5, 0x41, pid, 0x00], // Airbag
+    ];
+
+    for (var header in nodeHeaders) {
+      Future.delayed(Duration(milliseconds: 100 + Random().nextInt(200)), () {
+        if (_isConnected) {
+          _controller.add(header);
+        }
+      });
+    }
   }
 }

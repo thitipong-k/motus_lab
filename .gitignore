@@ -50,3 +50,10 @@ lib/core/config/app_secrets.dart
 .agent/
 .agents/
 client_secret_*.json
+service-account.json
+**/service-account.json
+**/codes.json
+**/diagnostic_codes.json
+**/dtc_definitions.json
+**/generic_codes.json
+**/odb-trouble-codes.json

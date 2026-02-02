@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:motus_lab/features/scan/domain/entities/ecu_node.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
+import 'package:motus_lab/core/services/service_locator.dart';
+import 'package:motus_lab/features/scan/domain/services/diagnostic_expert_service.dart';
 
 class EcuDetailDialog extends StatelessWidget {
   final EcuNode node;
@@ -58,6 +60,64 @@ class EcuDetailDialog extends StatelessWidget {
             const SizedBox(height: 8),
             _buildDetailRow("Address",
                 "0x${node.id.hashCode.toRadixString(16).substring(0, 3).toUpperCase()}"),
+
+            // ส่วนของคำแนะนำการซ่อม (Repair Guidelines)
+            // จะแสดงผลเฉพาะเมื่อสถานะเป็น FAULT เท่านั้น
+            if (node.status == EcuStatus.fault) ...[
+              const Divider(height: 32),
+              const Row(
+                children: [
+                  Icon(Icons.lightbulb, color: Colors.amber, size: 20),
+                  SizedBox(width: 8),
+                  Text("คำแนะนำการซ่อม (Technical Fixes)",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.amber)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              FutureBuilder<List<String>>(
+                future: locator<DiagnosticExpertService>()
+                    .getGuidelines(node.id == "7E2" ? "7E2" : "P0300"),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    );
+                  }
+
+                  final steps = snapshot.data ?? ["No guidelines found"];
+
+                  return Column(
+                    children: steps
+                        .map((step) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 4.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text("• ",
+                                      style:
+                                          TextStyle(color: AppColors.primary)),
+                                  Expanded(
+                                      child: Text(step,
+                                          style: const TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.white70))),
+                                ],
+                              ),
+                            ))
+                        .toList(),
+                  );
+                },
+              ),
+            ],
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
