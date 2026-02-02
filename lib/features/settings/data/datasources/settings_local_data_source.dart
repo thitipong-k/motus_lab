@@ -17,6 +17,7 @@ class SettingsLocalDataSourceImpl implements SettingsLocalDataSource {
   static const _keyAutoConnect = 'settings_auto_connect';
   static const _keyTimeout = 'settings_timeout';
   static const _keyUnitSystem = 'settings_unit_system';
+  static const _keyAppLock = 'settings_app_lock';
 
   @override
   Future<Settings> getSettings() async {
@@ -30,6 +31,7 @@ class SettingsLocalDataSourceImpl implements SettingsLocalDataSource {
     final unitIndex =
         sharedPreferences.getInt(_keyUnitSystem) ?? 0; // Metric default
     final unitSystem = UnitSystem.values[unitIndex];
+    final isAppLockEnabled = sharedPreferences.getBool(_keyAppLock) ?? false;
 
     return Settings(
       theme: theme,
@@ -37,6 +39,7 @@ class SettingsLocalDataSourceImpl implements SettingsLocalDataSource {
       isAutoConnect: autoConnect,
       connectionTimeoutSeconds: timeout,
       unitSystem: unitSystem,
+      isAppLockEnabled: isAppLockEnabled,
     );
   }
 
@@ -48,5 +51,6 @@ class SettingsLocalDataSourceImpl implements SettingsLocalDataSource {
     await sharedPreferences.setInt(
         _keyTimeout, settings.connectionTimeoutSeconds);
     await sharedPreferences.setInt(_keyUnitSystem, settings.unitSystem.index);
+    await sharedPreferences.setBool(_keyAppLock, settings.isAppLockEnabled);
   }
 }

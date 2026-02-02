@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
 import 'package:motus_lab/features/crm/domain/entities/customer.dart';
-import 'package:motus_lab/core/widgets/motus_card.dart';
+import 'package:motus_lab/shared/widgets/motus_card.dart';
 
 class CustomerDetailPage extends StatelessWidget {
   final Customer customer;

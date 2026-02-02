@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
-import 'package:motus_lab/core/widgets/motus_button.dart';
+import 'package:motus_lab/shared/widgets/motus_button.dart';
 import 'package:motus_lab/features/reporting/domain/entities/report_entities.dart';
 import 'package:motus_lab/features/reporting/presentation/bloc/report_bloc.dart';
 

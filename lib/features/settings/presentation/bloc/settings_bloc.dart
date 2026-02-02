@@ -33,6 +33,11 @@ class UpdateUnitSystem extends SettingsEvent {
   const UpdateUnitSystem(this.unitSystem);
 }
 
+class UpdateAppLock extends SettingsEvent {
+  final bool isEnabled;
+  const UpdateAppLock(this.isEnabled);
+}
+
 class SettingsState extends Equatable {
   final Settings settings;
   final bool isLoading;
@@ -76,6 +81,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<UpdateAutoConnect>(_onUpdateAutoConnect);
     on<UpdateConnectionTimeout>(_onUpdateConnectionTimeout);
     on<UpdateUnitSystem>(_onUpdateUnitSystem);
+    on<UpdateAppLock>(_onUpdateAppLock);
   }
 
   Future<void> _onLoadSettings(
@@ -109,6 +115,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   Future<void> _onUpdateUnitSystem(
       UpdateUnitSystem event, Emitter<SettingsState> emit) async {
     final newSettings = state.settings.copyWith(unitSystem: event.unitSystem);
+    await _repository.saveSettings(newSettings);
+    emit(state.copyWith(settings: newSettings));
+  }
+
+  Future<void> _onUpdateAppLock(
+      UpdateAppLock event, Emitter<SettingsState> emit) async {
+    final newSettings =
+        state.settings.copyWith(isAppLockEnabled: event.isEnabled);
     await _repository.saveSettings(newSettings);
     emit(state.copyWith(settings: newSettings));
   }

@@ -247,6 +247,41 @@ class _SettingsView extends StatelessWidget {
 
               const SizedBox(height: 24),
               const Text(
+                "Security",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.lock, color: Colors.orange),
+                      title: const Text("App Lock"),
+                      subtitle:
+                          const Text("Protect key features with Biometrics"),
+                      trailing: SizedBox(
+                        width: 48,
+                        child: Switch(
+                          value: currentSettings.isAppLockEnabled,
+                          onChanged: (val) {
+                            context
+                                .read<SettingsBloc>()
+                                .add(UpdateAppLock(val));
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+              const Text(
                 "System",
                 style: TextStyle(
                   fontSize: 14,

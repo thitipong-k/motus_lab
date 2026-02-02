@@ -6,6 +6,7 @@ class ReportConfig {
   final String phone;
   final String? taxId;
   final String? logoPath;
+  final DateTime? lastUpdated; // Phase 12: For sync resolution
 
   const ReportConfig({
     required this.shopName,
@@ -13,7 +14,32 @@ class ReportConfig {
     required this.phone,
     this.taxId,
     this.logoPath,
+    this.lastUpdated,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'shopName': shopName,
+      'address': address,
+      'phone': phone,
+      'taxId': taxId,
+      'logoPath': logoPath,
+      'lastUpdated': lastUpdated?.toIso8601String(),
+    };
+  }
+
+  factory ReportConfig.fromMap(Map<String, dynamic> map) {
+    return ReportConfig(
+      shopName: map['shopName'] ?? '',
+      address: map['address'] ?? '',
+      phone: map['phone'] ?? '',
+      taxId: map['taxId'],
+      logoPath: map['logoPath'],
+      lastUpdated: map['lastUpdated'] != null
+          ? DateTime.parse(map['lastUpdated'])
+          : null,
+    );
+  }
 }
 
 class DiagnosticReport {

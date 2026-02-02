@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/core/services/service_locator.dart';
-import 'package:motus_lab/core/widgets/adaptive_scaffold.dart';
+import 'package:motus_lab/shared/widgets/adaptive_scaffold.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/live_data/live_data_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/dtc/dtc_bloc.dart';

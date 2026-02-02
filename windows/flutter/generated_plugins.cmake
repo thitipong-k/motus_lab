@@ -3,11 +3,18 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  cloud_firestore
+  connectivity_plus
+  firebase_auth
+  firebase_core
+  firebase_storage
   flutter_js
   flutter_libserialport
+  local_auth_windows
   printing
   screen_retriever
   sqlite3_flutter_libs
+  url_launcher_windows
   window_manager
 )
 

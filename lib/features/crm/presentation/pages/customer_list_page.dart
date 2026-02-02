@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/core/services/service_locator.dart';
-import 'package:motus_lab/core/widgets/loading_indicator.dart';
-import 'package:motus_lab/core/widgets/motus_card.dart';
-import 'package:motus_lab/core/widgets/empty_state.dart';
+import 'package:motus_lab/shared/widgets/loading_indicator.dart';
+import 'package:motus_lab/shared/widgets/motus_card.dart';
+import 'package:motus_lab/shared/widgets/empty_state.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
 import 'package:motus_lab/features/crm/presentation/bloc/crm_bloc.dart';
 import 'package:motus_lab/features/crm/presentation/pages/customer_detail_page.dart';

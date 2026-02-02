@@ -1,1 +1,13 @@
 include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    - avoid_print
+    - always_use_package_imports
+    - prefer_const_constructors
+    - prefer_const_literals_to_create_immutables
+    - prefer_const_declarations
+    - sort_child_properties_last
+    - unawaited_futures
+    - prefer_final_locals
+    - depend_on_referenced_packages

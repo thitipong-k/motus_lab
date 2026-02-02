@@ -4,7 +4,7 @@ import 'package:motus_lab/core/services/service_locator.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
 import 'package:motus_lab/features/remote/presentation/bloc/remote_bloc.dart';
 import 'package:motus_lab/features/remote/presentation/widgets/chat_widget.dart';
-import 'package:motus_lab/core/widgets/motus_button.dart';
+import 'package:motus_lab/shared/widgets/motus_button.dart';
 
 class RemoteExpertPage extends StatelessWidget {
   const RemoteExpertPage({super.key});

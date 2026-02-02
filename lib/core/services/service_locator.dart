@@ -25,6 +25,7 @@ import 'package:motus_lab/features/maintenance/data/repositories/maintenance_rep
 import 'package:motus_lab/features/maintenance/presentation/bloc/maintenance_bloc.dart';
 import 'package:motus_lab/features/crm/domain/repositories/crm_repository.dart';
 import 'package:motus_lab/features/crm/data/repositories/crm_repository_impl.dart';
+import 'package:motus_lab/core/services/security/biometric_service.dart';
 import 'package:motus_lab/features/crm/presentation/bloc/crm_bloc.dart';
 import 'package:motus_lab/features/remote/domain/repositories/remote_repository.dart';
 import 'package:motus_lab/features/remote/data/repositories/remote_repository_impl.dart';
@@ -35,6 +36,9 @@ import 'package:motus_lab/features/reporting/data/services/pdf_generator_service
 import 'package:motus_lab/features/reporting/presentation/bloc/report_bloc.dart';
 import 'package:motus_lab/features/scan/domain/repositories/log_repository.dart';
 import 'package:motus_lab/features/scan/data/repositories/log_repository_impl.dart';
+import 'package:motus_lab/core/services/security/auth_service.dart'; // Phase 12
+import 'package:motus_lab/core/services/sync_service.dart'; // Phase 12
+import 'package:motus_lab/features/auth/presentation/bloc/auth_bloc.dart'; // Phase 12
 
 final locator = GetIt.instance;
 
@@ -132,4 +136,14 @@ Future<void> setupLocator() async {
   // 10. Vehicle Integration (Phase 4.1 & 7.1)
   locator.registerLazySingleton(() => HomeWidgetService());
   locator.registerLazySingleton(() => CarPlayService());
+  // 8. Security (Phase 11 & 12)
+  locator.registerLazySingleton<BiometricService>(() => BiometricService());
+  locator.registerLazySingleton<AuthService>(() => AuthService());
+  locator.registerLazySingleton<SyncService>(
+      () => SyncService(locator(), locator()));
+
+  // 11. Auth Feature (Phase 12)
+  locator.registerFactory<AuthBloc>(() => AuthBloc(locator()));
+  // Initialize Sync System (Phase 12)
+  locator<SyncService>().init();
 }

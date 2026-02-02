@@ -1,94 +1,72 @@
-import 'dart:io'; // For Platform check
-import 'package:flutter/foundation.dart'; // For kIsWeb
-import 'package:flutter/services.dart'; // For SystemChrome
-import 'package:window_manager/window_manager.dart'; // For Desktop
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:motus_lab/l10n/app_localizations.dart';
-import 'package:motus_lab/core/theme/app_theme.dart';
-import 'package:motus_lab/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:motus_lab/core/config/firebase_options.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:motus_lab/core/utils/logger.dart';
 import 'package:motus_lab/core/services/service_locator.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:motus_lab/features/settings/presentation/bloc/settings_bloc.dart';
-import 'package:motus_lab/features/scan/presentation/bloc/scan_bloc.dart';
-import 'package:motus_lab/features/scan/presentation/bloc/live_data/live_data_bloc.dart';
-import 'package:motus_lab/features/scan/presentation/bloc/dtc/dtc_bloc.dart';
-import 'package:motus_lab/features/reporting/presentation/bloc/report_bloc.dart';
+import 'package:motus_lab/app/app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+  Logger.info("Main: Widgets initialized.");
 
-  // [WORKFLOW STEP 0] Initialization: เริ่มต้นระบบและลงทะเบียน Dependencies
-  // โหลด Service Locator (GetIt) เพื่อเตรียมพร้อม injection ทั่วทั้งแอป
-  // และ Register Factory/Singleton ของ Bloc และ Repository ต่างๆ
+  // Initialize Firebase (Safe Init)
+  try {
+    if (kIsWeb || Platform.isWindows) {
+      Logger.info("Main: Initializing Firebase for Windows/Web...");
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } else {
+      Logger.info("Main: Initializing Firebase for Mobile...");
+      await Firebase.initializeApp();
+    }
+    Logger.info("💡 Firebase Initialized Successfully.");
+  } catch (e) {
+    Logger.error("⛔ Firebase Initialization Failed", e);
+  }
+
+  // Initialization: เริ่มต้นระบบและลงทะเบียน Dependencies
+  Logger.info("Main: Setting up Service Locator...");
   await setupLocator();
+  Logger.info("Main: Service Locator Ready.");
 
   // --- 1. Mobile: Immersive Mode ---
-  // ตั้งค่าสำหรับมือถือ: เปิดโหมด Immersive (ซ่อนแถบสถานะและแถบนำทาง)
-  // และล็อคหน้าจอให้เป็นแนวตั้งเท่านั้น
   if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-    // Hide Status Bar & Nav Bar
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    // Optional: Lock Orientation
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
   }
 
-  // --- 2. Desktop: Full Screen ---
-  // ตั้งค่าสำหรับ Desktop: ซ่อนแถบ Title Bar, ตั้งค่ากึ่งกลางหน้าจอ
-  // และบังคับให้เปิดเป็นโหมดเต็มหน้าจอ (Full Screen) ทันทีที่พร้อม
+  // --- 2. Desktop: Setup Window ---
   if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    Logger.info("Main: Configuring Window Manager...");
     await windowManager.ensureInitialized();
 
     WindowOptions windowOptions = const WindowOptions(
-      // size: Size(800, 600),
+      size: Size(1280, 720),
       center: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor:
+          Colors.black, // Change from transparent to avoid some GPU issues
       skipTaskbar: false,
-      titleBarStyle: TitleBarStyle.hidden, // Clean look, no title bar
+      titleBarStyle:
+          TitleBarStyle.normal, // Show title bar initially for safety
     );
 
-    windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();
-      await windowManager.setFullScreen(true); // Force Full Screen
+      Logger.info("Main: Window Visible and Focused.");
     });
   }
 
+  Logger.info("Main: Running App...");
   runApp(const MotusApp());
-}
-
-class MotusApp extends StatelessWidget {
-  const MotusApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider.value(value: locator<SettingsBloc>()..add(LoadSettings())),
-        BlocProvider.value(value: locator<ScanBloc>()),
-        BlocProvider.value(value: locator<LiveDataBloc>()),
-        BlocProvider.value(value: locator<DtcBloc>()),
-        // Initialize ReportBloc and load config on startup
-        BlocProvider.value(
-            value: locator<ReportBloc>()..add(LoadReportConfig())),
-      ],
-      child: BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, state) {
-          final style = state.settings.theme;
-
-          return MaterialApp(
-            title: 'Motus Lab',
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.getTheme(style),
-            themeMode: ThemeMode.light,
-            home: const DashboardPage(),
-          );
-        },
-      ),
-    );
-  }
 }

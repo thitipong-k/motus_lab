@@ -16,6 +16,7 @@ class ReportRepositoryImpl implements ReportRepository {
   static const String _kShopPhone = 'shop_phone';
   static const String _kShopTaxId = 'shop_tax_id';
   static const String _kShopLogo = 'shop_logo_path';
+  static const String _kLastUpdated = 'report_config_last_updated';
 
   @override
   Future<File> generateReportPdf(DiagnosticReport report, ReportConfig config) {
@@ -74,12 +75,15 @@ class ReportRepositoryImpl implements ReportRepository {
 
   @override
   Future<ReportConfig> getReportConfig() async {
+    final lastUpdatedStr = prefs.getString(_kLastUpdated);
     return ReportConfig(
       shopName: prefs.getString(_kShopName) ?? 'My Auto Shop',
       address: prefs.getString(_kShopAddress) ?? '123 Service Road',
       phone: prefs.getString(_kShopPhone) ?? '081-234-5678',
       taxId: prefs.getString(_kShopTaxId),
       logoPath: prefs.getString(_kShopLogo),
+      lastUpdated:
+          lastUpdatedStr != null ? DateTime.parse(lastUpdatedStr) : null,
     );
   }
 
@@ -96,6 +100,10 @@ class ReportRepositoryImpl implements ReportRepository {
     } else {
       await prefs.remove(_kShopLogo);
     }
+
+    // Update timestamp if the incoming config has one, or use now
+    final timestamp = config.lastUpdated ?? DateTime.now();
+    await prefs.setString(_kLastUpdated, timestamp.toIso8601String());
   }
 
   @override

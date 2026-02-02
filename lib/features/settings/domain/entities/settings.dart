@@ -9,6 +9,7 @@ class Settings extends Equatable {
   final bool isAutoConnect;
   final int connectionTimeoutSeconds;
   final UnitSystem unitSystem;
+  final bool isAppLockEnabled;
 
   const Settings({
     required this.theme,
@@ -16,6 +17,7 @@ class Settings extends Equatable {
     required this.isAutoConnect,
     required this.connectionTimeoutSeconds,
     this.unitSystem = UnitSystem.metric,
+    this.isAppLockEnabled = false,
   });
 
   // Default Settings
@@ -26,6 +28,7 @@ class Settings extends Equatable {
       isAutoConnect: false,
       connectionTimeoutSeconds: 10,
       unitSystem: UnitSystem.metric,
+      isAppLockEnabled: false,
     );
   }
 
@@ -35,6 +38,7 @@ class Settings extends Equatable {
     bool? isAutoConnect,
     int? connectionTimeoutSeconds,
     UnitSystem? unitSystem,
+    bool? isAppLockEnabled,
   }) {
     return Settings(
       theme: theme ?? this.theme,
@@ -43,6 +47,7 @@ class Settings extends Equatable {
       connectionTimeoutSeconds:
           connectionTimeoutSeconds ?? this.connectionTimeoutSeconds,
       unitSystem: unitSystem ?? this.unitSystem,
+      isAppLockEnabled: isAppLockEnabled ?? this.isAppLockEnabled,
     );
   }
 
@@ -52,6 +57,7 @@ class Settings extends Equatable {
         languageCode,
         isAutoConnect,
         connectionTimeoutSeconds,
-        unitSystem
+        unitSystem,
+        isAppLockEnabled,
       ];
 }

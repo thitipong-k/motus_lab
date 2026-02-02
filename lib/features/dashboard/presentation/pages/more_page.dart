@@ -7,6 +7,12 @@ import 'package:motus_lab/features/remote/presentation/pages/remote_expert_page.
 import 'package:motus_lab/features/scan/presentation/pages/freeze_frame_page.dart';
 import 'package:motus_lab/features/settings/presentation/pages/settings_page.dart';
 import 'package:motus_lab/features/sniffer/presentation/pages/sniffer_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:motus_lab/core/services/service_locator.dart';
+import 'package:motus_lab/core/services/security/biometric_service.dart';
+import 'package:motus_lab/features/settings/presentation/bloc/settings_bloc.dart';
+import 'package:motus_lab/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:motus_lab/features/auth/presentation/pages/login_page.dart';
 
 /// หน้า Menu (More) สำหรับรวมฟีเจอร์รองต่างๆ ไว้ในที่เดียว
 /// แสดงผลแบบ Grid เพื่อให้เข้าถึงง่ายและประหยัดพื้นที่บน Navigation Bar
@@ -65,6 +71,33 @@ class MorePage extends StatelessWidget {
         title: const Text('Menu'),
         centerTitle: true,
         automaticallyImplyLeading: false,
+        actions: [
+          BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, state) {
+              if (state is Authenticated) {
+                return IconButton(
+                  icon: const Icon(Icons.account_circle,
+                      color: AppColors.primary),
+                  onPressed: () {
+                    // Show Profile / Logout Dialog
+                    _showProfileDialog(context, state.user);
+                  },
+                );
+              }
+              return TextButton.icon(
+                icon: const Icon(Icons.cloud_sync, size: 18),
+                label: const Text("LOGIN"),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                  );
+                },
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: GridView.builder(
         padding: const EdgeInsets.all(16),
@@ -85,7 +118,32 @@ class MorePage extends StatelessWidget {
 
   Widget _buildMenuItem(BuildContext context, Map<String, dynamic> item) {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
+        if (item['label'] == 'CRM') {
+          // 1. Check if App Lock is enabled
+          final settingsState = context.read<SettingsBloc>().state;
+          if (settingsState.settings.isAppLockEnabled) {
+            // 2. Trigger Biometric Auth
+            final biometricService = locator<BiometricService>();
+            final isAuthenticated = await biometricService.authenticate(
+                reason: 'Release the lock to access Customer Data');
+
+            if (!isAuthenticated) {
+              // Auth Failed or Cancelled
+              if (context.mounted) {
+                // Check if widget still active
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Authentication Failed: Access Denied'),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+              return; // Stop navigation
+            }
+          }
+        }
+
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => item['page']),
@@ -129,6 +187,54 @@ class MorePage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showProfileDialog(BuildContext context, dynamic user) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text("Account Settings",
+            style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircleAvatar(
+              radius: 30,
+              backgroundColor: AppColors.primary,
+              child: Icon(Icons.person, color: Colors.white, size: 40),
+            ),
+            const SizedBox(height: 16),
+            Text(user.email ?? "No Email",
+                style: const TextStyle(color: Colors.white70)),
+            const SizedBox(height: 24),
+            ListTile(
+              leading: const Icon(Icons.security, color: AppColors.primary),
+              title: const Text("2FA Settings",
+                  style: TextStyle(color: Colors.white)),
+              onTap: () {
+                // Future: Navigate to 2FA Setup
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            child: const Text("CANCEL"),
+            onPressed: () => Navigator.pop(context),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () {
+              context.read<AuthBloc>().add(LogoutRequested());
+              Navigator.pop(context);
+            },
+            child: const Text("LOGOUT"),
+          ),
+        ],
       ),
     );
   }

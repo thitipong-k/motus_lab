@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "685546892906",
+    "project_id": "motus-lab",
+    "storage_bucket": "motus-lab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:685546892906:android:2035cd4ffe1ddad74b2413",
+        "android_client_info": {
+          "package_name": "com.example.motus_lab"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDts6P96s5mJJKGnpt5FkUBcADSl57GQB4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

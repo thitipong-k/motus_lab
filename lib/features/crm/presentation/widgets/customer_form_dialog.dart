@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/features/crm/domain/entities/customer.dart';
 import 'package:motus_lab/features/crm/presentation/bloc/crm_bloc.dart';
-import 'package:motus_lab/core/widgets/motus_button.dart';
+import 'package:motus_lab/shared/widgets/motus_button.dart';
 
 class CustomerFormDialog extends StatefulWidget {
   final Customer? customer; // If provided, edit mode
