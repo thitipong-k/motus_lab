@@ -1,15 +1,11 @@
-import 'package:flutter_carplay/flutter_carplay.dart';
 import 'package:logger/logger.dart';
 
 class CarPlayService {
   final Logger _logger = Logger();
-  FlutterCarplay? _carPlay;
 
   void initialize() {
     try {
-      _carPlay = FlutterCarplay();
-
-      /* 
+      /*
       // API Mismatch: rootTemplate not supported in constructor for this version.
       // Keeping this configuration for reference when API is confirmed.
       final rootTemplate = CPGridTemplate(

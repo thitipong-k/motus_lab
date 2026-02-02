@@ -6,8 +6,6 @@ import 'package:logger/logger.dart';
 /// ทำหน้าที่ส่งข้อมูลจาก Flutter ไปยัง Native Widget ผ่าน SharedPreferences
 class HomeWidgetService {
   final Logger _logger = Logger();
-  static const String _groupId =
-      'group.com.motus_lab.widget'; // ต้องตรงกับ App Group ใน iOS
   static const String _androidWidgetName =
       'MotusWidget'; // ต้องตรงกับชื่อ Class ใน Android (MotusWidget.kt)
 

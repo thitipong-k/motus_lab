@@ -10,14 +10,13 @@ part 'dtc_state.dart';
 /// Bloc สำหรับจัดการรหัสความผิดปกติ (DTC)
 /// รองรับการอ่าน (Mode 03) และการลบ (Mode 04)
 class DtcBloc extends Bloc<DtcEvent, DtcState> {
-  final ProtocolEngine _engine;
   final ConnectionInterface _connection;
 
   DtcBloc({
-    required ProtocolEngine engine,
+    required ProtocolEngine
+        engine, // Kept for now as it's part of the constructor signature, but _engine field is removed.
     required ConnectionInterface connection,
-  })  : _engine = engine,
-        _connection = connection,
+  })  : _connection = connection,
         super(const DtcState()) {
     on<ReadDtcCodes>(_onReadDtcCodes);
     on<ClearDtcCodes>(_onClearDtcCodes);
@@ -39,7 +38,7 @@ class DtcBloc extends Bloc<DtcEvent, DtcState> {
 
       // Response Format: [43] [Count] [Byte1] [Byte2] [Byte3] [Byte4] ...
       if (response.isNotEmpty && response[0] == 0x43) {
-        int count = response.length > 1 ? response[1] : 0;
+        // int count = response.length > 1 ? response[1] : 0; // Removed unused variable
 
         // Simple parser manual loop (Phase 1)
         // Start at index 2, take 2 bytes at a time
@@ -94,9 +93,8 @@ class DtcBloc extends Bloc<DtcEvent, DtcState> {
     int prefixIndex = (hb >> 6) & 0x03;
     String prefix = prefixes[prefixIndex];
 
-    int secondDigit =
-        (hb >> 4) & 0x03; // Actually bits 5-4 are the 2nd char (0-3)
-    int thirdDigit = hb & 0x0F;
+    // int secondDigit = (hb >> 4) & 0x03; // Removed unused variable
+    // int thirdDigit = hb & 0x0F; // Removed unused variable
 
     // For simplicity in simulation matching P0123/U0456 logic:
     // Real parser is complex. Let's inverse-map the MockConnection logic:

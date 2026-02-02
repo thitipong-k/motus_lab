@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:motus_lab/core/services/service_locator.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/topology/topology_bloc.dart';
 import 'package:motus_lab/features/scan/data/repositories/topology_repository_impl.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/topology/topology_painter.dart';

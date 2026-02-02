@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
 import 'package:motus_lab/features/scan/domain/entities/ecu_node.dart';

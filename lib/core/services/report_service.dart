@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';

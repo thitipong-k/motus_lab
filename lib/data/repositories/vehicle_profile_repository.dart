@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:motus_lab/core/database/app_database.dart';
-import 'package:motus_lab/core/database/tables/vehicle_profiles_table.dart';
 
 /// Repository สำหรับจัดการข้อมูล Vehicle Profiles
 /// ใช้สำหรับอ่าน/เขียนข้อมูล PIDs ที่รถแต่ละรุ่นรองรับ
