@@ -76,33 +76,111 @@ class _DtcResultPageState extends State<DtcResultPage> {
             );
           }
 
-          return ListView.builder(
-            itemCount: state.codes.length,
-            itemBuilder: (context, index) {
-              final code = state.codes[index];
-              final isSelected = _selectedDtc == code;
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: state.codes.length,
+                  itemBuilder: (context, index) {
+                    final code = state.codes[index];
+                    final isSelected = _selectedDtc == code;
 
-              return MotusCard(
-                color: isSelected ? AppColors.primary.withOpacity(0.1) : null,
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.warning, color: Colors.orange),
-                      title: Text(code,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle:
-                          const Text("Tap for Expert Diagnosis"), // Placeholder
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _onDtcSelected(code),
-                    ),
-                    if (isSelected) _buildExpertAnalysis(),
-                  ],
+                    return MotusCard(
+                      color: isSelected
+                          ? AppColors.primary.withOpacity(0.1)
+                          : null,
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: Column(
+                        children: [
+                          ListTile(
+                            leading:
+                                const Icon(Icons.warning, color: Colors.orange),
+                            title: Text(code,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            subtitle: const Text(
+                                "Tap for Expert Diagnosis"), // Placeholder
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => _onDtcSelected(code),
+                          ),
+                          if (isSelected) _buildExpertAnalysis(),
+                        ],
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
+              ),
+              _buildClearButton(context, state),
+            ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildClearButton(BuildContext context, DtcState state) {
+    final bool isClearing = state.status == DtcStatus.clearing;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.error,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: isClearing ? null : () => _confirmClear(context),
+        icon: isClearing
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Icon(Icons.delete_forever),
+        label: Text(isClearing ? "CLEARING CODES..." : "CLEAR ALL FAULT CODES"),
+      ),
+    );
+  }
+
+  void _confirmClear(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Clear Fault Codes?"),
+        content: const Text(
+          "This will reset the Check Engine Light and all diagnostic data. "
+          "Make sure the engine is OFF and ignition is ON.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("CANCEL"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () {
+              context.read<DtcBloc>().add(ClearDtcCodes());
+              Navigator.pop(ctx);
+            },
+            child: const Text("CLEAR NOW"),
+          ),
+        ],
       ),
     );
   }

@@ -13,6 +13,8 @@ import 'package:motus_lab/core/services/security/biometric_service.dart';
 import 'package:motus_lab/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:motus_lab/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:motus_lab/features/auth/presentation/pages/login_page.dart';
+import 'package:motus_lab/shared/pages/help_center_page.dart';
+import 'package:motus_lab/features/scan/presentation/pages/dtc_result_page.dart';
 
 /// หน้า Menu (More) สำหรับรวมฟีเจอร์รองต่างๆ ไว้ในที่เดียว
 /// แสดงผลแบบ Grid เพื่อให้เข้าถึงง่ายและประหยัดพื้นที่บน Navigation Bar
@@ -22,6 +24,18 @@ class MorePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> menuItems = [
+      {
+        'label': 'Help Center',
+        'icon': Icons.help_outline,
+        'page': const HelpCenterPage(),
+        'color': AppColors.primary,
+      },
+      {
+        'label': 'Diagnostics',
+        'icon': Icons.troubleshoot,
+        'page': const DtcResultPage(),
+        'color': AppColors.error,
+      },
       {
         'label': 'Freeze Frame',
         'icon': Icons.backup_table,
