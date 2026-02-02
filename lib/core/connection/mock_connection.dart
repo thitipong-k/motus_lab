@@ -283,6 +283,22 @@ class MockConnection implements ConnectionInterface {
       response = [0x44];
     }
 
+    // --- MODE 09: Vehicle Information ---
+    else if (data.length >= 2 && data[0] == 0x09) {
+      final pid = data[1];
+      // 09 02: VIN
+      if (pid == 0x02) {
+        // Return JHMGD38TEST in ASCII
+        // J=4A, H=48, M=4D, G=47, D=44, 3=33, 8=38, T=54, E=45, S=53, T=54
+        response = [
+          0x49, 0x02, 0x01, // 01 is number of data items
+          0x4A, 0x48, 0x4D, 0x47, 0x44, 0x33, 0x38, 0x54, 0x45, 0x53, 0x54
+        ];
+      } else {
+        response = [0x7F, 0x09, 0x12];
+      }
+    }
+
     // Default
     else {
       // Echo

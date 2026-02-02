@@ -11,6 +11,7 @@ import 'package:motus_lab/features/scan/domain/usecases/read_vin.dart';
 import 'package:motus_lab/features/scan/domain/repositories/log_repository.dart';
 import 'package:motus_lab/features/scan/domain/entities/log_record.dart';
 import 'package:motus_lab/features/scan/domain/entities/log_session.dart';
+import 'package:motus_lab/core/services/logger.dart';
 
 part 'live_data_event.dart';
 part 'live_data_state.dart';
@@ -60,6 +61,12 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     List<Command> commandsToUse = event.commands;
 
     if (commandsToUse.isEmpty || commandsToUse.length <= 3) {
+      // Check discovery only if connected
+      if (!_connection.isConnected) {
+        Logger.info(
+            "LiveDataBloc: Delayed StartStreaming - Waiting for connection...");
+        return;
+      }
       emit(state.copyWith(isStreaming: true, isDiscovering: true));
 
       List<String> supportedKeyCodes = [];
@@ -68,7 +75,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       try {
         currentVin = await _readVin(null);
       } catch (e) {
-        print("Error reading VIN: $e");
+        Logger.error("Error reading VIN: $e");
       }
 
       // Update VIN in state as soon as we have it
@@ -80,7 +87,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       if (currentVin != null) {
         final cachedPids = await _getSupportedPids(currentVin);
         if (cachedPids != null && cachedPids.isNotEmpty) {
-          print("Cache HIT for VIN: $currentVin. Skipping discovery.");
+          Logger.info("Cache HIT for VIN: $currentVin. Skipping discovery.");
           supportedKeyCodes = cachedPids;
           cacheHit = true;
         }
@@ -90,11 +97,11 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       // หากพบ VIN ในฐานข้อมูล จะดึงค่าเดิมมาใช้ทันที (Fast Start)
       // หากเป็นรถใหม่ จะทำการ Full Discovery เพื่อหาว่ากล่อง ECU ตอบรับ PID ไหนบ้าง
       if (!cacheHit) {
-        print("Cache MISS. Starting Full Discovery...");
+        Logger.info("Cache MISS. Starting Full Discovery...");
         await _checkSupportedPids("0100", supportedKeyCodes);
         await _checkSupportedPids("0120", supportedKeyCodes);
         await _checkSupportedPids("0140", supportedKeyCodes);
-        print("Discovered PIDs: $supportedKeyCodes");
+        Logger.info("Discovered PIDs: $supportedKeyCodes");
 
         if (currentVin != null && supportedKeyCodes.isNotEmpty) {
           await _profileRepository.saveProfile(
@@ -107,11 +114,35 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
 
       final allAvailable = _repository.getAllAvailablePids();
       commandsToUse = allAvailable.where((cmd) {
+        // กรอง PIDs ที่เป็น Support Check ออก (เช่น 0100, 0120) เพราะเป็นบิตแมสก์ ไม่ใช่ค่าเซนเซอร์
+        final bool isSupportCheck = cmd.code.length == 4 &&
+            cmd.code.startsWith("01") &&
+            (cmd.code.endsWith("00") ||
+                cmd.code.endsWith("20") ||
+                cmd.code.endsWith("40") ||
+                cmd.code.endsWith("60") ||
+                cmd.code.endsWith("80") ||
+                cmd.code.endsWith("A0") ||
+                cmd.code.endsWith("C0") ||
+                cmd.code.endsWith("E0"));
+
+        if (isSupportCheck) return false;
+        if (cmd.code == "0902")
+          return false; // ซ่อน VIN จากรายการเซนเซอร์ (แสดงแยกใน Header)
+
         return supportedKeyCodes.contains(cmd.code);
       }).toList();
 
       if (commandsToUse.isEmpty) {
-        commandsToUse = _repository.getStandardPids();
+        commandsToUse = _repository.getStandardPids().where((cmd) {
+          // Same filter for standard list
+          final bool isSupportCheck = cmd.code.length == 4 &&
+              cmd.code.startsWith("01") &&
+              (cmd.code.endsWith("00") ||
+                  cmd.code.endsWith("20") ||
+                  cmd.code.endsWith("40"));
+          return !isSupportCheck;
+        }).toList();
       }
 
       emit(state.copyWith(
@@ -122,44 +153,44 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     emit(state.copyWith(isStreaming: true, activeCommands: _activeCommands));
 
     _timer?.cancel();
+    _startPollingLoop();
+  }
 
+  /// ระบบการดึงข้อมูลแบบวนลูปต่อเนื่อง (Sequential Polling Loop)
+  /// เพื่อป้องกันปัญหา Overlapping Ticks และหน้าจอค้าง (UI Freeze)
+  void _startPollingLoop() {
     int tick = 0;
-    final Map<String, int> _consecutiveErrors = {};
-    final List<Command> _quarantinedCommands = [];
-    const int _maxErrorsBeforeQuarantine = 5;
+    final Map<String, int> consecutiveErrors = {};
+    final List<Command> quarantinedCommands = [];
+    const int maxErrorsBeforeQuarantine = 5;
 
-    _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) async {
-      if (!_connection.isConnected) {
-        add(StopStreaming());
+    Future<void> poll() async {
+      if (!state.isStreaming || !_connection.isConnected) {
+        Logger.info("LiveDataBloc: Stopping Polling Loop.");
         return;
       }
 
       tick++;
-      Map<String, double> updatedValues = Map.from(state.currentValues);
+      final Map<String, double> updatedValues = Map.from(state.currentValues);
 
-      if (tick % 200 == 0 && _quarantinedCommands.isNotEmpty) {
-        final probeCmd = _quarantinedCommands.first;
+      // Quarantined Probe
+      if (tick % 200 == 0 && quarantinedCommands.isNotEmpty) {
+        final probeCmd = quarantinedCommands.first;
         try {
           final request = _engine.buildRequest(probeCmd);
           final response = await _connection.send(request);
           if (response.isNotEmpty) {
-            _quarantinedCommands.remove(probeCmd);
+            quarantinedCommands.remove(probeCmd);
             _activeCommands.add(probeCmd);
-            _consecutiveErrors[probeCmd.code] = 0;
+            consecutiveErrors[probeCmd.code] = 0;
           }
-        } catch (e) {
-          _quarantinedCommands.remove(probeCmd);
-          _quarantinedCommands.add(probeCmd);
-        }
+        } catch (_) {}
       }
 
-      // [WORKFLOW STEP 2] Adaptive Polling: จัดลำดับการส่งคำสั่งตาม Priority
-      // High (RPM/Speed) : ส่งทุกครั้งที่ Tick
-      // Normal (Engine Load): ส่งทุก 10 Ticks
-      // Low (Temp): ส่งทุก 40 Ticks
-      // พร้อมระบบ Quarantine: หาก PID ไหนตอบช้าหรือ Error ติดกัน 5 ครั้ง จะถูกพักไว้ชั่วคราว
+      // การกรองคำสั่งตามลำดับความสำคัญ (High, Normal, Low)
+      // ช่วยลดภาระการสื่อสารกับรถ (Bus Load)
       final commandsToPoll = _activeCommands.where((cmd) {
-        if (_quarantinedCommands.contains(cmd)) return false;
+        if (quarantinedCommands.contains(cmd)) return false;
         switch (cmd.priority) {
           case CommandPriority.high:
             return true;
@@ -170,33 +201,34 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
         }
       }).toList();
 
-      if (commandsToPoll.isEmpty) return;
-
-      for (var cmd in commandsToPoll) {
-        try {
-          final request = _engine.buildRequest(cmd);
-          final response = await _connection.send(request);
-          if (response.isNotEmpty) {
-            final value = _engine.parseResponse(response, cmd.formula);
-            updatedValues[cmd.name] = value;
-            if (_consecutiveErrors.containsKey(cmd.code)) {
-              _consecutiveErrors[cmd.code] = 0;
+      if (commandsToPoll.isNotEmpty) {
+        for (final cmd in commandsToPoll) {
+          try {
+            final request = _engine.buildRequest(cmd);
+            final response = await _connection.send(request);
+            if (response.isNotEmpty) {
+              final value = _engine.parseResponse(response, cmd.formula);
+              updatedValues[cmd.name] = value;
+              consecutiveErrors[cmd.code] = 0;
+            }
+          } catch (e) {
+            final int errors = (consecutiveErrors[cmd.code] ?? 0) + 1;
+            consecutiveErrors[cmd.code] = errors;
+            if (errors >= maxErrorsBeforeQuarantine) {
+              _activeCommands.remove(cmd);
+              quarantinedCommands.add(cmd);
             }
           }
-        } catch (e) {
-          int errors = (_consecutiveErrors[cmd.code] ?? 0) + 1;
-          _consecutiveErrors[cmd.code] = errors;
-          if (errors >= _maxErrorsBeforeQuarantine) {
-            _activeCommands.remove(cmd);
-            _quarantinedCommands.add(cmd);
-          }
         }
-      }
-
-      if (updatedValues.isNotEmpty) {
         add(NewDataReceived(updatedValues));
       }
-    });
+
+      // Schedule next poll after current one finishes
+      // Small delay prevents thread starving
+      _timer = Timer(const Duration(milliseconds: 10), poll);
+    }
+
+    poll();
   }
 
   Future<void> _checkSupportedPids(
@@ -207,13 +239,13 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       final request = _engine.buildRequest(cmd);
       final response = await _connection.send(request);
       if (response.isNotEmpty) {
-        int startPid = int.parse(pidCode.substring(2), radix: 16);
+        final int startPid = int.parse(pidCode.substring(2), radix: 16);
         final pids = _engine.decodeSupportedPids(response, startPid);
         resultList.addAll(pids);
       }
       await Future.delayed(const Duration(milliseconds: 50));
     } catch (e) {
-      print("Discovery Error ($pidCode): $e");
+      Logger.error("Discovery Error ($pidCode): $e");
     }
   }
 
@@ -240,7 +272,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       final session = await _logRepository.startSession(vin);
       emit(state.copyWith(isLogging: true, currentSessionId: session.id));
     } catch (e) {
-      print("Start Logging Failed: $e");
+      Logger.error("Start Logging Failed: $e");
     }
   }
 
@@ -263,8 +295,8 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     if (state.isLogging &&
         state.currentSessionId != null &&
         event.values.isNotEmpty) {
-      final now = DateTime.now();
-      List<LogRecord> records = [];
+      final DateTime now = DateTime.now();
+      final List<LogRecord> records = [];
 
       // Find command defs for values to get units
       // Optimization: Use a Map for O(1) lookup if activeCommands is large
@@ -325,17 +357,17 @@ class _DebugLogRepository implements LogRepository {
 
   @override
   Future<void> saveRecords(List<LogRecord> records) async {
-    print("DEBUG LOG: ${records.length} records");
+    Logger.info("DEBUG LOG: ${records.length} records");
   }
 
   @override
   Future<LogSession> startSession(String vin) async {
-    print("DEBUG START LOGGING: $vin");
+    Logger.info("DEBUG START LOGGING: $vin");
     return LogSession(id: 999, vin: vin, startTime: DateTime.now());
   }
 
   @override
   Future<void> stopSession(int sessionId) async {
-    print("DEBUG STOP LOGGING: $sessionId");
+    Logger.info("DEBUG STOP LOGGING: $sessionId");
   }
 } // Temporary Helper Class

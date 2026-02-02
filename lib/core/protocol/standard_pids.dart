@@ -182,12 +182,20 @@ class StandardPids {
       unit: "Bitmask",
       formula: "");
 
+  static const Command vinRequest = Command(
+      name: "VIN",
+      code: "0902",
+      description: "Vehicle Identification Number",
+      unit: "String",
+      formula: "");
+
   /// รายการ PIDs ทั้งหมดที่รองรับ
   static List<Command> get all => [
         pidsSupported00, // Important: Check this first
         pidsSupported20,
         pidsSupported40,
         pidsSupported60,
+        vinRequest,
         calculatedLoad,
         engineCoolantTemp,
         shortTermFuelTrim1,
