@@ -8,6 +8,7 @@ import 'package:motus_lab/core/connection/connection_interface.dart';
 import 'package:motus_lab/core/connection/mock_connection.dart';
 import 'package:motus_lab/features/settings/domain/repositories/settings_repository.dart';
 import 'package:motus_lab/core/services/vehicle_integration/home_widget_service.dart';
+import 'package:motus_lab/core/services/ux/haptic_service.dart';
 import 'package:motus_lab/core/utils/logger.dart';
 
 part 'scan_event.dart';
@@ -21,6 +22,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   final SettingsRepository _settingsRepository;
   final ConnectionInterface _connection;
   final HomeWidgetService _homeWidgetService;
+  final HapticService _hapticService;
   StreamSubscription? _resultsSubscription;
 
   ScanBloc({
@@ -29,11 +31,13 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     required ConnectionInterface connection,
     required SettingsRepository settingsRepository,
     HomeWidgetService? homeWidgetService,
+    HapticService? hapticService,
   })  : _bluetoothService = bluetoothService,
         _connectToDevice = connectToDevice,
         _connection = connection,
         _settingsRepository = settingsRepository,
         _homeWidgetService = homeWidgetService ?? HomeWidgetService(),
+        _hapticService = hapticService ?? HapticService(),
         super(const ScanState()) {
     on<StartScan>(_onStartScan);
     on<StopScan>(_onStopScan);
@@ -43,6 +47,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
   // เมื่อเริ่มต้นการสแกนอุปกรณ์ (StartScan)
   Future<void> _onStartScan(StartScan event, Emitter<ScanState> emit) async {
+    _hapticService.lightTap();
     emit(state.copyWith(status: ScanStatus.scanning, results: []));
 
     // Refactor: Use manual subscription but with better management
@@ -114,12 +119,14 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
           .timeout(Duration(seconds: settings.connectionTimeoutSeconds));
 
       Logger.info("ScanBloc: Connected to ${event.deviceId}!");
+      _hapticService.mediumTap();
       _homeWidgetService.updateConnectionStatus(isConnected: true);
 
       emit(state.copyWith(
           status: ScanStatus.connected, connectedDeviceId: event.deviceId));
     } catch (e) {
       Logger.error("ScanBloc: Connection Failed", e);
+      _hapticService.errorFeedback();
       _homeWidgetService.updateConnectionStatus(isConnected: false);
       emit(
           state.copyWith(status: ScanStatus.error, errorMessage: e.toString()));

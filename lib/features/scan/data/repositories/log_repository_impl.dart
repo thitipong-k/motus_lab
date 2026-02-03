@@ -96,6 +96,11 @@ class LogRepositoryImpl implements LogRepository {
     await _updateRecordCount(sessionId, records.length);
   }
 
+  @override
+  Future<void> addRecord(int sessionId, LogRecord record) async {
+    await saveRecords([record]);
+  }
+
   Future<void> _updateRecordCount(int sessionId, int addedCount) async {
     final sessions = await getSessions();
     final index = sessions.indexWhere((s) => s.id == sessionId);

@@ -13,6 +13,8 @@ import 'package:motus_lab/features/scan/domain/entities/log_record.dart';
 import 'package:motus_lab/features/scan/domain/entities/log_session.dart';
 import 'package:motus_lab/core/services/logger.dart';
 import 'package:motus_lab/features/scan/data/repositories/vehicle_stats_repository.dart';
+import 'package:motus_lab/core/services/ux/haptic_service.dart';
+import 'package:motus_lab/core/protocol/protocol_parser_isolate.dart';
 
 part 'live_data_event.dart';
 part 'live_data_state.dart';
@@ -30,8 +32,11 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
   final LogRepository _logRepository;
   final VehicleStatsRepository
       _vehicleStatsRepository; // เพื่อรองรับการเดารุ่นรถ (Predictive Caching)
+  final HapticService _hapticService;
+  final ProtocolParserIsolate _parser = ProtocolParserIsolate();
   Timer? _timer;
   List<Command> _activeCommands = [];
+  StreamSubscription? _resultSubscription;
 
   LiveDataBloc({
     required ProtocolEngine engine,
@@ -43,6 +48,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     required VehicleStatsRepository
         vehicleStatsRepository, // บังคับใส่เพื่อเก็บสถิติ
     LogRepository? logRepository, // Optional for backward compatibility/testing
+    HapticService? hapticService,
   })  : _engine = engine,
         _connection = connection,
         _repository = repository,
@@ -50,9 +56,11 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
         _getSupportedPids = getSupportedPids,
         _readVin = readVin,
         _vehicleStatsRepository = vehicleStatsRepository,
+        _hapticService = hapticService ?? HapticService(),
         _logRepository = logRepository ??
             _DebugLogRepository(), // Fallback if not injected (mostly test/debug)
         super(const LiveDataState()) {
+    _initParser();
     on<StartStreaming>(_onStartStreaming);
     on<StopStreaming>(_onStopStreaming);
     on<UpdateActiveCommands>(_onUpdateActiveCommands);
@@ -60,6 +68,13 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     on<LoadProtocol>(_onLoadProtocol);
     on<StartLogging>(_onStartLogging);
     on<StopLogging>(_onStopLogging);
+  }
+
+  void _initParser() async {
+    await _parser.start();
+    _resultSubscription = _parser.results.listen((result) {
+      add(NewDataReceived(cmdName: result.cmdName, value: result.value));
+    });
   }
 
   /// เริ่มต้นการสตรีมข้อมูล
@@ -160,6 +175,8 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
         }).toList();
       }
 
+      _hapticService.mediumTap(); // Discovery Finished
+
       emit(state.copyWith(
           isDiscovering: false, supportedPidCodes: supportedKeyCodes));
     }
@@ -187,7 +204,6 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       }
 
       tick++;
-      final Map<String, double> updatedValues = Map.from(state.currentValues);
 
       // กู้คืนคำสั่งที่ถูกกักบริเวณ (Quarantine) เพื่อลองใหม่เป็นระยะๆ
       if (tick % 200 == 0 && quarantinedCommands.isNotEmpty) {
@@ -221,14 +237,17 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       if (commandsToPoll.isNotEmpty) {
         for (final cmd in commandsToPoll) {
           try {
-            // STEP: สร้างคำสั่ง > ส่งผ่าน Connection > รับ ObdResponse > ประมวลผล
+            // STEP: สร้างคำสั่ง > ส่งผ่าน Connection > รับ ObdResponse > ประมวลผลใน Isolate
             final request = _engine.buildRequest(cmd);
             final response = await _connection.send(request);
 
             if (response.hasValidData) {
-              final value = _engine.parseResponse(response, cmd.formula,
-                  script: cmd.script);
-              updatedValues[cmd.name] = value;
+              _parser.parse(ParseRequest(
+                response: response,
+                formula: cmd.formula,
+                script: cmd.script,
+                cmdName: cmd.name,
+              ));
               consecutiveErrors[cmd.code] = 0; // รีเซ็ตการนับ Error
             }
           } catch (e) {
@@ -241,7 +260,6 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
             }
           }
         }
-        add(NewDataReceived(updatedValues));
       }
 
       // กำหนดรอบการทำงานถัดไปแบบ Non-blocking
@@ -279,8 +297,69 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     emit(state.copyWith(activeCommands: _activeCommands));
   }
 
+  void _onNewDataReceived(NewDataReceived event, Emitter<LiveDataState> emit) {
+    Map<String, double> updatedValues;
+
+    if (event.values != null) {
+      updatedValues = Map.from(state.currentValues)..addAll(event.values!);
+    } else if (event.cmdName != null && event.value != null) {
+      updatedValues = Map.from(state.currentValues);
+      updatedValues[event.cmdName!] = event.value!;
+    } else {
+      return;
+    }
+
+    emit(state.copyWith(currentValues: updatedValues));
+
+    // Logging Logic
+    if (state.isLogging && state.currentSessionId != null) {
+      if (event.cmdName != null && event.value != null) {
+        final cmd = _activeCommands.firstWhere((c) => c.name == event.cmdName,
+            orElse: () => Command(
+                name: event.cmdName!,
+                code: "",
+                description: "Unknown",
+                formula: "",
+                unit: ""));
+
+        _logRepository.addRecord(
+          state.currentSessionId!,
+          LogRecord(
+            sessionId: state.currentSessionId!,
+            timestamp: DateTime.now(),
+            pidName: event.cmdName!,
+            value: event.value!,
+            unit: cmd.unit,
+          ),
+        );
+      } else if (event.values != null) {
+        // Handle batch log if needed (currently polling is sequential)
+        for (var entry in event.values!.entries) {
+          final cmd = _activeCommands.firstWhere((c) => c.name == entry.key,
+              orElse: () => Command(
+                  name: entry.key,
+                  code: "",
+                  description: "Unknown",
+                  formula: "",
+                  unit: ""));
+          _logRepository.addRecord(
+            state.currentSessionId!,
+            LogRecord(
+              sessionId: state.currentSessionId!,
+              timestamp: DateTime.now(),
+              pidName: entry.key,
+              value: entry.value,
+              unit: cmd.unit,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> _onStopStreaming(
       StopStreaming event, Emitter<LiveDataState> emit) async {
+    _hapticService.lightTap();
     _timer?.cancel();
     if (state.isLogging) {
       add(StopLogging());
@@ -305,48 +384,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     if (state.currentSessionId != null) {
       await _logRepository.stopSession(state.currentSessionId!);
     }
-    emit(state.copyWith(
-        isLogging: false,
-        currentSessionId:
-            null)); // Or keep session ID for review? Better null for next start.
-  }
-
-  // Handle data reception and logging
-  void _onNewDataReceived(NewDataReceived event, Emitter<LiveDataState> emit) {
-    emit(state.copyWith(currentValues: event.values));
-
-    // Logging Logic
-    if (state.isLogging &&
-        state.currentSessionId != null &&
-        event.values.isNotEmpty) {
-      final DateTime now = DateTime.now();
-      final List<LogRecord> records = [];
-
-      // Find command defs for values to get units
-      // Optimization: Use a Map for O(1) lookup if activeCommands is large
-
-      for (var entry in event.values.entries) {
-        final cmd = _activeCommands.firstWhere((c) => c.name == entry.key,
-            orElse: () => Command(
-                name: entry.key,
-                code: "",
-                description: "Unknown",
-                formula: "",
-                unit: ""));
-
-        // Log only if valid command (optional) or just log everything
-        records.add(LogRecord(
-            sessionId: state.currentSessionId!,
-            timestamp: now,
-            pidName: entry.key,
-            value: entry.value,
-            unit: cmd.unit));
-      }
-
-      // Fire and forget save to avoid blocking UI?
-      // Or wait? LogRepository uses file append which is fast.
-      _logRepository.saveRecords(records);
-    }
+    emit(state.copyWith(isLogging: false, currentSessionId: null));
   }
 
   Future<void> _onLoadProtocol(
@@ -360,7 +398,8 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
   @override
   Future<void> close() {
     _timer?.cancel();
-    // Ensure we stop logging if bloc closes?
+    _parser.stop();
+    _resultSubscription?.cancel();
     if (state.isLogging && state.currentSessionId != null) {
       _logRepository.stopSession(state.currentSessionId!);
     }
@@ -368,8 +407,12 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
   }
 }
 
-// Dummy repo for fallback/testing
 class _DebugLogRepository implements LogRepository {
+  @override
+  Future<void> addRecord(int sessionId, LogRecord record) async {
+    // Logger.info("DEBUG RECORD: ${record.pidName} = ${record.value}");
+  }
+
   @override
   Future<void> deleteSession(int sessionId) async {}
 
@@ -387,7 +430,7 @@ class _DebugLogRepository implements LogRepository {
   @override
   Future<LogSession> startSession(String vin) async {
     Logger.info("DEBUG START LOGGING: $vin");
-    return LogSession(id: 999, vin: vin, startTime: DateTime.now());
+    return LogSession(id: 1, vin: vin, startTime: DateTime.now());
   }
 
   @override

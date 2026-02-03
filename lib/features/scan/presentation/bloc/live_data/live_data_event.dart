@@ -30,11 +30,14 @@ class UpdateActiveCommands extends LiveDataEvent {
 
 /// อัพเดตค่าที่ได้รับมาใหม่
 class NewDataReceived extends LiveDataEvent {
-  final Map<String, double> values;
-  const NewDataReceived(this.values);
+  final Map<String, double>? values; // For batch updates
+  final String? cmdName; // For single updates from isolate
+  final double? value;
+
+  const NewDataReceived({this.values, this.cmdName, this.value});
 
   @override
-  List<Object> get props => [values];
+  List<Object> get props => [values ?? {}, cmdName ?? '', value ?? 0.0];
 }
 
 /// Start logging session

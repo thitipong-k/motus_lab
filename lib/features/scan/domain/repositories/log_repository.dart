@@ -11,6 +11,9 @@ abstract class LogRepository {
   /// Save a batch of records to the database.
   Future<void> saveRecords(List<LogRecord> records);
 
+  /// Save a single record.
+  Future<void> addRecord(int sessionId, LogRecord record);
+
   /// Get all logging sessions from history.
   Future<List<LogSession>> getSessions();
 

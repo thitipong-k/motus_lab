@@ -46,6 +46,7 @@ import 'package:motus_lab/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:motus_lab/features/scan/domain/services/diagnostic_expert_service.dart';
 import 'package:motus_lab/features/scan/data/repositories/vehicle_stats_repository.dart';
 import 'package:motus_lab/core/services/cloud_seed_service.dart';
+import 'package:motus_lab/core/services/ux/haptic_service.dart';
 // import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 final locator = GetIt.instance;
@@ -166,6 +167,9 @@ Future<void> setupLocator() async {
   // 12. Seeding Service
   locator.registerLazySingleton<CloudSeedService>(
       () => CloudSeedService(locator()));
+
+  // 13. UX Services
+  locator.registerLazySingleton(() => HapticService());
 
   // Initialize Sync System
   locator<SyncService>().init();

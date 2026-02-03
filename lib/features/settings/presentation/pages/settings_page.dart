@@ -15,6 +15,8 @@ import 'package:motus_lab/features/scan/domain/entities/dtc_result.dart';
 import 'package:motus_lab/features/settings/domain/entities/settings.dart';
 import 'package:motus_lab/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:motus_lab/l10n/app_localizations.dart';
+import 'package:motus_lab/core/services/ux/haptic_service.dart';
+import 'package:motus_lab/core/services/service_locator.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -272,6 +274,7 @@ class _SettingsView extends StatelessWidget {
                         child: Switch(
                           value: currentSettings.isAppLockEnabled,
                           onChanged: (val) {
+                            locator<HapticService>().selectionClick();
                             // สั่งอัพเดตสถานะการล็อคแอปผ่าน BLoC
                             context
                                 .read<SettingsBloc>()
@@ -313,6 +316,7 @@ class _SettingsView extends StatelessWidget {
                   child: Switch(
                     value: currentSettings.unitSystem == UnitSystem.imperial,
                     onChanged: (isImperial) {
+                      locator<HapticService>().selectionClick();
                       context.read<SettingsBloc>().add(UpdateUnitSystem(
                           isImperial
                               ? UnitSystem.imperial

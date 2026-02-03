@@ -1,8 +1,35 @@
 # Changelog
 
+## [1.0.6] - 2026-02-03
+
+### Added [1.0.6]
+
+- **Performance: Background Isolate Parsing (Phase 14)**:
+  - Implemented `ProtocolParserIsolate` to offload OBD-II data decoding to a background worker.
+  - Maintains smooth UI during high-frequency data polling.
+  - Note: `ScriptEngine` (flutter_js) bypassed in Isolate due to Flutter Bindings requirement.
+- **Haptic Feedback Engine**: Integrated tactile responses for connection events, settings toggles, and discovery completion.
+- **Skeleton UI Loaders**: Premium shimmer placeholders for `LiveDataPage` during PID discovery.
+- **Vehicle Topology Enhancement**:
+  - Integrated `InteractiveViewer` for pan/zoom support on narrow mobile screens.
+  - Fixed tap detection for ECU module selection.
+
+### Changed [1.0.6]
+
+- **LiveDataBloc**: Refactored polling loop to use Isolate results via Stream subscription.
+- **NewDataReceived Event**: Extended to support both batch updates and single-value updates from Isolate.
+- **LogRepository**: Added `addRecord` method for incremental logging.
+
+### Fixed [1.0.6]
+
+- **Topology Overflow**: Resolved mobile layout overflow where ECU nodes were cut off.
+- **Isolate Crash**: Fixed `Binding has not yet been initialized` error by removing `ScriptEngine` from background Isolate.
+
+---
+
 ## [1.0.5] - 2026-02-03
 
-### Added
+### Added [1.0.5]
 
 - **Professional Security (Phase 11)**:
   - **Biometric App Lock**: Integrated `local_auth` to protect sensitive modules (CRM, Reports, Logs).
@@ -10,7 +37,7 @@
   - **Authentication Guard**: Centralized Auth-check logic in `MorePage` for professional privacy.
 - **Thai System Documentation**: Detailed Thai comments added to core security, database, and protocol engine modules for transparent operation explanation.
 
-### Changed
+### Changed [1.0.5]
 
 - **Database Architecture**: Implemented `SecurityRepository` for unified encryption key management.
 - **Windows Compatibility (Developer Bypass)**:
@@ -18,7 +45,7 @@
   - Implemented `SharedPreferences` fallback for security keys during Windows local development.
 - **Protocol Engine Stability**: Resolved compilation issues with `ObdCommandDef.script` and refined Thai documentation for data decoding logic.
 
-### Fixed
+### Fixed [1.0.5]
 
 - **Manual Localization Sync**: Resolved missing getters in `AppLocalizations` hierarchy for security-related strings.
 

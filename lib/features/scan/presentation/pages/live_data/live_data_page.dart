@@ -11,8 +11,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/graphs/live_data_graph.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/gauges/simple_gauge.dart';
 import 'package:motus_lab/shared/widgets/motus_card.dart';
-import 'package:motus_lab/shared/widgets/loading_indicator.dart';
 import 'package:motus_lab/shared/widgets/empty_state.dart';
+import 'package:motus_lab/shared/widgets/skeleton_gauge.dart';
 import 'package:motus_lab/features/reporting/presentation/bloc/report_bloc.dart';
 import 'package:motus_lab/features/reporting/domain/entities/report_entities.dart';
 import 'package:printing/printing.dart';
@@ -236,10 +236,17 @@ class _LiveDataPageState extends State<LiveDataPage> {
           },
           builder: (context, state) {
             if (state.isDiscovering) {
-              if (state.isDiscovering) {
-                return const LoadingIndicator(
-                    message: "Scanning supported PIDs...");
-              }
+              return GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 220,
+                  childAspectRatio: 0.85,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
+                itemCount: 6, // Show 6 skeleton placeholders
+                itemBuilder: (context, index) => const SkeletonGauge(),
+              );
             }
 
             if (!state.isStreaming && state.activeCommands.isEmpty) {

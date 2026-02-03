@@ -94,23 +94,49 @@ class _TopologyViewState extends State<_TopologyView> {
     );
   }
 
+  /// ControlIer สำหรับจัดการ Pan/Zoom ของ InteractiveViewer
+  final TransformationController _transformController =
+      TransformationController();
+
+  /// =================================================================
+  /// สร้าง Canvas สำหรับแสดงผังเครือข่าย ECU
+  /// =================================================================
+  ///
+  /// รองรับการซูมและเลื่อนดู (Pan/Zoom) ผ่าน InteractiveViewer
+  /// เพื่อให้ดูได้ครบถ้วนบนหน้าจอมือถือที่มีขนาดเล็ก
+  ///
+  /// GestureDetector วางอยู่ภายใน InteractiveViewer เพื่อให้
+  /// ตำแหน่งที่แตะตรงกับพิกัดบน Canvas โดยตรง
+  /// =================================================================
   Widget _buildCanvas(TopologyState state) {
-    return GestureDetector(
-      onTapUp: (details) {
-        _handleTap(details.localPosition, state.nodes);
-      },
-      child: Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F0F0F),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white10),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: CustomPaint(
-            size: Size.infinite,
-            painter: TopologyPainter(state.nodes),
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F0F0F), // พื้นหลังสีดำเข้ม
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        // InteractiveViewer ช่วยให้ซูมและเลื่อนดูผังได้
+        child: InteractiveViewer(
+          transformationController: _transformController,
+          constrained:
+              false, // ปิด Constraint เพื่อให้ Canvas ใหญ่กว่าหน้าจอได้
+          boundaryMargin: const EdgeInsets.all(100), // ขอบเขตการเลื่อน
+          minScale: 0.5, // ซูมออกได้สูงสุด 50%
+          maxScale: 2.5, // ซูมเข้าได้สูงสุด 250%
+          // GestureDetector อยู่ภายในเพื่อให้พิกัด Tap ตรงกับ Canvas
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque, // รับ Tap ทั่วทั้งพื้นที่
+            onTapUp: (details) {
+              // ใช้ localPosition ได้โดยตรงเพราะอยู่ใน InteractiveViewer
+              _handleTap(details.localPosition, state.nodes);
+            },
+            child: CustomPaint(
+              size: const Size(600, 500), // ขนาดพื้นที่วาดผังคงที่
+              painter: TopologyPainter(state.nodes),
+            ),
           ),
         ),
       ),
