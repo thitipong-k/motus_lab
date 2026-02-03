@@ -3,10 +3,13 @@ import 'package:equatable/equatable.dart';
 import 'package:motus_lab/core/connection/connection_interface.dart';
 import 'package:motus_lab/core/protocol/standard_pids.dart';
 import 'package:motus_lab/domain/entities/command.dart';
+import 'package:motus_lab/domain/entities/obd_communication.dart';
 
 part 'freeze_frame_event.dart';
 part 'freeze_frame_state.dart';
 
+/// Bloc สำหรับจัดการข้อมูลภาพนิ่งขณะเกิดความผิดปกติ (Freeze Frame)
+/// รองรับการอ่าน Mode 02 เพื่อดูค่าเซนเซอร์ ณ วินาทีที่ไฟเครื่องโชว์
 class FreezeFrameBloc extends Bloc<FreezeFrameEvent, FreezeFrameState> {
   final ConnectionInterface _connection;
 
@@ -16,38 +19,35 @@ class FreezeFrameBloc extends Bloc<FreezeFrameEvent, FreezeFrameState> {
     on<LoadFreezeFrameData>(_onLoadFreezeFrameData);
   }
 
+  /// ฟังก์ชันโหลดข้อมูล Freeze Frame
   Future<void> _onLoadFreezeFrameData(
       LoadFreezeFrameData event, Emitter<FreezeFrameState> emit) async {
     emit(FreezeFrameLoading());
 
     try {
       if (!_connection.isConnected) {
-        emit(const FreezeFrameError("Not connected to vehicle"));
+        emit(const FreezeFrameError("ยังไม่ได้เชื่อมต่อกับตัวรถ"));
         return;
       }
 
       final Map<String, dynamic> results = {};
-      String dtcCode = "Unknown";
+      String dtcCode = "ไม่ระบุ";
 
-      // 1. Get DTC that caused freeze frame (PID 02)
-      // Custom parsing for Mode 02 PID 02 (DTC)
+      // 1. อ่านรหัสความผิดปกติที่เป็นสาเหตุให้เกิด Freeze Frame (Mode 02 PID 02)
       try {
-        // Mode 02, PID 02
-        final response = await _connection.send([0x02, 0x02]);
-        // Expect 42 02 HB LB or similar
-        if (response.length >= 4 &&
-            response[0] == 0x42 &&
-            response[1] == 0x02) {
-          // Parse DTC: same logic as Mode 03
-          // HB = response[2], LB = response[3]
-          dtcCode = _parseDtc(response[2], response[3]);
+        final response = await _connection.send(ObdRequest(command: "0202"));
+        // รูปแบบที่คาดหวัง: 42 02 [HB] [LB]
+        if (response.hasValidData &&
+            response.rawData.length >= 4 &&
+            response.rawData[0] == 0x42 &&
+            response.rawData[1] == 0x02) {
+          dtcCode = _parseDtc(response.rawData[2], response.rawData[3]);
         }
       } catch (e) {
-        print("Error fetching Freeze DTC: $e");
+        print("Error ดึงรหัส Freeze DTC: $e");
       }
 
-      // 2. Fetch other PIDs (Mode 02)
-      // We will fetch a standard set of PIDs relevant for snapshot
+      // 2. ดึงค่าเซนเซอร์อื่นๆ ที่เกี่ยวข้อง ณ ขณะนั้น (สตรีมผ่าน Mode 02)
       final List<Command> snapshotPids = [
         StandardPids.calculatedLoad,
         StandardPids.engineCoolantTemp,
@@ -55,29 +55,26 @@ class FreezeFrameBloc extends Bloc<FreezeFrameEvent, FreezeFrameState> {
         StandardPids.vehicleSpeed,
         StandardPids.shortTermFuelTrim1,
         StandardPids.longTermFuelTrim1,
-        // Add more if needed
       ];
 
       for (var cmd in snapshotPids) {
         try {
-          // Convert '010C' to [0x02, 0x0C] for Mode 02 request
-          int pidByte = int.parse(cmd.code.substring(2), radix: 16);
-          final response = await _connection.send([0x02, pidByte]);
+          // แปลง PID จาก Mode 01 เป็น Mode 02 (เช่น 010C -> 020C)
+          String pidHex = cmd.code.substring(2);
+          final response =
+              await _connection.send(ObdRequest(command: "02$pidHex"));
 
-          if (response.length >= 3 &&
-              response[0] == 0x42 &&
-              response[1] == pidByte) {
-            // Parse value
-            // Logic same as Mode 01 but response header is 42
-            // We can reuse the formula logic if we strip the header
-            // Or simplified manual parsing for now
+          if (response.hasValidData &&
+              response.rawData.length >= 3 &&
+              response.rawData[0] == 0x42 &&
+              response.rawData[1] == int.parse(pidHex, radix: 16)) {
+            final raw = response.rawData;
             double val = 0.0;
 
-            // Extract bytes (A, B, C, D)
-            int A = response.length > 2 ? response[2] : 0;
-            int B = response.length > 3 ? response[3] : 0;
+            // แยกข้อมูลดิบ A, B ไปคำนวณตามประเภทของเซนเซอร์
+            int A = raw.length > 2 ? raw[2] : 0;
+            int B = raw.length > 3 ? raw[3] : 0;
 
-            // Simple hardcoded formula mapping for basic PIDs to avoid complex parser injection
             if (cmd == StandardPids.engineRpm) {
               val = ((A * 256) + B) / 4;
             } else if (cmd == StandardPids.vehicleSpeed) {
@@ -94,13 +91,13 @@ class FreezeFrameBloc extends Bloc<FreezeFrameEvent, FreezeFrameState> {
             results[cmd.name] = val;
           }
         } catch (e) {
-          print("Error fetching freeze frame PID ${cmd.name}: $e");
+          print("Error ดึงค่า Freeze Frame PID ${cmd.name}: $e");
         }
       }
 
       emit(FreezeFrameLoaded(data: results, dtc: dtcCode));
     } catch (e) {
-      emit(FreezeFrameError(e.toString()));
+      emit(FreezeFrameError("โหลดข้อมูลภาพนิ่งล้มเหลว: ${e.toString()}"));
     }
   }
 

@@ -117,4 +117,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreSeedCloud => 'Seed Cloud';
+
+  @override
+  String get secTitle => 'Security';
+
+  @override
+  String get secAppLock => 'App Lock';
+
+  @override
+  String get secAppLockDesc => 'Protect sensitive features with Biometrics';
+
+  @override
+  String get secAuthReq => 'Authentication Required';
 }

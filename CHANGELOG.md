@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.0.5] - 2026-02-03
+
+### Added
+
+- **Professional Security (Phase 11)**:
+  - **Biometric App Lock**: Integrated `local_auth` to protect sensitive modules (CRM, Reports, Logs).
+  - **Security Settings**: New toggle in Settings page to manage App Lock/Biometric access.
+  - **Authentication Guard**: Centralized Auth-check logic in `MorePage` for professional privacy.
+- **Thai System Documentation**: Detailed Thai comments added to core security, database, and protocol engine modules for transparent operation explanation.
+
+### Changed
+
+- **Database Architecture**: Implemented `SecurityRepository` for unified encryption key management.
+- **Windows Compatibility (Developer Bypass)**:
+  - Bypassed `sqlcipher_flutter_libs` and `flutter_secure_storage` on Windows to resolve OpenSSL and ATL build blockers.
+  - Implemented `SharedPreferences` fallback for security keys during Windows local development.
+- **Protocol Engine Stability**: Resolved compilation issues with `ObdCommandDef.script` and refined Thai documentation for data decoding logic.
+
+### Fixed
+
+- **Manual Localization Sync**: Resolved missing getters in `AppLocalizations` hierarchy for security-related strings.
+
 ## [1.0.4] - 2026-02-02
 
 ### Added

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 import 'package:motus_lab/core/connection/connection_interface.dart';
+import 'package:motus_lab/domain/entities/obd_communication.dart';
 
 /// การเชื่อมต่อผ่าน Serial Port (USB) สำหรับ Desktop
 /// คลาสนี้ทำหน้าที่จัดการการรับ-ส่งข้อมูลผ่านสาย USB OBDII
@@ -46,19 +47,24 @@ class SerialConnection implements ConnectionInterface {
     }
   }
 
-  /// ฟังก์ชันส่งข้อมูล Hex ออกไปยังรถ
+  /// ฟังก์ชันส่งข้อมูล String/Hex ออกไปยังรถ (Standardized)
   @override
-  Future<List<int>> send(List<int> data) async {
+  Future<ObdResponse> send(ObdRequest request) async {
     if (!isConnected) throw Exception("ไม่ได้เชื่อมต่อ USB Serial");
 
     // ส่งข้อมูลในรูปแบบ Uint8List
+    final data = request.toBytes();
     final bytesWritten = _port!.write(Uint8List.fromList(data));
 
     if (bytesWritten < 0) {
       throw Exception("ส่งข้อมูลล้มเหลว");
     }
 
-    return []; // ข้อมูลตอบกลับจะไหลกลับมาทาง Stream onDataReceived
+    return ObdResponse(
+      rawData: [],
+      timestamp: DateTime.now(),
+      isSuccess: true,
+    );
   }
 
   /// ฟังก์ชันตัดการเชื่อมต่อและคืนทรัพยากร

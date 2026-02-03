@@ -117,4 +117,17 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get moreSeedCloud => 'อัปโหลดข้อมูล';
+
+  @override
+  String get secTitle => 'ความปลอดภัย';
+
+  @override
+  String get secAppLock => 'ระบบล็อคแอป';
+
+  @override
+  String get secAppLockDesc =>
+      'ปกป้องข้อมูลสำคัญด้วยการยืนยันตัวตน (Biometrics)';
+
+  @override
+  String get secAuthReq => 'ต้องยืนยันตัวตน';
 }

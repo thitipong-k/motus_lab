@@ -25,6 +25,9 @@ class Command extends Equatable {
   /// สูตรคำนวณ (เช่น "A*256+B / 4")
   final String formula;
 
+  /// สคริปต์คำนวณขั้นสูง (Javascript) - สำหรับ Tier 3 Manufacturer Middleware
+  final String? script;
+
   /// ค่าต่ำสุดที่คาดหวัง (สำหรับ Gauge)
   final double min;
 
@@ -40,6 +43,7 @@ class Command extends Equatable {
     required this.description,
     this.unit = '',
     this.formula = '',
+    this.script,
     this.min = 0.0,
     this.max = 100.0,
     this.priority = CommandPriority.normal,
@@ -47,5 +51,5 @@ class Command extends Equatable {
 
   @override
   List<Object?> get props =>
-      [name, code, description, unit, formula, min, max, priority];
+      [name, code, description, unit, formula, script, min, max, priority];
 }

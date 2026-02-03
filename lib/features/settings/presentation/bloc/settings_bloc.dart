@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/core/theme/app_style.dart';
 import 'package:motus_lab/features/settings/domain/entities/settings.dart';
 import 'package:motus_lab/features/settings/domain/repositories/settings_repository.dart';
+import 'package:motus_lab/core/services/security/biometric_service.dart';
 
 // --- Events ---
 abstract class SettingsEvent extends Equatable {
@@ -83,15 +84,16 @@ class SettingsState extends Equatable {
 }
 
 // --- Bloc ---
-/// Bloc สำหรับจัดการการตั้งค่าของแอป (Theme, Connection, Language)
-/// [WORKFLOW STEP: Settings Management]
-/// 1. LoadSettings: อ่านค่าจาก SharedPreferences เมื่อเริ่มแอป
-/// 2. Update*: รับ Event จาก UI และบันทึกลง Persistence ทันที
+/// Bloc สำหรับจัดการการตั้งค่าของแอป (Theme, Connection, Language, Security)
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   final SettingsRepository _repository;
+  final BiometricService _biometricService;
 
-  SettingsBloc({required SettingsRepository repository})
-      : _repository = repository,
+  SettingsBloc({
+    required SettingsRepository repository,
+    required BiometricService biometricService,
+  })  : _repository = repository,
+        _biometricService = biometricService,
         super(SettingsState.initial()) {
     on<LoadSettings>(_onLoadSettings);
     on<UpdateTheme>(_onUpdateTheme);
@@ -147,6 +149,20 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
 
   Future<void> _onUpdateAppLock(
       UpdateAppLock event, Emitter<SettingsState> emit) async {
+    // If enabling, verify identity first
+    if (event.isEnabled) {
+      final authenticated = await _biometricService.authenticate(
+        reason: 'ยืนยันตัวตนเพื่อเปิดใช้งานระบบล็อคแอป',
+      );
+
+      if (!authenticated) {
+        // Re-emit current state to reset toggle in UI if necessary
+        // (though BlocBuilder usually handles this if state doesn't change)
+        emit(state.copyWith());
+        return;
+      }
+    }
+
     final newSettings =
         state.settings.copyWith(isAppLockEnabled: event.isEnabled);
     await _repository.saveSettings(newSettings);

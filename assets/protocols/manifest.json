@@ -1,0 +1,20 @@
+{
+    "version": "1.0",
+    "mappings": [
+        {
+            "vin_prefix": "1HG",
+            "manufacturer": "Honda",
+            "asset_path": "assets/protocols/honda_civic.json",
+            "priority": 10
+        },
+        {
+            "vin_prefix": "JHM",
+            "manufacturer": "Honda",
+            "asset_path": "assets/protocols/honda_civic.json",
+            "priority": 10
+        }
+    ],
+    "default_packs": [
+        "assets/protocols/standard_obd2.json"
+    ]
+}

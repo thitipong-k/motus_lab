@@ -1,5 +1,6 @@
 import 'dart:ffi' as ffi;
 import 'package:motus_lab/core/connection/connection_interface.dart';
+import 'package:motus_lab/domain/entities/obd_communication.dart';
 
 /// การเชื่อมต่อผ่านมาตรฐาน J2534 PassThru (Windows Only)
 /// ใช้สำหรับการสื่อสารระดับโรงงาน (Reflashing/Advanced Coding)
@@ -34,10 +35,15 @@ class J2534Connection implements ConnectionInterface {
   }
 
   @override
-  Future<List<int>> send(List<int> data) async {
+  Future<ObdResponse> send(ObdRequest request) async {
     // การส่งข้อมูลผ่าน J2534 จะซับซ้อนกว่าปกติ ต้องรอการ Map ฟังก์ชันครบถ้วน
-    print("J2534 Send: ${data.toString()} (Not fully implemented)");
-    return [];
+    print("J2534 Send: ${request.command} (Not fully implemented)");
+    return ObdResponse(
+      rawData: [],
+      timestamp: DateTime.now(),
+      isSuccess: true,
+      errorMessage: "J2534 Bridge Not Fully Implemented",
+    );
   }
 
   @override

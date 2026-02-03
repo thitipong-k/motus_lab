@@ -28,7 +28,8 @@ part 'app_database.g.dart';
   VehicleScanStats
 ])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(openConnection());
+  AppDatabase({String? encryptionKey})
+      : super(openConnection(key: encryptionKey));
 
   @override
   int get schemaVersion =>

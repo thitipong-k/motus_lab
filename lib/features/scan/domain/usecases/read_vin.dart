@@ -26,7 +26,7 @@ class ReadVinUseCase implements UseCase<String?, void> {
       // 3. Send Request
       final response = await connection.send(request);
 
-      if (response.isEmpty) return null;
+      if (!response.hasValidData) return null;
 
       // 4. Parse Response (Mock for now)
       // In real scenario: engine.parseVin(response)

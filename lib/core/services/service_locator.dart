@@ -28,7 +28,6 @@ import 'package:motus_lab/features/maintenance/data/repositories/maintenance_rep
 import 'package:motus_lab/features/maintenance/presentation/bloc/maintenance_bloc.dart';
 import 'package:motus_lab/features/crm/domain/repositories/crm_repository.dart';
 import 'package:motus_lab/features/crm/data/repositories/crm_repository_impl.dart';
-import 'package:motus_lab/core/services/security/biometric_service.dart';
 import 'package:motus_lab/features/crm/presentation/bloc/crm_bloc.dart';
 import 'package:motus_lab/features/remote/domain/repositories/remote_repository.dart';
 import 'package:motus_lab/features/remote/data/repositories/remote_repository_impl.dart';
@@ -39,12 +38,15 @@ import 'package:motus_lab/features/reporting/data/services/pdf_generator_service
 import 'package:motus_lab/features/reporting/presentation/bloc/report_bloc.dart';
 import 'package:motus_lab/features/scan/domain/repositories/log_repository.dart';
 import 'package:motus_lab/features/scan/data/repositories/log_repository_impl.dart';
+import 'package:motus_lab/core/services/security/security_repository.dart';
+import 'package:motus_lab/core/services/security/biometric_service.dart';
 import 'package:motus_lab/core/services/security/auth_service.dart';
 import 'package:motus_lab/core/services/sync_service.dart';
 import 'package:motus_lab/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:motus_lab/features/scan/domain/services/diagnostic_expert_service.dart';
 import 'package:motus_lab/features/scan/data/repositories/vehicle_stats_repository.dart';
 import 'package:motus_lab/core/services/cloud_seed_service.dart';
+// import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 final locator = GetIt.instance;
 
@@ -61,8 +63,15 @@ Future<void> setupLocator() async {
   locator.registerLazySingleton(() => motus.BluetoothService());
   locator.registerLazySingleton<ConnectionInterface>(() => MockConnection());
 
-  // Database & Repositories
-  locator.registerLazySingleton(() => AppDatabase());
+  // Database & Key Management
+  // locator.registerLazySingleton(() => const FlutterSecureStorage());
+  locator.registerLazySingleton(() => SecurityRepository(prefs: locator()));
+
+  final securityRepo = locator<SecurityRepository>();
+  final encryptionKey = await securityRepo.getDatabaseKey();
+
+  locator
+      .registerLazySingleton(() => AppDatabase(encryptionKey: encryptionKey));
   locator.registerLazySingleton(() => DiagnosticRepository(locator()));
   locator.registerLazySingleton(() => ProtocolRepository());
   locator.registerLazySingleton(() => VehicleProfileRepository(locator()));
@@ -110,7 +119,7 @@ Future<void> setupLocator() async {
   locator.registerLazySingleton<SettingsRepository>(
       () => SettingsRepositoryImpl(locator()));
   locator.registerLazySingleton<SettingsBloc>(
-      () => SettingsBloc(repository: locator()));
+      () => SettingsBloc(repository: locator(), biometricService: locator()));
 
   // 6. Maintenance Feature
   locator.registerLazySingleton<MaintenanceRepository>(

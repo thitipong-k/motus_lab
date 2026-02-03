@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift/wasm.dart';
 
-LazyDatabase openConnection() {
+LazyDatabase openConnection({String? key}) {
   return LazyDatabase(() async {
     final result = await WasmDatabase.open(
       databaseName: 'motus_lab_db',

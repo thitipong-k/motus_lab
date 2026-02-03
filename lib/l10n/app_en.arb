@@ -45,5 +45,9 @@
     "moreSniffer": "Sniffer",
     "moreKnowledge": "Knowledge",
     "moreSettings": "Settings",
-    "moreSeedCloud": "Seed Cloud"
+    "moreSeedCloud": "Seed Cloud",
+    "secTitle": "Security",
+    "secAppLock": "App Lock",
+    "secAppLockDesc": "Protect sensitive features with Biometrics",
+    "secAuthReq": "Authentication Required"
 }

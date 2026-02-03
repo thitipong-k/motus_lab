@@ -35,5 +35,9 @@
     "moreSniffer": "สนิฟเฟอร์",
     "moreKnowledge": "ความรู้",
     "moreSettings": "ตั้งค่า",
-    "moreSeedCloud": "อัปโหลดข้อมูล"
+    "moreSeedCloud": "อัปโหลดข้อมูล",
+    "secTitle": "ความปลอดภัย",
+    "secAppLock": "ระบบล็อคแอป",
+    "secAppLockDesc": "ปกป้องข้อมูลสำคัญด้วยการยืนยันตัวตน (Biometrics)",
+    "secAuthReq": "ต้องยืนยันตัวตน"
 }

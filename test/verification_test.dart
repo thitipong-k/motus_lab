@@ -1,6 +1,7 @@
 import 'package:motus_lab/core/protocol/protocol_engine.dart';
 import 'package:motus_lab/core/connection/mock_connection.dart';
 import 'package:motus_lab/domain/entities/command.dart';
+import 'package:motus_lab/domain/entities/obd_communication.dart';
 
 // สคริปต์ทดสอบการทำงานของระบบ Motus Core (Phase 1)
 // ทดสอบ: ProtocolEngine + ExpressionEvaluator + MockConnection
@@ -32,11 +33,7 @@ void main() async {
 
   // 4. สร้าง Request Packet (Build)
   final request = engine.buildRequest(cmdRpm);
-  // แปลงเป็น Hex String เพื่อแสดงผล: [1, 12] -> "01 0C"
-  final requestHex = request
-      .map((e) => e.toRadixString(16).padLeft(2, '0').toUpperCase())
-      .join(' ');
-  print(" -> Request Hex: $requestHex");
+  print(" -> Request Command: ${request.command}");
 
   // 5. ส่งและรอรับผล (Send & Receive)
   print("\nStep 3: Sending Command...");
@@ -51,7 +48,13 @@ void main() async {
     // 6. แปลผล (Parse)
     print("\nStep 4: Parsing Response...");
     try {
-      final value = engine.parseResponse(data, cmdRpm.formula);
+      // Wrap raw data in ObdResponse for engine
+      final obdResponse = ObdResponse(
+        rawData: data,
+        timestamp: DateTime.now(),
+        isSuccess: true,
+      );
+      final value = engine.parseResponse(obdResponse, cmdRpm.formula);
       print(" -> Formula: ${cmdRpm.formula}");
       print(" -> Result: $value ${cmdRpm.unit}");
       print(" -> Status: Pass ✅");

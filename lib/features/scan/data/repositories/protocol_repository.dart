@@ -10,6 +10,32 @@ class ProtocolRepository {
   ProtocolPack? _activePack;
   List<Command>? _cachedMergedCommands;
 
+  /// Automatically loads the best Protocol Pack based on the vehicle's VIN.
+  /// Uses assets/protocols/manifest.json for mapping.
+  Future<void> loadPackByVin(String vin) async {
+    try {
+      final manifestString =
+          await rootBundle.loadString('assets/protocols/manifest.json');
+      final manifest = jsonDecode(manifestString);
+      final List mappings = manifest['mappings'] ?? [];
+
+      for (var mapping in mappings) {
+        final prefix = mapping['vin_prefix'] as String;
+        if (vin.startsWith(prefix)) {
+          final assetPath = mapping['asset_path'] as String;
+          await loadProtocolPackFromAsset(assetPath);
+          return;
+        }
+      }
+
+      print(
+          "No matching protocol pack found for VIN: $vin. Using standard OBD2.");
+      clearProtocolPack();
+    } catch (e) {
+      print("Error automatic loading pack by VIN: $e");
+    }
+  }
+
   /// Returns the list of Standard SAE J1979 PIDs.
   List<Command> getStandardPids() {
     return StandardPids.all;
@@ -76,6 +102,7 @@ class ProtocolRepository {
         description: "Extended PID (${cmd.pid})",
         unit: cmd.unit,
         formula: cmd.formula,
+        script: cmd.script,
         min: cmd.min.toDouble(),
         max: cmd.max.toDouble(),
       );

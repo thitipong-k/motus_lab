@@ -32,9 +32,10 @@ class TopologyRepositoryImpl implements TopologyRepository {
     final stream = _connection.onDataReceived;
 
     // 3. Send Broadcast "Supported PIDs" (Mode 01 PID 00)
-    // Using engine to build request for future-proofing
-    final broadcastCmd =
-        _engine.getAllSupportedPids().firstWhere((c) => c.code == "0100");
+    final broadcastCmd = _engine.getAllSupportedPids().firstWhere(
+          (c) => c.code == "0100",
+          orElse: () => throw Exception("Standard PID 0100 not found"),
+        );
     _connection.send(_engine.buildRequest(broadcastCmd));
 
     // 4. Collect responses for a few seconds

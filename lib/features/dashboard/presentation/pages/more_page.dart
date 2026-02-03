@@ -52,12 +52,14 @@ class MorePage extends StatelessWidget {
         'icon': Icons.history,
         'page': const LogSessionsPage(),
         'color': AppColors.primary,
+        'requiresAuth': true,
       },
       {
         'label': l10n.moreCRM,
         'icon': Icons.people,
         'page': const CustomerListPage(),
         'color': AppColors.primary,
+        'requiresAuth': true,
       },
       {
         'label': l10n.moreRemoteExpert,
@@ -76,18 +78,21 @@ class MorePage extends StatelessWidget {
         'icon': Icons.edit_note,
         'page': const AdaptationPage(),
         'color': AppColors.secondary,
+        'requiresAuth': true,
       },
       {
         'label': l10n.moreSniffer,
         'icon': Icons.terminal,
         'page': const SnifferPage(),
         'color': AppColors.error,
+        'requiresAuth': true,
       },
       {
         'label': l10n.moreKnowledge,
         'icon': Icons.menu_book,
         'page': const KnowledgeBasePage(),
         'color': AppColors.primary,
+        'requiresAuth': true,
       },
       {
         'label': l10n.moreSettings,
@@ -105,6 +110,7 @@ class MorePage extends StatelessWidget {
           );
         },
         'color': Colors.blueAccent,
+        'requiresAuth': true,
       },
     ];
 
@@ -161,27 +167,32 @@ class MorePage extends StatelessWidget {
   Widget _buildMenuItem(BuildContext context, Map<String, dynamic> item) {
     return GestureDetector(
       onTap: () async {
-        if (item['label'] == 'CRM') {
-          // 1. Check if App Lock is enabled
+        // --- 1. ระบบความปลอดภัย (App Lock / AuthGuard) ---
+        // ตรวจสอบว่าเมนูนี้เป็นข้อมูลสำคัญที่ต้องล็อคไว้หรือไม่ (requiresAuth: true)
+        final requiresAuth = item['requiresAuth'] == true;
+        if (requiresAuth) {
           final settingsState = context.read<SettingsBloc>().state;
-          if (settingsState.settings.isAppLockEnabled) {
-            // 2. Trigger Biometric Auth
-            final biometricService = locator<BiometricService>();
-            final isAuthenticated = await biometricService.authenticate(
-                reason: 'Release the lock to access Customer Data');
 
+          // หากผู้ใช้ "เปิด" ระบบ App Lock ไว้ในหน้าการตั้งค่า
+          if (settingsState.settings.isAppLockEnabled) {
+            final biometricService = locator<BiometricService>();
+
+            // เรียกใช้ระบบ Biometrics ของเครื่อง (สแกนนิ้ว/ใบหน้า)
+            final isAuthenticated = await biometricService.authenticate(
+              reason: 'โปรดยืนยันตัวตนเพื่อเข้าถึงข้อมูลสำคัญ',
+            );
+
+            // หากยืนยันตัวตนไม่ผ่าน ให้บล็อกการเข้าถึงและหยุดทำงานทันที
             if (!isAuthenticated) {
-              // Auth Failed or Cancelled
               if (context.mounted) {
-                // Check if widget still active
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Authentication Failed: Access Denied'),
+                    content: Text('ต้องยืนยันตัวตนก่อนเข้าใช้งาน'),
                     backgroundColor: AppColors.error,
                   ),
                 );
               }
-              return; // Stop navigation
+              return;
             }
           }
         }

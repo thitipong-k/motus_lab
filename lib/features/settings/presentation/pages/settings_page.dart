@@ -14,6 +14,7 @@ import 'package:motus_lab/features/reporting/presentation/pages/report_settings_
 import 'package:motus_lab/features/scan/domain/entities/dtc_result.dart';
 import 'package:motus_lab/features/settings/domain/entities/settings.dart';
 import 'package:motus_lab/features/settings/presentation/bloc/settings_bloc.dart';
+import 'package:motus_lab/l10n/app_localizations.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -63,7 +64,7 @@ class _SettingsView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("SETTINGS"),
+        title: Text(AppLocalizations.of(context)!.moreSettings.toUpperCase()),
       ),
       body: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
@@ -245,10 +246,12 @@ class _SettingsView extends StatelessWidget {
                 ),
               ),
 
+              // --- ส่วนที่ 11.2: ระบบความปลอดภัย (Security) ---
+              // ส่วนนี้ใช้สำหรับตั้งค่าการเข้าถึงแอป เช่น การล็อคด้วยลายนิ้วมือ/ใบหน้า
               const SizedBox(height: 24),
-              const Text(
-                "Security",
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.secTitle,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: AppColors.primary,
@@ -261,14 +264,15 @@ class _SettingsView extends StatelessWidget {
                   children: [
                     ListTile(
                       leading: const Icon(Icons.lock, color: Colors.orange),
-                      title: const Text("App Lock"),
+                      title: Text(AppLocalizations.of(context)!.secAppLock),
                       subtitle:
-                          const Text("Protect key features with Biometrics"),
+                          Text(AppLocalizations.of(context)!.secAppLockDesc),
                       trailing: SizedBox(
                         width: 48,
                         child: Switch(
                           value: currentSettings.isAppLockEnabled,
                           onChanged: (val) {
+                            // สั่งอัพเดตสถานะการล็อคแอปผ่าน BLoC
                             context
                                 .read<SettingsBloc>()
                                 .add(UpdateAppLock(val));

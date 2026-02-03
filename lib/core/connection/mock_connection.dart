@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math';
 import 'package:motus_lab/core/connection/connection_interface.dart';
 
+import 'package:motus_lab/domain/entities/obd_communication.dart';
+
 /// การเชื่อมต่อจำลอง (Mock Connection)
 /// ใช้สำหรับทดสอบระบบโดยไม่ต้องต่อรถจริง
 /// จะสุ่มค่าส่งกลับมาเหมือนรถจริงๆ ตอบสนอง
@@ -35,11 +37,20 @@ class MockConnection implements ConnectionInterface {
   }
 
   @override
-  Future<List<int>> send(List<int> data) async {
+  Future<ObdResponse> send(ObdRequest request) async {
     if (!_isConnected) throw Exception("Device not connected");
 
     await Future.delayed(
         Duration(milliseconds: 30)); // Faster response for smoother graph
+
+    // Parse command (e.g., "010C" -> [0x01, 0x0C])
+    String cleanCmd = request.command.replaceAll(' ', '').toUpperCase();
+    List<int> data = [];
+    for (int i = 0; i < cleanCmd.length; i += 2) {
+      if (i + 1 < cleanCmd.length) {
+        data.add(int.parse(cleanCmd.substring(i, i + 2), radix: 16));
+      }
+    }
 
     List<int> response = [];
 
@@ -277,6 +288,18 @@ class MockConnection implements ConnectionInterface {
       }
     }
 
+    // --- MODE 22: Honda Advanced PIDs (Tier 3) ---
+    else if (data.length >= 2 && data[0] == 0x22) {
+      final pid = data[1];
+      // 22 01: VSA Status
+      if (pid == 0x01) {
+        // Return 1 (Active) -> Bit 0 is 1
+        response = [0x62, 0x01, 0x01];
+      } else {
+        response = [0x7F, 0x22, 0x12];
+      }
+    }
+
     // --- MODE 03: Read DTCs ---
     else if (data.length >= 1 && data[0] == 0x03) {
       // Mock returning 2 DTCs: P0123, U0456
@@ -316,7 +339,11 @@ class MockConnection implements ConnectionInterface {
       _controller.add(response);
     }
 
-    return response;
+    return ObdResponse(
+      rawData: response,
+      timestamp: DateTime.now(),
+      isSuccess: true,
+    );
   }
 
   /// จำลองการตอบสนองจากหลายโมดูล (ECU)

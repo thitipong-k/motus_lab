@@ -331,6 +331,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Seed Cloud'**
   String get moreSeedCloud;
+
+  /// **'Security'**
+  String get secTitle;
+
+  /// **'App Lock'**
+  String get secAppLock;
+
+  /// **'Protect sensitive features with Biometrics'**
+  String get secAppLockDesc;
+
+  /// **'Authentication Required'**
+  String get secAuthReq;
 }
 
 class _AppLocalizationsDelegate

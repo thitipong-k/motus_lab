@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:motus_lab/core/connection/connection_interface.dart';
+import 'package:motus_lab/domain/entities/obd_communication.dart';
 
 /// บริการสำหรับส่งผ่านข้อมูล (Relay) ไปยังช่างเทคนิคทางไกล
 /// ใช้ WebSocket ในการรับส่งข้อมูล CAN Bus เพื่อให้วิกฤตความเร็ว (Low Latency)
@@ -41,6 +42,10 @@ class WebSocketRelay {
   /// ฟังก์ชันรับคำสั่งจาก Master (Remote) มาสั่งการเครื่องยนต์
   void handleRemoteCommand(List<int> command) {
     print("รับคำสั่งจากช่างทางไกล: $command");
-    connection.send(command);
+    // แปลง List<int> เป็น Hex String (เช่น [0x01, 0x0C] -> "010C")
+    final cmdString = command
+        .map((b) => b.toRadixString(16).toUpperCase().padLeft(2, '0'))
+        .join('');
+    connection.send(ObdRequest(command: cmdString));
   }
 }

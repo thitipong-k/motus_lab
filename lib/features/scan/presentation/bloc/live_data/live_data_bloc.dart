@@ -19,7 +19,7 @@ part 'live_data_state.dart';
 
 /// Bloc สำหรับจัดการค่าสด (Live Data)
 /// [WORKFLOW STEP 2] Live Data Loop: หัวใจหลักของระบบ (Pull PIDs > Adaptive Polling > Display)
-/// ทำหน้าที่ส่งคำสั่งชุดเดิมวนซ้ำ (Round-robin) เพื่อให้ UI อัพเดตตลอดเวลา
+/// ทำหน้าที่เป็นศูนย์กลางการควบคุมการดึงข้อมูลจากรถแบบวนลูป
 class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
   final ProtocolEngine _engine;
   final ConnectionInterface _connection;
@@ -29,7 +29,7 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
   final ReadVinUseCase _readVin;
   final LogRepository _logRepository;
   final VehicleStatsRepository
-      _vehicleStatsRepository; // เพิ่มเพื่อรองรับ Predictive Caching
+      _vehicleStatsRepository; // เพื่อรองรับการเดารุ่นรถ (Predictive Caching)
   Timer? _timer;
   List<Command> _activeCommands = [];
 
@@ -62,15 +62,17 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     on<StopLogging>(_onStopLogging);
   }
 
+  /// เริ่มต้นการสตรีมข้อมูล
+  /// ขั้นตอน: อ่าน VIN > ค้นหา PIDs ที่รองรับ > เริ่มลูปดึงข้อมูล
   Future<void> _onStartStreaming(
       StartStreaming event, Emitter<LiveDataState> emit) async {
     List<Command> commandsToUse = event.commands;
 
     if (commandsToUse.isEmpty || commandsToUse.length <= 3) {
-      // Check discovery only if connected
+      // 1. ตรวจสอบการเชื่อมต่อก่อนเริ่ม
       if (!_connection.isConnected) {
         Logger.info(
-            "LiveDataBloc: Delayed StartStreaming - Waiting for connection...");
+            "LiveDataBloc: ยังไม่ได้เชื่อมต่ออุปกรณ์ รอการเชื่อมต่อ...");
         return;
       }
       emit(state.copyWith(isStreaming: true, isDiscovering: true));
@@ -78,46 +80,43 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
       List<String> supportedKeyCodes = [];
       String? currentVin;
 
+      // 2. พยายามอ่านเลขตัวถัง (VIN) เพื่อระบุตัวตนรถ
       try {
         currentVin = await _readVin(null);
       } catch (e) {
         Logger.error("Error reading VIN: $e");
       }
 
-      // Update VIN in state as soon as we have it
       if (currentVin != null) {
         emit(state.copyWith(vin: currentVin));
 
-        // [Predictive Caching Logic]
-        // เมื่อระบุรถได้แล้ว (ผ่าน VIN) ให้บันทึกสถิติการใช้งานทันที
-        // หมายเหตุ: ในขั้นพื้นฐานนี้จะใช้การ Mock ข้อมูลรุ่นรถจาก VIN ไปก่อน
-        // ในระบบจริงจะมีการใช้ VIN Decoder เพื่อหา Year/Make/Model ที่ถูกต้อง
+        // บันทึกสถิติการสแกนเพื่อใช้ในการเดาโปรโตคอลในครั้งถัดไป (Predictive)
         _vehicleStatsRepository.incrementScanCount(
-          year: currentVin.contains("2024") ? 2024 : 2022, // Example Logic
+          year: currentVin.contains("2024") ? 2024 : 2022,
           make: "Honda",
           model: "Civic FE",
         );
       }
 
+      // 3. ตรวจสอบว่าเคยสแกนรถคันนี้แล้วหรือไม่ (Cache Discovery)
       bool cacheHit = false;
       if (currentVin != null) {
         final cachedPids = await _getSupportedPids(currentVin);
         if (cachedPids != null && cachedPids.isNotEmpty) {
-          Logger.info("Cache HIT for VIN: $currentVin. Skipping discovery.");
+          Logger.info(
+              "พบข้อมูล PID ในแคชสำหรับ VIN: $currentVin. ข้ามขั้นตอนสแกนใหม่");
           supportedKeyCodes = cachedPids;
           cacheHit = true;
         }
       }
 
-      // [WORKFLOW STEP 1] Identity Flow: ตรวจสอบ VIN และค้นหา PIDs ที่รองรับ
-      // หากพบ VIN ในฐานข้อมูล จะดึงค่าเดิมมาใช้ทันที (Fast Start)
-      // หากเป็นรถใหม่ จะทำการ Full Discovery เพื่อหาว่ากล่อง ECU ตอบรับ PID ไหนบ้าง
+      // 4. หากไม่มีแคช ให้สแกนหา PID ที่รถรองรับแบบ Full Discovery
       if (!cacheHit) {
-        Logger.info("Cache MISS. Starting Full Discovery...");
+        Logger.info("ไม่พบข้อมูลในแคช เริ่มการสแกนหา PID ที่รองรับ...");
         await _checkSupportedPids("0100", supportedKeyCodes);
         await _checkSupportedPids("0120", supportedKeyCodes);
         await _checkSupportedPids("0140", supportedKeyCodes);
-        Logger.info("Discovered PIDs: $supportedKeyCodes");
+        Logger.info("ผลการสแกนพบ PID ที่รองรับ: $supportedKeyCodes");
 
         if (currentVin != null && supportedKeyCodes.isNotEmpty) {
           await _profileRepository.saveProfile(
@@ -128,9 +127,9 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
         }
       }
 
+      // 5. กรองเฉพาะคำสั่งที่รถคันนี้รองรับจริงๆ รวมถึงตัดคำสั่งเช็คสถานะทิ้ง
       final allAvailable = _repository.getAllAvailablePids();
       commandsToUse = allAvailable.where((cmd) {
-        // กรอง PIDs ที่เป็น Support Check ออก (เช่น 0100, 0120) เพราะเป็นบิตแมสก์ ไม่ใช่ค่าเซนเซอร์
         final bool isSupportCheck = cmd.code.length == 4 &&
             cmd.code.startsWith("01") &&
             (cmd.code.endsWith("00") ||
@@ -144,14 +143,14 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
 
         if (isSupportCheck) return false;
         if (cmd.code == "0902")
-          return false; // ซ่อน VIN จากรายการเซนเซอร์ (แสดงแยกใน Header)
+          return false; // ข้อมูล VIN ไม่แสดงใน Dashboard เซนเซอร์
 
         return supportedKeyCodes.contains(cmd.code);
       }).toList();
 
+      // Fallback: หากสแกนไม่สำเร็จให้ใช้ค่ามาตรฐานพื้นฐาน
       if (commandsToUse.isEmpty) {
         commandsToUse = _repository.getStandardPids().where((cmd) {
-          // Same filter for standard list
           final bool isSupportCheck = cmd.code.length == 4 &&
               cmd.code.startsWith("01") &&
               (cmd.code.endsWith("00") ||
@@ -168,12 +167,13 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
     _activeCommands = commandsToUse;
     emit(state.copyWith(isStreaming: true, activeCommands: _activeCommands));
 
+    // 6. เริ่มลูปดึงข้อมูลวนรอบ (Polling Loop)
     _timer?.cancel();
     _startPollingLoop();
   }
 
   /// ระบบการดึงข้อมูลแบบวนลูปต่อเนื่อง (Sequential Polling Loop)
-  /// เพื่อป้องกันปัญหา Overlapping Ticks และหน้าจอค้าง (UI Freeze)
+  /// ออกแบบมาเพื่อป้องกัน UI Freeze โดยการทำงานแบบทีละตัวแทนทีละชุดหลายตัวพร้อมกัน
   void _startPollingLoop() {
     int tick = 0;
     final Map<String, int> consecutiveErrors = {};
@@ -182,20 +182,21 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
 
     Future<void> poll() async {
       if (!state.isStreaming || !_connection.isConnected) {
-        Logger.info("LiveDataBloc: Stopping Polling Loop.");
+        Logger.info("หยุดการทำงานของลูปดึงข้อมูล (Disconnected or Stopped)");
         return;
       }
 
       tick++;
       final Map<String, double> updatedValues = Map.from(state.currentValues);
 
-      // Quarantined Probe
+      // กู้คืนคำสั่งที่ถูกกักบริเวณ (Quarantine) เพื่อลองใหม่เป็นระยะๆ
       if (tick % 200 == 0 && quarantinedCommands.isNotEmpty) {
         final probeCmd = quarantinedCommands.first;
         try {
+          // ใช้ Standardized ObdRequest
           final request = _engine.buildRequest(probeCmd);
           final response = await _connection.send(request);
-          if (response.isNotEmpty) {
+          if (response.hasValidData) {
             quarantinedCommands.remove(probeCmd);
             _activeCommands.add(probeCmd);
             consecutiveErrors[probeCmd.code] = 0;
@@ -203,31 +204,35 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
         } catch (_) {}
       }
 
-      // การกรองคำสั่งตามลำดับความสำคัญ (High, Normal, Low)
-      // ช่วยลดภาระการสื่อสารกับรถ (Bus Load)
+      // ระบบจัดการลำดับความสำคัญ (Adaptive Polling)
+      // ช่วยประหยัดแบนด์วิดท์โดยดึงข้อมูลตัวกะพริบช้าให้น้อยลง
       final commandsToPoll = _activeCommands.where((cmd) {
         if (quarantinedCommands.contains(cmd)) return false;
         switch (cmd.priority) {
           case CommandPriority.high:
-            return true;
+            return true; // ดึงทุกรอบ (เช่น รอบเครื่อง Speed)
           case CommandPriority.normal:
-            return tick % 10 == 0;
+            return tick % 10 == 0; // ดึงทุก 10 รอบ
           case CommandPriority.low:
-            return tick % 40 == 0;
+            return tick % 40 == 0; // ดึงทุก 40 รอบ (เช่น อุณหภูมิ)
         }
       }).toList();
 
       if (commandsToPoll.isNotEmpty) {
         for (final cmd in commandsToPoll) {
           try {
+            // STEP: สร้างคำสั่ง > ส่งผ่าน Connection > รับ ObdResponse > ประมวลผล
             final request = _engine.buildRequest(cmd);
             final response = await _connection.send(request);
-            if (response.isNotEmpty) {
-              final value = _engine.parseResponse(response, cmd.formula);
+
+            if (response.hasValidData) {
+              final value = _engine.parseResponse(response, cmd.formula,
+                  script: cmd.script);
               updatedValues[cmd.name] = value;
-              consecutiveErrors[cmd.code] = 0;
+              consecutiveErrors[cmd.code] = 0; // รีเซ็ตการนับ Error
             }
           } catch (e) {
+            // ระบบกักบริเวณคำสั่งที่พังเพื่อไม่ให้หน่วงระบบโดยรวม (Fault Isolation)
             final int errors = (consecutiveErrors[cmd.code] ?? 0) + 1;
             consecutiveErrors[cmd.code] = errors;
             if (errors >= maxErrorsBeforeQuarantine) {
@@ -239,29 +244,32 @@ class LiveDataBloc extends Bloc<LiveDataEvent, LiveDataState> {
         add(NewDataReceived(updatedValues));
       }
 
-      // Schedule next poll after current one finishes
-      // Small delay prevents thread starving
+      // กำหนดรอบการทำงานถัดไปแบบ Non-blocking
       _timer = Timer(const Duration(milliseconds: 10), poll);
     }
 
     poll();
   }
 
+  /// ฟังก์ชันช่วยในการเช็ค PID ที่รองรับทีละช่วง (00, 20, 40)
   Future<void> _checkSupportedPids(
       String pidCode, List<String> resultList) async {
     try {
       final cmd = _repository.getCommandByCode(pidCode);
       if (cmd == null) return;
+
+      // ใช้ระบบ Request/Response แบบใหม่ เพื่อความปลอดภัยของข้อมูล
       final request = _engine.buildRequest(cmd);
       final response = await _connection.send(request);
-      if (response.isNotEmpty) {
+
+      if (response.hasValidData) {
         final int startPid = int.parse(pidCode.substring(2), radix: 16);
-        final pids = _engine.decodeSupportedPids(response, startPid);
+        final pids = _engine.decodeSupportedPids(response.rawData, startPid);
         resultList.addAll(pids);
       }
       await Future.delayed(const Duration(milliseconds: 50));
     } catch (e) {
-      Logger.error("Discovery Error ($pidCode): $e");
+      Logger.error("Error ระหว่างการเช็ค PID รองรับ ($pidCode): $e");
     }
   }
 

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:motus_lab/core/connection/connection_interface.dart';
+import 'package:motus_lab/domain/entities/obd_communication.dart';
 import 'package:logger/logger.dart';
 
 /// การเชื่อมต่อผ่าน Bluetooth LE (BLE)
@@ -85,16 +86,21 @@ class BleConnection implements ConnectionInterface {
   }
 
   @override
-  Future<List<int>> send(List<int> data) async {
+  Future<ObdResponse> send(ObdRequest request) async {
     if (!isConnected || _writeCharacteristic == null) {
       throw Exception("Not connected to a valid device");
     }
 
     // ส่งข้อมูล
+    final data = request.toBytes();
     await _writeCharacteristic!.write(data, withoutResponse: false);
 
-    // ในระบบ OBD2 ปกติ เรามักจะรอรับผลผ่าน Stream onDataReceived
-    // แต่เพื่อความสะดวก เราคืนค่าว่างไปก่อน
-    return [];
+    // ในระบบ OBD2 ผ่าน BLE เรามักจะรอรับผลผ่าน Stream onDataReceived
+    // สำหรับโครงสร้างใหม่นี้ เราจะส่งกลับผลการส่งเบื้องต้นไปก่อน
+    return ObdResponse(
+      rawData: [], // ข้อมูลจริงจะไหลเข้า StreamonDataReceived
+      timestamp: DateTime.now(),
+      isSuccess: true,
+    );
   }
 }

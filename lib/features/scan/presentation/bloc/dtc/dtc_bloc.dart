@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:motus_lab/core/protocol/protocol_engine.dart';
 import 'package:motus_lab/core/connection/connection_interface.dart';
+import 'package:motus_lab/domain/entities/obd_communication.dart';
 import 'package:motus_lab/features/scan/data/repositories/vehicle_stats_repository.dart';
 
 part 'dtc_event.dart';
@@ -27,61 +28,67 @@ class DtcBloc extends Bloc<DtcEvent, DtcState> {
     on<ClearDtcCodes>(_onClearDtcCodes);
   }
 
+  /// ฟังก์ชันอ่านรหัสความผิดปกติจากรถ
   Future<void> _onReadDtcCodes(
       ReadDtcCodes event, Emitter<DtcState> emit) async {
-    // [Predictive Caching Logic] บันทึกสถิติการเข้าดูข้อมูล
-    // ในที่นี้สมมติเป็นรุ่นหลักที่สแกนบ่อยเพื่อเป็นตัวอย่าง (Honda Civic FE)
+    // บันทึกสถิติการใช้งานสำหรับรุ่นรถตัวอย่าง (Honda Civic FE)
     _vehicleStatsRepository.incrementScanCount(
         year: 2022, make: "Honda", model: "Civic FE");
 
     emit(const DtcState(status: DtcStatus.loading));
 
     try {
-      if (!_connection.isConnected) throw Exception("Not connected to vehicle");
+      if (!_connection.isConnected)
+        throw Exception("ยังไม่ได้เชื่อมต่อกับตัวรถ");
 
-      // 1. ส่งคำสั่ง Mode 03 (Request DTCs)
-      final request = [0x03]; // ในโปรเจกต์จริงจะผ่าน CommandBuilder
+      // 1. ส่งคำสั่ง Mode 03 (ขอรายการ DTC) ผ่านมาตรฐาน ObdRequest
+      final request = ObdRequest(command: "03");
       final response = await _connection.send(request);
 
-      // 2. แปลผล (DTC Parser)
+      // 2. แปลผลข้อมูลดิบให้เป็นรายการรหัสโค้ด (เช่น P0123)
       List<String> codes = [];
 
-      // Response Format: [43] [Count] [Byte1] [Byte2] [Byte3] [Byte4] ...
-      if (response.isNotEmpty && response[0] == 0x43) {
-        // int count = response.length > 1 ? response[1] : 0; // Removed unused variable
-
-        // Simple parser manual loop (Phase 1)
-        // Start at index 2, take 2 bytes at a time
-        for (int i = 2; i < response.length - 1; i += 2) {
-          int hb = response[i];
-          int lb = response[i + 1];
+      // โครงสร้างการตอบกลับ: [43] [จำนวนโค้ด] [Data1] [Data2] ...
+      // หมายเหตุ: 43 คือการตอบกลับของ Mode 03 (03 + 40 = 43)
+      if (response.hasValidData &&
+          response.rawData.isNotEmpty &&
+          response.rawData[0] == 0x43) {
+        final raw = response.rawData;
+        // วนลูปอ่านข้อมูลทีละ 2 bytes เพื่อแปลงเป็น 1 DTC
+        for (int i = 2; i < raw.length - 1; i += 2) {
+          int hb = raw[i];
+          int lb = raw[i + 1];
           codes.add(_parseDtcBytes(hb, lb));
         }
       }
 
       emit(DtcState(status: DtcStatus.success, codes: codes));
     } catch (e) {
-      emit(DtcState(status: DtcStatus.error, errorMessage: e.toString()));
+      emit(DtcState(
+          status: DtcStatus.error,
+          errorMessage: "เกิดข้อผิดพลาดในการอ่านโค้ด: ${e.toString()}"));
     }
   }
 
+  /// ฟังก์ชันลบรหัสความผิดปกติ (Clear DTCs)
   Future<void> _onClearDtcCodes(
       ClearDtcCodes event, Emitter<DtcState> emit) async {
     emit(DtcState(status: DtcStatus.clearing, codes: state.codes));
 
     try {
-      if (!_connection.isConnected) throw Exception("Not connected to vehicle");
+      if (!_connection.isConnected)
+        throw Exception("ยังไม่ได้เชื่อมต่อกับตัวรถ");
 
-      // 1. ส่งคำสั่ง Mode 04 (Clear DTCs)
-      final request = [0x04];
+      // 1. ส่งคำสั่ง Mode 04 (ขอให้กล่องลบข้อมูลความผิดปกติ)
+      final request = ObdRequest(command: "04");
       await _connection.send(request);
 
-      // 2. แจ้งผลสำเร็จและล้างรายการในแอป
+      // 2. หากส่งคำสั่งสำเร็จ ให้ล้างรายการในแอปออกทันที
       emit(const DtcState(status: DtcStatus.success, codes: []));
     } catch (e) {
       emit(DtcState(
           status: DtcStatus.error,
-          errorMessage: e.toString(),
+          errorMessage: "ไม่สามารถลบโค้ดได้: ${e.toString()}",
           codes: state.codes));
     }
   }

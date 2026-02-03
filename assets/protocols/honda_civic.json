@@ -22,6 +22,16 @@
       "min": 40,
       "max": 150,
       "formula": "A-40"
+    },
+    {
+      "pid": "2201",
+      "name": "VSA Status",
+      "description": "Vehicle Stability Assist Active State",
+      "unit": "binary",
+      "min": 0,
+      "max": 1,
+      "formula": "A",
+      "script": "A & 0x01 ? 1 : 0"
     }
   ]
 }

@@ -1,3 +1,4 @@
+/// Protocol Pack Models - Updated with Secure Scripting support
 class ProtocolPack {
   final ProtocolMeta meta;
   final List<String> initSequence;
@@ -46,6 +47,7 @@ class ObdCommandDef {
   final String unit;
   final int bytes;
   final String formula;
+  final String? script;
   final num min;
   final num max;
 
@@ -55,6 +57,7 @@ class ObdCommandDef {
     required this.unit,
     required this.bytes,
     required this.formula,
+    this.script,
     required this.min,
     required this.max,
   });
@@ -66,6 +69,7 @@ class ObdCommandDef {
       unit: json['unit'] ?? "",
       bytes: json['bytes'] ?? 1,
       formula: json['formula'] ?? "",
+      script: json['script'],
       min: json['min'] ?? 0,
       max: json['max'] ?? 100,
     );
