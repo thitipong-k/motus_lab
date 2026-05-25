@@ -58,7 +58,7 @@ Leveraging the existing Firebase foundation to cater to B2B clients (repair shop
   - [x] Implement UDP broadcasting & listener on port 13400 for DoIP Vehicle Identification (Vehicle Announcement Message).
   - [x] Implement TCP socket connection for DoIP Routing Activation.
   - [x] Build a DoIP Payload Formatter (handling Headers, Diagnostic Messages, Alive Check).
-  - [ ] Add specific ENET cable connection profiles for European cars (e.g., BMW F/G series, modern Mercedes-Benz).
+  - [x] Add specific ENET cable connection profiles for European cars (e.g., BMW F/G series, modern Mercedes-Benz).
 
 ---
 

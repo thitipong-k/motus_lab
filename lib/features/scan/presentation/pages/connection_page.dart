@@ -11,6 +11,7 @@ import 'package:motus_lab/features/scan/presentation/widgets/radar_view.dart';
 import 'dart:io';
 import 'package:motus_lab/l10n/app_localizations.dart';
 import 'package:motus_lab/core/connection/j2534/j2534_scanner_service.dart';
+import 'package:motus_lab/core/connection/doip/doip_profiles.dart';
 
 /// หน้าสำหรับค้นหาและเชื่อมต่ออุปกรณ์ Bluetooth (รองรับหลายภาษา: EN/TH)
 class ConnectionPage extends StatelessWidget {
@@ -108,10 +109,36 @@ class ConnectionPage extends StatelessWidget {
                        subtitle: const Text("Connect to modern vehicle via TCP/IP"),
                        trailing: ElevatedButton(
                          onPressed: () {
-                           context.read<ScanBloc>().add(const ConnectToDevice("DOIP:13400"));
-                           MotusSnackbar.showSuccess(context, "Initiating DoIP Routing Activation...");
+                           showModalBottomSheet(
+                             context: context,
+                             backgroundColor: AppColors.background,
+                             shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                             builder: (context) {
+                               return Padding(
+                                 padding: const EdgeInsets.all(16.0),
+                                 child: Column(
+                                   mainAxisSize: MainAxisSize.min,
+                                   children: [
+                                     const Text("Select ENET / DoIP Profile", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                     const SizedBox(height: 16),
+                                     ...doipProfiles.map((profile) => ListTile(
+                                       leading: const Icon(Icons.router, color: AppColors.primary),
+                                       title: Text(profile.name),
+                                       subtitle: Text(profile.description),
+                                       onTap: () {
+                                         Navigator.pop(context);
+                                         final ip = profile.ipAddress ?? "auto";
+                                         context.read<ScanBloc>().add(ConnectToDevice("DOIP:$ip"));
+                                         MotusSnackbar.showSuccess(context, "Initiating DoIP connection for ${profile.name}...");
+                                       },
+                                     )).toList(),
+                                   ],
+                                 ),
+                               );
+                             }
+                           );
                          },
-                         child: const Text("Connect")
+                         child: const Text("Profiles")
                        ),
                      )
                    )
