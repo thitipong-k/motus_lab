@@ -15,6 +15,8 @@ class MockConnection implements ConnectionInterface {
   double _fuelLevel = 100.0;
   double _coolantTemp = 40.0; // Start cold
   double _load = 20.0;
+  List<List<int>> _activeDtcs = [[0x01, 0x23], [0xC4, 0x56]]; // P0123, U0456
+  int _udsSecurityState = 0; // 0 = Locked, 1 = Unlocked
 
   @override
   bool get isConnected => _isConnected;
@@ -53,6 +55,12 @@ class MockConnection implements ConnectionInterface {
     }
 
     List<int> response = [];
+
+    // Backdoor SGW Unlock Command from SgwAuthService
+    if (data.length >= 3 && data[0] == 0xAA && data[1] == 0xBB && data[2] == 0xCC) {
+      _udsSecurityState = 1; // Unlocked
+      return ObdResponse(rawData: [0xDD], timestamp: DateTime.now(), isSuccess: true);
+    }
 
     // --- MODE 01: Live Data ---
     if (data.length >= 2 && data[0] == 0x01) {
@@ -216,6 +224,24 @@ class MockConnection implements ConnectionInterface {
         response = [0x41, 0x10, A, B];
       }
 
+      // 01 0F: Intake Air Temp
+      else if (pid == 0x0F) {
+        int val = (45 + 40); // 45 deg C
+        response = [0x41, 0x0F, val];
+      }
+      // 01 11: Throttle Position
+      else if (pid == 0x11) {
+        // Correlate with load
+        int val = ((_load / 100) * 255).round().clamp(0, 255);
+        response = [0x41, 0x11, val];
+      }
+      // 01 14: O2 Sensor Voltage
+      else if (pid == 0x14) {
+        // Fluctuate between 0.1v and 0.9v
+        double vol = 0.5 + sin(DateTime.now().millisecondsSinceEpoch / 200) * 0.4;
+        int val = (vol * 200).round(); // Formula: A/200
+        response = [0x41, 0x14, val, 128]; // B=128 (Short term trim 0%)
+      }
       // 01 2F: Fuel Level
       else if (pid == 0x2F) {
         // Slowly decrease
@@ -302,12 +328,19 @@ class MockConnection implements ConnectionInterface {
 
     // --- MODE 03: Read DTCs ---
     else if (data.length >= 1 && data[0] == 0x03) {
-      // Mock returning 2 DTCs: P0123, U0456
-      response = [0x43, 0x02, 0x01, 0x23, 0xC4, 0x56];
+      if (_activeDtcs.isEmpty) {
+        response = [0x43, 0x00];
+      } else {
+        response = [0x43, _activeDtcs.length];
+        for (var dtc in _activeDtcs) {
+          response.addAll(dtc);
+        }
+      }
     }
 
     // --- MODE 04: Clear DTCs ---
     else if (data.length >= 1 && data[0] == 0x04) {
+      _activeDtcs.clear();
       response = [0x44];
     }
 
@@ -324,6 +357,70 @@ class MockConnection implements ConnectionInterface {
         ];
       } else {
         response = [0x7F, 0x09, 0x12];
+      }
+    }
+
+    // --- UDS PROTOCOL SUPPORT (Phase 2.2 / ECU Flasher) ---
+    // 0x10 Diagnostic Session Control
+    else if (data.length >= 2 && data[0] == 0x10) {
+      response = [0x50, data[1]]; 
+    }
+    // 0x27 Security Access
+    else if (data.length >= 2 && data[0] == 0x27) {
+      if (data[1] % 2 != 0) {
+        // Request Seed (Odd subfunction like 01, 03)
+        response = [0x67, data[1], 0xDE, 0xAD, 0xBE, 0xEF]; // Mock seed
+      } else {
+        // Send Key (Even subfunction like 02, 04)
+        _udsSecurityState = 1;
+        response = [0x67, data[1]]; 
+      }
+    }
+    // 0x22 Read Data By Identifier
+    else if (data.length >= 3 && data[0] == 0x22) {
+      response = [0x62, data[1], data[2], 0x00, 0x01, 0x02, 0x03]; // Mock response
+    }
+    // 0x31 Routine Control
+    else if (data.length >= 4 && data[0] == 0x31) {
+      if (_udsSecurityState == 0) {
+        response = [0x7F, 0x31, 0x33]; // SGW Locked -> NRC 0x33
+      } else {
+        if (data[1] == 0x01) {
+          // Routine Start. Simulate 3s delay for specific routines like TBA or Battery
+          bool isLongRoutine = (data[2] == 0x01 && data[3] == 0x1A) || // TBA
+                               (data[2] == 0x02 && data[3] == 0x11) || // Battery
+                               (data[2] == 0x03 && data[3] == 0x11) || // EPB
+                               (data[2] == 0x05 && data[3] == 0x11) || // Coolant
+                               (data[2] == 0x06 && data[3] == 0x11) || // DPF
+                               (data[2] == 0x07 && data[3] == 0x11);   // Trans
+          if (isLongRoutine) {
+            await Future.delayed(const Duration(seconds: 3));
+          }
+        }
+        // Echo Routine ID with positive response
+        response = [0x71, data[1], data[2], data[3]];
+      }
+    }
+    // 0x34 Request Download
+    else if (data.length >= 1 && data[0] == 0x34) {
+      response = [0x74, 0x20, 0x0F, 0xFF]; // Allow up to 4095 block size
+    }
+    // 0x36 Transfer Data
+    else if (data.length >= 2 && data[0] == 0x36) {
+      response = [0x76, data[1]]; // Acknowledge block sequence
+    }
+    // 0x37 Request Transfer Exit
+    else if (data.length >= 1 && data[0] == 0x37) {
+      response = [0x77];
+    }
+    // 0x2F Input/Output Control
+    else if (data.length >= 4 && data[0] == 0x2F) {
+      if (_udsSecurityState == 0) {
+        response = [0x7F, 0x2F, 0x33]; // SGW Locked -> NRC 0x33
+      } else {
+        // Simulate hardware clicking noise or delay
+        // Return positive response: 0x6F, DID_High, DID_Low, ControlOption
+        response = [0x6F, data[1], data[2], data[3]];
       }
     }
 

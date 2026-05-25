@@ -4,6 +4,14 @@ import 'package:motus_lab/core/connection/bluetooth_service.dart' as motus;
 import 'package:motus_lab/core/protocol/protocol_engine.dart';
 import 'package:motus_lab/core/connection/connection_interface.dart';
 import 'package:motus_lab/core/connection/mock_connection.dart';
+import 'package:motus_lab/core/connection/j2534_connection.dart';
+import 'package:motus_lab/core/protocol/transport/diagnostic_transport.dart';
+import 'package:motus_lab/core/protocol/transport/j2534_transport_adapter.dart';
+import 'package:motus_lab/core/protocol/transport/mock_transport_adapter.dart';
+import 'package:motus_lab/core/protocol/uds/uds_engine.dart';
+import 'package:motus_lab/features/coding/presentation/bloc/actuation_bloc.dart';
+import 'package:motus_lab/features/coding/presentation/bloc/basic_settings_bloc.dart';
+import 'package:motus_lab/features/coding/presentation/bloc/flashing_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/live_data/live_data_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/dtc/dtc_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/scan_bloc.dart';
@@ -41,6 +49,7 @@ import 'package:motus_lab/features/scan/data/repositories/log_repository_impl.da
 import 'package:motus_lab/core/services/security/security_repository.dart';
 import 'package:motus_lab/core/services/security/biometric_service.dart';
 import 'package:motus_lab/core/services/security/auth_service.dart';
+import 'package:motus_lab/core/services/security/sgw_auth_service.dart';
 import 'package:motus_lab/core/services/sync_service.dart';
 import 'package:motus_lab/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:motus_lab/features/scan/domain/services/diagnostic_expert_service.dart';
@@ -63,6 +72,15 @@ Future<void> setupLocator() async {
   // 2. Connection Logic
   locator.registerLazySingleton(() => motus.BluetoothService());
   locator.registerLazySingleton<ConnectionInterface>(() => MockConnection());
+  
+  // Advanced Diagnostics Protocols
+  locator.registerLazySingleton(() => J2534Connection());
+  
+  // TEMP: Use MockTransportAdapter to allow testing UDS / ECU Flasher UI offline
+  // Normally this would be J2534TransportAdapter(locator<J2534Connection>())
+  locator.registerLazySingleton<DiagnosticTransport>(() => MockTransportAdapter(locator<ConnectionInterface>()));
+  
+  locator.registerLazySingleton(() => UdsEngine(locator<DiagnosticTransport>()));
 
   // Database & Key Management
   // locator.registerLazySingleton(() => const FlutterSecureStorage());
@@ -158,11 +176,17 @@ Future<void> setupLocator() async {
   // 8. Security
   locator.registerLazySingleton<BiometricService>(() => BiometricService());
   locator.registerLazySingleton<AuthService>(() => AuthService());
+  locator.registerLazySingleton<SgwAuthService>(() => SgwAuthService());
   locator.registerLazySingleton<SyncService>(
       () => SyncService(locator(), locator()));
 
   // 11. Auth Feature
   locator.registerFactory<AuthBloc>(() => AuthBloc(locator()));
+
+  // 11.5 Coding / Flashing Feature
+  locator.registerFactory<FlashingBloc>(() => FlashingBloc(locator<UdsEngine>()));
+  locator.registerFactory<ActuationBloc>(() => ActuationBloc(locator<UdsEngine>()));
+  locator.registerFactory<BasicSettingsBloc>(() => BasicSettingsBloc(locator<UdsEngine>()));
 
   // 12. Seeding Service
   locator.registerLazySingleton<CloudSeedService>(

@@ -11,6 +11,9 @@ import 'package:motus_lab/features/scan/presentation/bloc/dtc/dtc_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/live_data/live_data_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:motus_lab/features/settings/presentation/bloc/settings_bloc.dart';
+import 'package:motus_lab/features/coding/presentation/bloc/flashing_bloc.dart';
+import 'package:motus_lab/features/coding/presentation/bloc/actuation_bloc.dart';
+import 'package:motus_lab/features/coding/presentation/bloc/basic_settings_bloc.dart';
 import 'package:motus_lab/l10n/app_localizations.dart';
 
 class MotusApp extends StatelessWidget {
@@ -28,6 +31,9 @@ class MotusApp extends StatelessWidget {
         BlocProvider.value(value: locator<DtcBloc>()),
         BlocProvider.value(
             value: locator<ReportBloc>()..add(LoadReportConfig())),
+        BlocProvider.value(value: locator<FlashingBloc>()),
+        BlocProvider.value(value: locator<ActuationBloc>()),
+        BlocProvider.value(value: locator<BasicSettingsBloc>()),
       ],
       child: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:motus_lab/core/services/service_locator.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/topology/topology_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/topology/topology_painter.dart';
-import 'package:motus_lab/features/scan/presentation/widgets/topology/ecu_detail_dialog.dart';
 
 class TopologyPage extends StatelessWidget {
   const TopologyPage({super.key});
@@ -99,20 +98,75 @@ class _TopologyViewState extends State<_TopologyView> {
 
   void _handleTap(Offset localPosition, List<dynamic> nodes) {
     // Simple hit test: check distance to each node
-    // Node radius is likely ~30-40px defined in Painter
-    const double hitRadius = 40.0;
+    // Node radius is likely ~45px
+    const double hitRadius = 45.0;
 
     for (var node in nodes) {
       final dx = localPosition.dx - node.position.dx;
       final dy = localPosition.dy - node.position.dy;
       if ((dx * dx + dy * dy) <= (hitRadius * hitRadius)) {
         // Hit!
-        showDialog(
-          context: context,
-          builder: (context) => EcuDetailDialog(node: node),
-        );
+        _showEcuActionSheet(context, node);
         break;
       }
     }
+  }
+
+  void _showEcuActionSheet(BuildContext context, dynamic node) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: Text(node.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  subtitle: Text("ID: ${node.id} | Status: ${node.status.name.toUpperCase()}"),
+                  trailing: node.dtcCount > 0 
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(12)),
+                        child: Text("${node.dtcCount} DTCs", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      )
+                    : null,
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.document_scanner, color: Colors.orange),
+                  title: const Text("Read Fault Codes"),
+                  subtitle: const Text("View and clear Diagnostic Trouble Codes"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Navigating to DTCs for ${node.name}...")));
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.bar_chart, color: Colors.blue),
+                  title: const Text("Live Data Stream"),
+                  subtitle: const Text("View real-time sensor values"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Loading Live Data for ${node.name}...")));
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.settings_suggest, color: Colors.green),
+                  title: const Text("Active Tests & Coding"),
+                  subtitle: const Text("Perform bi-directional control and adaptations"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Opening Actuation menu for ${node.name}...")));
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:motus_lab/core/theme/app_colors.dart';
 import 'package:motus_lab/features/coding/presentation/pages/adaptation_page.dart';
+import 'package:motus_lab/features/coding/presentation/pages/flashing_page.dart';
 import 'package:motus_lab/features/crm/presentation/pages/customer_list_page.dart';
 import 'package:motus_lab/features/profile/presentation/pages/wallet_page.dart';
 import 'package:motus_lab/features/remote/presentation/pages/remote_expert_page.dart';
@@ -78,6 +79,13 @@ class MorePage extends StatelessWidget {
         'icon': Icons.edit_note,
         'page': const AdaptationPage(),
         'color': AppColors.secondary,
+        'requiresAuth': true,
+      },
+      {
+        'label': 'ECU Flasher', // Advanced Phase 2.2 Feature
+        'icon': Icons.memory,
+        'page': const FlashingPage(),
+        'color': AppColors.error,
         'requiresAuth': true,
       },
       {

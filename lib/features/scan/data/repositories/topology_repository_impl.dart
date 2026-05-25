@@ -38,6 +38,16 @@ class TopologyRepositoryImpl implements TopologyRepository {
         );
     _connection.send(_engine.buildRequest(broadcastCmd));
 
+    // Yield CGW (Central Gateway) immediately
+    yield const EcuNode(
+      id: "CGW",
+      name: "Central Gateway Module",
+      status: EcuStatus.ok,
+      position: Offset(300, 240), // Anchor Point
+      busType: BusType.gateway,
+      dtcCount: 0,
+    );
+
     // 4. Collect responses for a few seconds
     // We wrap the stream to yield EcuNodes as we find them.
     await for (final data in stream.timeout(const Duration(seconds: 3),
@@ -58,21 +68,34 @@ class TopologyRepositoryImpl implements TopologyRepository {
         // BCM (7E3) -> Bottom Center
         // SRS (7E5) -> Middle Right
         final Map<int, Offset> _posMap = {
-          0x7E0: const Offset(200, 80),
-          0x7E1: const Offset(400, 80),
-          0x7E2: const Offset(100, 220),
-          0x7E5: const Offset(500, 220),
-          0x7E3: const Offset(300, 360),
+          0x7E0: const Offset(150, 100), // ECM HS-CAN
+          0x7E1: const Offset(300, 100), // TCM HS-CAN
+          0x7E2: const Offset(450, 100), // ABS HS-CAN
+          0x7E5: const Offset(200, 380), // SRS MS-CAN
+          0x7E3: const Offset(400, 380), // BCM MS-CAN
+        };
+
+        final Map<int, BusType> _busMap = {
+          0x7E0: BusType.hsCan,
+          0x7E1: BusType.hsCan,
+          0x7E2: BusType.hsCan,
+          0x7E5: BusType.msCan,
+          0x7E3: BusType.msCan,
         };
 
         final pos =
             _posMap[id] ?? Offset(100.0 + (discoveredIds.length * 50), 400);
 
+        int dtcs = Random().nextDouble() > 0.6 ? Random().nextInt(4) + 1 : 0;
+        EcuStatus stat = dtcs > 0 ? EcuStatus.fault : EcuStatus.ok;
+
         yield EcuNode(
           id: id.toRadixString(16).toUpperCase(),
           name: _moduleMap[id]!,
           position: pos,
-          status: Random().nextDouble() > 0.9 ? EcuStatus.fault : EcuStatus.ok,
+          status: stat,
+          busType: _busMap[id] ?? BusType.hsCan,
+          dtcCount: dtcs,
         );
       }
     }

@@ -8,7 +8,9 @@ import 'package:motus_lab/shared/widgets/motus_card.dart';
 import 'package:motus_lab/shared/widgets/motus_snackbar.dart';
 import 'package:motus_lab/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:motus_lab/features/scan/presentation/widgets/radar_view.dart';
+import 'dart:io';
 import 'package:motus_lab/l10n/app_localizations.dart';
+import 'package:motus_lab/core/connection/j2534/j2534_scanner_service.dart';
 
 /// หน้าสำหรับค้นหาและเชื่อมต่ออุปกรณ์ Bluetooth (รองรับหลายภาษา: EN/TH)
 class ConnectionPage extends StatelessWidget {
@@ -89,6 +91,56 @@ class ConnectionPage extends StatelessWidget {
                   type: ButtonType.warning,
                 ),
               ),
+              if (Platform.isWindows) ...[
+                 Padding(
+                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                   child: Align(
+                     alignment: Alignment.centerLeft,
+                     child: Text("Advanced Desktop Connections", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                   ),
+                 ),
+                 Padding(
+                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                   child: MotusCard(
+                     child: ListTile(
+                       leading: const Icon(Icons.lan, color: AppColors.primary),
+                       title: const Text("DoIP / ENET Cable"),
+                       subtitle: const Text("Connect to modern vehicle via TCP/IP"),
+                       trailing: ElevatedButton(
+                         onPressed: () {
+                           context.read<ScanBloc>().add(const ConnectToDevice("DOIP:13400"));
+                           MotusSnackbar.showSuccess(context, "Initiating DoIP Routing Activation...");
+                         },
+                         child: const Text("Connect")
+                       ),
+                     )
+                   )
+                 ),
+                 Padding(
+                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                   child: MotusCard(
+                     child: ListTile(
+                       leading: const Icon(Icons.usb, color: AppColors.primary),
+                       title: const Text("J2534 PassThru Devices"),
+                       subtitle: const Text("Scan Registry for VCI drivers"),
+                       trailing: ElevatedButton(
+                         onPressed: () async {
+                           MotusSnackbar.showWarning(context, "Scanning HKLM\\Software\\PassThruSupport.04.04...");
+                           final devices = await J2534ScannerService.scanDevices();
+                           if (devices.isEmpty && context.mounted) {
+                             MotusSnackbar.showError(context, "No J2534 devices found in Registry.");
+                           } else if (context.mounted) {
+                             MotusSnackbar.showSuccess(context, "Found ${devices.length} J2534 drivers!");
+                             // Select the first one for demo
+                             context.read<ScanBloc>().add(ConnectToDevice("J2534:${devices.first.name}"));
+                           }
+                         },
+                         child: const Text("Scan & Connect")
+                       ),
+                     )
+                   )
+                 ),
+              ],
             ],
           );
         },
